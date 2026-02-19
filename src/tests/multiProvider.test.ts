@@ -2,7 +2,7 @@
  * Tests for Multi-Provider Integration
  */
 
-import { AIProvider } from '@/types/types';
+import { AIProvider } from '@/types/common';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { MultiProviderConfig, multiProviderService } from '../services/multiProviderService';
 

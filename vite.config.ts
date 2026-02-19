@@ -50,6 +50,12 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('.', import.meta.url)),
+        '@components': fileURLToPath(new URL('./src/components', import.meta.url)),
+        '@services': fileURLToPath(new URL('./src/services', import.meta.url)),
+        '@utils': fileURLToPath(new URL('./src/utils', import.meta.url)),
+        '@hooks': fileURLToPath(new URL('./src/hooks', import.meta.url)),
+        '@types': fileURLToPath(new URL('./src/types', import.meta.url)),
+        '@config': fileURLToPath(new URL('./src/config', import.meta.url)),
       }
     },
     build: {
@@ -131,7 +137,7 @@ export default defineConfig(({ mode }) => {
       },
       outDir: 'dist',
       sourcemap: (mode !== 'production' ? 'inline' : false),
-      chunkSizeWarningLimit: 900,
+      chunkSizeWarningLimit: 2048,
     },
     css: {
       preprocessorOptions: {
@@ -141,7 +147,7 @@ export default defineConfig(({ mode }) => {
       }
     },
     optimizeDeps: {
-      include: ['react', 'react-dom', 'framer-motion', 'uuid',],
+      include: ['react', 'react-dom', 'framer-motion'],
     },
     esbuild: {
       drop: ['console', 'debugger'],

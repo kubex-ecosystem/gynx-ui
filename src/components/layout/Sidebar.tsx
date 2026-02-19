@@ -1,4 +1,4 @@
-import { Activity, Bot, Database, Key, LayoutDashboard, LucideIcon, Mail, MessageCircle, NotebookPen, Sparkles, Wand2, Workflow } from 'lucide-react';
+import { Activity, BarChart3, Bot, Database, Key, LayoutDashboard, LucideIcon, Mail, MessageCircle, NotebookPen, Sparkles, Wand2, Workflow } from 'lucide-react';
 import React from 'react';
 import { useTranslations } from '../../i18n/useTranslations';
 

@@ -6,15 +6,16 @@
 
 import { MultiAIWrapper } from '../core/llm/wrapper/MultiAIWrapper'
 import {
-  AIProvider,
   AIModel,
+  AIProvider,
   AnthropicModels,
+  DeepSeekModels,
   GeminiModels,
   MultiAIConfig,
   OpenAIModels
-} from '@/types/types'
-import { enhancedAPI } from './enhancedAPI'
+} from '../types/common'
 import { GenerateRequest, GenerateResponse, Provider } from './api'
+import { enhancedAPI } from './enhancedAPI'
 
 /**
  * Configuration for multi-provider service
@@ -39,6 +40,12 @@ export interface MultiProviderConfig {
       models?: string[]
       baseURL?: string
     }
+    [AIProvider.DEEPSEEK]?: {
+      apiKey: string
+      defaultModel: string
+      models?: string[]
+      baseURL?: string
+    }
   }
   fallbackToBackend?: boolean
   cacheResponses?: boolean
@@ -52,7 +59,8 @@ const PROVIDER_MAPPING: Record<string, AIProvider> = {
   'claude': AIProvider.ANTHROPIC,
   'anthropic': AIProvider.ANTHROPIC,
   'gemini': AIProvider.GEMINI,
-  'google': AIProvider.GEMINI
+  'google': AIProvider.GEMINI,
+  'deepseek': AIProvider.DEEPSEEK
 }
 
 /**
@@ -61,7 +69,8 @@ const PROVIDER_MAPPING: Record<string, AIProvider> = {
 const BACKEND_PROVIDER_MAPPING: Record<AIProvider, string> = {
   [AIProvider.OPENAI]: 'openai',
   [AIProvider.ANTHROPIC]: 'claude',
-  [AIProvider.GEMINI]: 'gemini'
+  [AIProvider.GEMINI]: 'gemini',
+  [AIProvider.DEEPSEEK]: 'deepseek'
 }
 
 /**
@@ -130,6 +139,21 @@ export class MultiProviderService {
         }
       }
       configuredOrder.push(AIProvider.ANTHROPIC)
+    }
+
+    // Configure DeepSeek
+    if (config.providers[AIProvider.DEEPSEEK]) {
+      const deepseekConfig = config.providers[AIProvider.DEEPSEEK]!
+      multiAIConfig.providers[AIProvider.DEEPSEEK] = {
+        defaultModel: deepseekConfig.defaultModel as DeepSeekModels,
+        models: deepseekConfig.models,
+        apiKey: deepseekConfig.apiKey,
+        options: {
+          baseURL: deepseekConfig.baseURL,
+          defaultQuery: {}
+        }
+      }
+      configuredOrder.push(AIProvider.DEEPSEEK)
     }
 
     // Configure Gemini
@@ -205,6 +229,15 @@ export class MultiProviderService {
       })
     }
 
+    if (this.config?.providers[AIProvider.DEEPSEEK]) {
+      localProviders.push({
+        name: 'deepseek-local',
+        available: true,
+        type: 'deepseek',
+        defaultModel: this.config.providers[AIProvider.DEEPSEEK]!.defaultModel
+      })
+    }
+
     // Merge and deduplicate
     const allProviders = [...backendProviders, ...localProviders]
     const uniqueProviders = allProviders.filter((provider, index, self) =>
@@ -270,8 +303,11 @@ export class MultiProviderService {
   /**
    * Check if provider is available locally
    */
-  private isProviderAvailableLocally(provider: AIProvider): boolean {
-    return this.config?.providers[provider] !== undefined
+  private isProviderAvailableLocally(provider: AIProvider | undefined): boolean {
+    if (!provider) return false
+    if (!this.config?.providers) return false
+    const p = this.config.providers as Record<AIProvider, any>
+    return p[provider] !== undefined
   }
 
   /**

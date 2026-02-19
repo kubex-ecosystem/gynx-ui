@@ -1,8 +1,5 @@
 import { default as DeepSeek } from "@anthropic-ai/sdk";
 
-const {
-  Messages,
-} = DeepSeek;
 
 import { MessagesPage } from "openai/resources/beta/threads/messages";
 import {
@@ -13,7 +10,7 @@ import {
   type AIResponse,
   type GenerateContentParams,
   type MultiAIConfig
-} from "@/types/types";
+} from "../../../types/common";
 
 export class DeepSeekProvider extends BaseProvider {
   private anthropic: DeepSeek;

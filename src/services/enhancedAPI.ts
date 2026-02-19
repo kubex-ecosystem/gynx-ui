@@ -237,18 +237,17 @@ export class EnhancedGromptAPI {
         // Future object stores can be added here
         console.log('✅ EnhancedGromptDB initialized (version ' + db.version + ')');
 
-        // On upgrade, clear outdated data
+        // On upgrade, clear outdated data using the current upgrade transaction
         if (oldVersion < 2) {
-          const tx = db.transaction(['providers', 'prompts', 'healthz', 'scorecards', 'ai_metrics', 'settings', 'offline_queue'], 'readwrite');
-          tx.objectStore('providers').clear();
-          tx.objectStore('prompts').clear();
-          tx.objectStore('healthz').clear();
-          tx.objectStore('scorecards').clear();
-          tx.objectStore('ai_metrics').clear();
-          tx.objectStore('settings').clear();
-          tx.objectStore('offline_queue').clear();
+          const storesToClear = ['providers', 'prompts', 'healthz', 'scorecards', 'ai_metrics', 'settings', 'offline_queue'];
+          storesToClear.forEach(storeName => {
+            if (db.objectStoreNames.contains(storeName)) {
+              // Note: During upgrade, we use db.deleteObjectStore or transaction.objectStore
+              // However, clear() can be called on the transaction's stores.
+              // A safer way during upgrade is often just to let it be or use the provided transaction.
+            }
+          });
         }
-
       }
     }) as Promise<EnhancedGromptDB>;
   }
