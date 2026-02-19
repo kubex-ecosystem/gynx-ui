@@ -1,0 +1,56 @@
+{
+  "name": "gnyx-ui",
+  "description": "Gnyx UI is a React-based frontend application that provides an intuitive interface for users to interact with the Gnyx ecosystem. It offers features such as chat interfaces, user authentication, and seamless integration with various AI models, enabling users to experience the full potential of Gnyx's capabilities.",
+  "markdown": "github",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kubex-ecosystem/gnyx-ui.git"
+  },
+  "homepage": "https://gnyx.kubex.world",
+  "author": {
+    "name": "Rafael Mori",
+    "email": "faelmori@gmail.com",
+    "url": "https://rafa-mori.dev"
+  },
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "readme": "README.md",
+  "license": "MIT",
+  "icon": "https://raw.githubusercontent.com/kubex-ecosystem/gnyx-ui/main/public/favicon.ico",
+  "scripts": {
+    "build": "vite build",
+    "build:prod": "test -f ./.env.production && source ./.env.production || true && vite build --mode production",
+    "dev": "vite --port 3000",
+    "dev:full": "vite build && vite --port 3000",
+    "dev:preview": "vite preview --port 3000",
+    "prod": "NODE_ENV=production vite preview --port 3000",
+    "prod:full": "export NODE_ENV=production && vite build && vite preview --port 3000"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.63.0",
+    "@google/genai": "^1.20.0",
+    "@tailwindcss/vite": "^4.1.15",
+    "framer-motion": "^10.18.0",
+    "idb": "^8.0.3",
+    "lucide-react": "^0.542.0",
+    "openai": "^5.22.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "remark-gfm": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.17.0",
+    "@types/react": "^19.1.13",
+    "@types/react-dom": "^19.1.9",
+    "@types/uuid": "^10.0.0",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38",
+    "react-markdown": "^10.1.0",
+    "tailwindcss": "^3.4.4",
+    "typescript": "~5.8.2",
+    "vite": "^7.1.6",
+    "vitest": "^4.0.8"
+  },
+  "packageManager": "pnpm@10.26.1+sha512.664074abc367d2c9324fdc18037097ce0a8f126034160f709928e9e9f95d98714347044e5c3164d65bd5da6c59c6be362b107546292a8eecb7999196e5ce58fa"
+}

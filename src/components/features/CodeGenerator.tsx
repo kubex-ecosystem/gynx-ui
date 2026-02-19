@@ -1,0 +1,205 @@
+import { Theme } from '@/types';
+import { Braces, ClipboardCheck, ClipboardCopy, Loader2, Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import Card from '../ui/Card';
+
+interface CodeGeneratorProps {
+ onGenerate?: (spec: {
+ stack: string;
+ goal: string;
+ constraints: string[];
+ extras: string;
+ }, apiKey?: string) => Promise<string>;
+ theme: Theme;
+ isApiKeyMissing: boolean;
+}
+
+const stacks = ['Go + Fiber', 'TypeScript + React', 'Python + FastAPI', 'Rust + Axum'];
+
+const CodeGenerator: React.FC<CodeGeneratorProps> = ({ onGenerate, theme, isApiKeyMissing }) => {
+ const [stack, setStack] = useState(stacks[0]);
+ const [goal, setGoal] = useState('');
+ const [constraints, setConstraints] = useState<string[]>([]);
+ const [extraNotes, setExtraNotes] = useState('');
+ const [isGenerating, setIsGenerating] = useState(false);
+ const [result, setResult] = useState<string>('');
+ const [copied, setCopied] = useState(false);
+ // BYOK Support
+ const [externalApiKey, setExternalApiKey] = useState<string>('');
+ const [showApiKeyInput, setShowApiKeyInput] = useState(false);
+
+ const toggleConstraint = (value: string) => {
+ setConstraints((prev) =>
+ prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]
+ );
+ };
+
+ const handleGenerate = async () => {
+ if (!goal.trim() || !onGenerate) return;
+ setIsGenerating(true);
+ setResult('');
+ try {
+ // BYOK Support: Pass external API key if provided
+ const apiKey = externalApiKey.trim() || undefined;
+ const code = await onGenerate({
+ stack,
+ goal: goal.trim(),
+ constraints,
+ extras: extraNotes.trim(),
+ }, apiKey);
+ setResult(code);
+ } catch (error) {
+ setResult(error instanceof Error ? error.message : 'Não foi possível gerar o código.');
+ } finally {
+ setIsGenerating(false);
+ }
+ };
+
+ const handleCopy = async () => {
+ if (!result) return;
+ await navigator.clipboard.writeText(result);
+ setCopied(true);
+ setTimeout(() => setCopied(false), 2000);
+ };
+
+ const disabled = !goal.trim() || isGenerating;
+
+ return (
+ <div className="space-y-6">
+ <Card title="Code Generator" description="Gere scaffolds de código com constraints Kubex-ready.">
+ <div className="grid gap-6 lg:grid-cols-2">
+ <div className="space-y-4">
+ <label className="block text-xs font-semibold uppercase tracking-[0.3em] text-muted">
+ Stack alvo
+ </label>
+ <div className="grid grid-cols-2 gap-2">
+ {stacks.map((option) => (
+ <button
+ key={option}
+ type="button"
+ onClick={() => setStack(option)}
+ className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${stack === option
+ ? 'border-accent-primary bg-accent-primary text-white shadow-md'
+ : 'border-border-primary bg-surface-primary text-secondary hover:border-border-accent'
+ }`}
+ >
+ {option}
+ </button>
+ ))}
+ </div>
+
+ <div>
+ <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-muted">
+ Objetivo principal
+ </label>
+ <textarea
+ value={goal}
+ onChange={(event) => setGoal(event.target.value)}
+ placeholder="Descreva o módulo, endpoint ou fluxo que deseja gerar."
+ rows={6}
+ className="w-full resize-none rounded-2xl border border-border-primary bg-surface-primary px-4 py-3 text-sm text-primary shadow-sm transition focus:border-accent-primary focus:outline-none focus:ring-2 focus:ring-accent-primary/20"
+ />
+ </div>
+
+ <div className="space-y-2">
+ <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted">
+ Constraints recomendadas
+ </p>
+ {['Testes unitários incluídos', 'Sem frameworks proprietários', 'Documentação inline'].map((constraint) => (
+ <label key={constraint} className="flex items-center gap-2 text-sm text-secondary">
+ <input
+ type="checkbox"
+ checked={constraints.includes(constraint)}
+ onChange={() => toggleConstraint(constraint)}
+ className="h-4 w-4 rounded border-border-primary text-accent-primary focus:ring-accent-primary/30 bg-surface-primary"
+ />
+ {constraint}
+ </label>
+ ))}
+ </div>
+
+ <div>
+ <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-muted">
+ Observações extras
+ </label>
+ <textarea
+ value={extraNotes}
+ onChange={(event) => setExtraNotes(event.target.value)}
+ placeholder="Dependências preferidas, integrações, padrões arquiteturais..."
+ rows={4}
+ className="w-full resize-none rounded-2xl border border-border-primary bg-surface-primary px-4 py-3 text-sm text-primary shadow-sm transition focus:border-accent-primary focus:outline-none focus:ring-2 focus:ring-accent-primary/20"
+ />
+ </div>
+
+ {/* BYOK Support: Optional API Key Input */}
+ <div>
+ <button
+ type="button"
+ onClick={() => setShowApiKeyInput(!showApiKeyInput)}
+ className="text-xs text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 flex items-center gap-1"
+ >
+ {showApiKeyInput ? '🔒 Ocultar API Key' : '🔑 Usar Sua Própria API Key (BYOK)'}
+ </button>
+
+ {showApiKeyInput && (
+ <div className="mt-2">
+ <input
+ type="password"
+ placeholder="sk-... ou AIza... (opcional)"
+ value={externalApiKey}
+ onChange={(e) => setExternalApiKey(e.target.value)}
+ className="w-full p-2 rounded-lg border text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-400"
+ />
+ <p className="text-xs mt-1 text-gray-500 dark:text-gray-400">
+ 💡 Sua key é usada apenas nesta requisição e nunca armazenada
+ </p>
+ </div>
+ )}
+ </div>
+
+ <button
+ type="button"
+ onClick={handleGenerate}
+ disabled={disabled}
+ className="inline-flex items-center gap-2 rounded-full border border-accent-primary bg-accent-primary px-6 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-accent-secondary disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
+ >
+ {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+ {isGenerating ? 'Gerando blueprint...' : 'Gerar código'}
+ </button>
+ </div>
+
+ <div className="flex h-full flex-col rounded-2xl border border-border-primary/80 bg-surface-primary/70 p-5 shadow-md">
+ <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.3em] text-muted">
+ <span className="inline-flex items-center gap-2"><Braces className="h-4 w-4" /> Saída</span>
+ <button
+ type="button"
+ onClick={handleCopy}
+ disabled={!result}
+ className="inline-flex items-center gap-1 rounded-full border border-border-primary bg-surface-primary px-3 py-1 text-[11px] font-semibold text-secondary transition disabled:cursor-not-allowed disabled:opacity-50"
+ >
+ {copied ? <ClipboardCheck className="h-3 w-3" /> : <ClipboardCopy className="h-3 w-3" />}
+ {copied ? 'Copiado' : 'Copiar'}
+ </button>
+ </div>
+ <div className="mt-4 flex-1 overflow-auto rounded-xl border border-dashed border-border-primary/80 bg-surface-primary/75 p-4 text-sm text-primary">
+ {isGenerating && (
+ <div className="flex items-center gap-2 text-sm text-muted">
+ <Loader2 className="h-4 w-4 animate-spin" />
+ Gerando snippet idiomático...
+ </div>
+ )}
+ {!isGenerating && result && (
+ <pre className="whitespace-pre-wrap break-words text-sm leading-relaxed">{result}</pre>
+ )}
+ {!isGenerating && !result && (
+ <p>O código e instruções aparecerão aqui após a geração.</p>
+ )}
+ </div>
+ </div>
+ </div>
+ </Card>
+ </div>
+ );
+};
+
+export default CodeGenerator;
