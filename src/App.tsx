@@ -3,6 +3,7 @@ import AgentsGenerator from './components/features/AgentsGenerator';
 import ChatInterface from './components/features/ChatInterface';
 import CodeGenerator from './components/features/CodeGenerator';
 import ContentSummarizer from './components/features/ContentSummarizer';
+import DataAnalyzer from './components/features/DataAnalyzer';
 import ImageGenerator from './components/features/ImageGenerator';
 import PromptCrafter from './components/features/PromptCrafter';
 import Welcome from './components/features/Welcome';
@@ -31,6 +32,7 @@ const SECTION_IDS = [
   'auth', 
   'welcome', 
   'gateway-dashboard', 
+  'data-analyzer',
   'mail-hub', 
   'data-sync', 
   'providers-settings',
@@ -257,6 +259,11 @@ const App: React.FC = () => {
       description: t('sectionDashboardDescription'),
     },
     {
+      id: 'data-analyzer',
+      label: t('sectionAnalyzerLabel'),
+      description: t('sectionAnalyzerDescription'),
+    },
+    {
       id: 'mail-hub',
       label: t('sectionMailLabel'),
       description: t('sectionMailDescription'),
@@ -312,6 +319,8 @@ const App: React.FC = () => {
         return <Auth />;
       case 'gateway-dashboard':
         return <GatewayDashboard />;
+      case 'data-analyzer':
+        return <DataAnalyzer theme={theme} />;
       case 'mail-hub':
         return <MailHub />;
       case 'data-sync':

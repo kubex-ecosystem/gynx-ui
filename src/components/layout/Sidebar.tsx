@@ -19,6 +19,7 @@ interface SidebarProps {
 
 const defaultIcons: Record<string, LucideIcon> = {
   'gateway-dashboard': Activity,
+  'data-analyzer': BarChart3,
   'mail-hub': Mail,
   'data-sync': Database,
   'providers-settings': Key,
