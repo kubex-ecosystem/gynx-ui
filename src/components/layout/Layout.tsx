@@ -37,15 +37,25 @@ const Layout: React.FC<LayoutProps> = ({
  />
  )}
 
- <div className="relative flex min-h-screen">
- <aside
- className={`fixed inset-y-0 left-0 z-40 transform border-r border-border-primary bg-surface-primary/95 backdrop-blur-xl transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${sidebarWidthClass} ${sidebarOpen ? 'translate-x-0 shadow-lg' : '-translate-x-full lg:translate-x-0'
- }`}
- >
- {sidebar}
- </aside>
+       <div className="relative flex min-h-screen">
 
- <div className="flex flex-1 flex-col lg:ml-5">
+         <aside
+
+           className={`fixed inset-y-0 left-0 z-40 transform border-r border-border-primary bg-surface-primary/95 backdrop-blur-xl transition-all duration-300 ease-in-out lg:static lg:translate-x-0 ${sidebarWidthClass} ${sidebarOpen ? 'translate-x-0 shadow-lg' : '-translate-x-full lg:translate-x-0'
+
+             }`}
+
+         >
+
+           {sidebar}
+
+         </aside>
+
+ 
+
+         <div className="flex flex-1 flex-col transition-all duration-300 ease-in-out lg:ml-5">
+
+ 
  <header className="sticky top-0 z-20 border-b border-border-primary bg-surface-primary/85 backdrop-blur-lg">
  {header}
  </header>

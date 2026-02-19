@@ -172,7 +172,7 @@ const getSectionFromHash = (hash: string): SectionId | null => {
 const App: React.FC = () => {
   // State management
   const [theme, setTheme] = useState<Theme>('dark');
-  const [language, setLanguage] = useState<Language>('en');
+  const [language, setLanguage] = useState<Language>('pt');
   const [activeSection, setActiveSection] = useState<SectionId>(() => {
     if (typeof window === 'undefined') return 'landing';
     const fromHash = getSectionFromHash(window.location.hash);
@@ -358,6 +358,11 @@ const App: React.FC = () => {
   // Sidebar sections configuration
   const sections: SidebarSection[] = [
     {
+      id: 'welcome',
+      label: t('sectionWelcomeLabel'),
+      description: t('sectionWelcomeDescription'),
+    },
+    {
       id: 'gateway-dashboard',
       label: t('sectionDashboardLabel'),
       description: t('sectionDashboardDescription'),
@@ -371,16 +376,6 @@ const App: React.FC = () => {
       id: 'data-sync',
       label: t('sectionDataLabel'),
       description: t('sectionDataDescription'),
-    },
-    {
-      id: 'providers-settings',
-      label: t('sectionSettingsLabel'),
-      description: t('sectionSettingsDescription'),
-    },
-    {
-      id: 'welcome',
-      label: t('sectionWelcomeLabel'),
-      description: t('sectionWelcomeDescription'),
     },
     {
       id: 'prompt',
@@ -411,6 +406,11 @@ const App: React.FC = () => {
       id: 'images',
       label: t('sectionImagesLabel'),
       description: t('sectionImagesDescription'),
+    },
+    {
+      id: 'providers-settings',
+      label: t('sectionSettingsLabel'),
+      description: t('sectionSettingsDescription'),
     },
   ];
 
