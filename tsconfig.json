@@ -42,5 +42,13 @@
       ]
     },
     "noEmit": true
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    ".notes",
+    "coverage",
+    "scripts"
+  ]
 }

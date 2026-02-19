@@ -11,6 +11,7 @@ import Header from './components/layout/Header';
 import Layout from './components/layout/Layout';
 import Sidebar, { SidebarSection } from './components/layout/Sidebar';
 import { LanguageContext } from './context/LanguageContext';
+import { translations } from './i18n/translations';
 import { configService } from './services/configService';
 import { Language, Theme } from './types';
 
@@ -21,118 +22,6 @@ import GatewayDashboard from './pages/GatewayDashboard';
 import MailHub from './pages/MailHub';
 import DataSync from './pages/DataSync';
 import ProvidersSettings from './pages/ProvidersSettings';
-
-// Translation strings
-const translations: Record<Language, Record<string, string>> = {
-  en: {
-    poweredBy: 'Powered by Kubex Ecosystem',
-    motto: 'Governance, Creativity, Productivity, Freedom',
-    lang_en: 'English',
-    lang_pt: 'Portuguese',
-    headerTitle: 'GNyx Workspace',
-    headerTagline: 'Engineering freedom to evolve real systems',
-    sidebarTitle: 'Workspace',
-    sidebarSuiteLabel: 'Kubex Suite',
-    sidebarHubTitle: 'GNyx Hub',
-    sidebarDescription: 'Navigate through engineering modules for creation, analysis, and delivery.',
-    sidebarFooterLineOne: 'Build long-lived systems with deliberate tooling.',
-    sidebarFooterLineTwo: 'Portable, explicit, and human-guided.',
-    sectionWelcomeLabel: 'Welcome',
-    sectionWelcomeDescription: 'Getting started',
-    sectionPromptLabel: 'Prompt Crafter',
-    sectionPromptDescription: 'Build prompts',
-    sectionAgentsLabel: 'Agents',
-    sectionAgentsDescription: 'AI Agents',
-    sectionChatLabel: 'Chat',
-    sectionChatDescription: 'Conversations',
-    sectionSummarizerLabel: 'Summarizer',
-    sectionSummarizerDescription: 'Content summary',
-    sectionCodeLabel: 'Code',
-    sectionCodeDescription: 'Code generation',
-    sectionImagesLabel: 'Images',
-    sectionImagesDescription: 'Image generation',
-    sectionDashboardLabel: 'Gateway',
-    sectionDashboardDescription: 'Status & Logs',
-    sectionMailLabel: 'Mail Hub',
-    sectionMailDescription: 'AI Inbox',
-    sectionDataLabel: 'Data Sync',
-    sectionDataDescription: 'Cronjobs & DBs',
-    sectionSettingsLabel: 'Providers',
-    sectionSettingsDescription: 'Secrets & Keys',
-    welcomeKicker: 'Kubex Ecosystem',
-    welcomeHeadline: 'Autonomous, agnostic workspace for engineering.',
-    welcomeSubheadline:
-      'GNyx organizes creation, analysis, and delivery of software systems with explicit tools, including AI when needed. The focus is architecture, operation, and continuous evolution.',
-    welcomeCta: 'Explore the workspace',
-    welcomeStackTitle: 'Technical workspace',
-    welcomeStackItemOne: 'External providers and tools connected as optional resources.',
-    welcomeStackItemTwo: 'Local persistence for continuity and technical context.',
-    welcomeStackItemThree: 'Responsive interface organized around work flows.',
-    welcomePhaseCreation: 'Creation',
-    welcomePhaseAnalysis: 'Analysis',
-    welcomePhaseConsolidation: 'Consolidation',
-    welcomePromptTitle: 'Prompt Crafter',
-    welcomePromptDescription: 'Structure context, objectives, and constraints to start with precision and traceability.',
-    welcomeChatTitle: 'Assisted Conversations',
-    welcomeChatDescription: 'Investigate decisions, hypotheses, and trade-offs with contextual dialogue.',
-    welcomeSummaryTitle: 'Summaries & Deliverables',
-    welcomeSummaryDescription: 'Consolidate results into technical summaries and clear deliverables.',
-  },
-  pt: {
-    poweredBy: 'Desenvolvido pelo Kubex Ecosystem',
-    motto: 'Governança, Criatividade, Produtividade, Liberdade',
-    lang_en: 'English',
-    lang_pt: 'Português',
-    headerTitle: 'GNyx Workspace',
-    headerTagline: 'Liberdade de engenharia para evoluir sistemas reais',
-    sidebarTitle: 'Workspace',
-    sidebarSuiteLabel: 'Kubex Suite',
-    sidebarHubTitle: 'GNyx Hub',
-    sidebarDescription: 'Navegue por módulos de engenharia para criação, análise e entrega.',
-    sidebarFooterLineOne: 'Construa sistemas duradouros com ferramentas explícitas.',
-    sidebarFooterLineTwo: 'Portátil, transparente e guiado por pessoas.',
-    sectionWelcomeLabel: 'Boas-vindas',
-    sectionWelcomeDescription: 'Primeiros passos',
-    sectionPromptLabel: 'Prompt Crafter',
-    sectionPromptDescription: 'Construir prompts',
-    sectionAgentsLabel: 'Agentes',
-    sectionAgentsDescription: 'Agentes de IA',
-    sectionChatLabel: 'Chat',
-    sectionChatDescription: 'Conversas',
-    sectionSummarizerLabel: 'Sumarizador',
-    sectionSummarizerDescription: 'Resumo de conteúdo',
-    sectionCodeLabel: 'Código',
-    sectionCodeDescription: 'Geração de código',
-    sectionImagesLabel: 'Imagens',
-    sectionImagesDescription: 'Geração de imagens',
-    sectionDashboardLabel: 'Gateway',
-    sectionDashboardDescription: 'Status e Logs',
-    sectionMailLabel: 'Mail Hub',
-    sectionMailDescription: 'AI Inbox',
-    sectionDataLabel: 'Sincronização',
-    sectionDataDescription: 'Cronjobs e BDs',
-    sectionSettingsLabel: 'Providers',
-    sectionSettingsDescription: 'Secrets e Keys',
-    welcomeKicker: 'Kubex Ecosystem',
-    welcomeHeadline: 'Workspace autônomo e agnóstico para engenharia.',
-    welcomeSubheadline:
-      'O GNyx organiza criação, análise e entrega de sistemas de software com ferramentas explícitas, incluindo IA quando necessário. O foco é arquitetura, operação e evolução contínua.',
-    welcomeCta: 'Explorar o workspace',
-    welcomeStackTitle: 'Workspace técnico',
-    welcomeStackItemOne: 'Provedores e ferramentas externos conectados como recursos opcionais.',
-    welcomeStackItemTwo: 'Persistência local para continuidade e contexto técnico.',
-    welcomeStackItemThree: 'Interface responsiva organizada por fluxos de trabalho.',
-    welcomePhaseCreation: 'Criação',
-    welcomePhaseAnalysis: 'Análise',
-    welcomePhaseConsolidation: 'Consolidação',
-    welcomePromptTitle: 'Prompt Crafter',
-    welcomePromptDescription: 'Estruture contexto, objetivos e restrições para iniciar trabalhos com precisão e rastreabilidade.',
-    welcomeChatTitle: 'Conversas Assistidas',
-    welcomeChatDescription: 'Investigue decisões, hipóteses e trade-offs com conversa contextual.',
-    welcomeSummaryTitle: 'Sumarização e Entregáveis',
-    welcomeSummaryDescription: 'Consolide resultados em resumos técnicos e entregáveis claros.',
-  },
-};
 
 const SIDEBAR_COLLAPSED_KEY = 'grompt.sidebar.collapsed';
 const SIDEBAR_AUTO_EXPAND_SEEN_KEY = 'grompt.sidebar.autoExpandSeen';
@@ -196,6 +85,18 @@ const App: React.FC = () => {
   const userInteractedRef = useRef(false);
   const activeSectionRef = useRef(activeSection);
   const [demoMode, setDemoMode] = useState<boolean>(true); // Default to demo mode
+
+  // Translation function
+  const t = (key: string, params?: Record<string, string>): string => {
+    const localeStrings = translations[language] || translations.en;
+    let translation = localeStrings[key] || translations.en[key] || key;
+    if (params) {
+      Object.keys(params).forEach(paramKey => {
+        translation = translation.replace(`{${paramKey}}`, params[paramKey]);
+      });
+    }
+    return translation;
+  };
 
   // Load theme from localStorage
   useEffect(() => {
@@ -341,18 +242,6 @@ const App: React.FC = () => {
       return;
     }
     setSidebarOpen(prev => !prev);
-  };
-
-  // Translation function
-  const t = (key: string, params?: Record<string, string>): string => {
-    const localeStrings = translations[language] || translations.en;
-    let translation = localeStrings[key] || translations.en[key] || key;
-    if (params) {
-      Object.keys(params).forEach(paramKey => {
-        translation = translation.replace(`{${paramKey}}`, params[paramKey]);
-      });
-    }
-    return translation;
   };
 
   // Sidebar sections configuration

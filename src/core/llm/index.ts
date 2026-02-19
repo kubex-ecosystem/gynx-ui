@@ -1,4 +1,4 @@
-export * from "./types";
+export * from "../../types";
 
 export * from "./providers/anthropic";
 export * from "./providers/deepseek";
