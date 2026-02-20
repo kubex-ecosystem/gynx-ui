@@ -43,7 +43,7 @@ const mockEmails: EmailMock[] = [
   },
   {
     id: 2,
-    sender: "Carlos Alberto (Bellube)",
+    sender: "Carlos Alberto (Some Partner Inc)",
     subject: "Proposta para novo cliente varejo",
     excerpt:
       "Segue em anexo a proposta para o cliente varejo que visitamos ontem na unidade de Guarulhos.",
