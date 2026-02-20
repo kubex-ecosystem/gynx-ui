@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { Database, Bot, Wand2, Loader2 } from 'lucide-react';
 import AgentsGenerator from './components/features/AgentsGenerator';
 import ChatInterface from './components/features/ChatInterface';
 import CodeGenerator from './components/features/CodeGenerator';
@@ -12,6 +13,7 @@ import Header from './components/layout/Header';
 import Layout from './components/layout/Layout';
 import Sidebar, { SidebarSection } from './components/layout/Sidebar';
 import { LanguageContext } from './context/LanguageContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { translations } from './i18n/translations';
 import { configService } from './services/configService';
 import { Language, Theme } from './types';
@@ -53,14 +55,14 @@ const getSectionFromHash = (hash: string): SectionId | null => {
     const candidate = decodeURIComponent(raw) as SectionId;
     if (SECTION_IDS.includes(candidate)) return candidate;
   }
-  // Fallback for direct hash routes
   const direct = hash.replace('#', '') as SectionId;
   if (SECTION_IDS.includes(direct)) return direct;
-  
   return null;
 };
 
-const App: React.FC = () => {
+const MainApp: React.FC = () => {
+  const { isAuthenticated, isLoading: authLoading, logout } = useAuth();
+  
   // State management
   const [theme, setTheme] = useState<Theme>('dark');
   const [language, setLanguage] = useState<Language>('pt');
@@ -68,17 +70,14 @@ const App: React.FC = () => {
     if (typeof window === 'undefined') return 'landing';
     const fromHash = getSectionFromHash(window.location.hash);
     if (fromHash) return fromHash;
-    const saved = localStorage.getItem(ACTIVE_SECTION_KEY) as SectionId | null;
-    if (saved && SECTION_IDS.includes(saved)) return saved;
     return 'landing';
   });
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
     if (typeof window === 'undefined') return true;
     const saved = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
-    if (saved === 'true') return true;
-    if (saved === 'false') return false;
-    return true;
+    return saved !== 'false';
   });
   const [autoExpandSeen, setAutoExpandSeen] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
@@ -86,7 +85,7 @@ const App: React.FC = () => {
   });
   const userInteractedRef = useRef(false);
   const activeSectionRef = useRef(activeSection);
-  const [demoMode, setDemoMode] = useState<boolean>(true); // Default to demo mode
+  const [demoMode, setDemoMode] = useState<boolean>(true);
 
   // Translation function
   const t = (key: string, params?: Record<string, string>): string => {
@@ -100,28 +99,31 @@ const App: React.FC = () => {
     return translation;
   };
 
-  // Load theme from localStorage
+  // Route Protection & Logic
+  useEffect(() => {
+    if (authLoading) return;
+
+    const publicSections: SectionId[] = ['landing', 'auth'];
+    
+    // Se não estiver logado e tentar acessar algo privado -> Landing
+    if (!isAuthenticated && !publicSections.includes(activeSection)) {
+      setActiveSection('landing');
+      window.location.hash = '#landing';
+    }
+    
+    // Se logado e tentar acessar landing/auth -> Welcome
+    if (isAuthenticated && publicSections.includes(activeSection)) {
+      setActiveSection('welcome');
+      window.location.hash = '#welcome';
+    }
+  }, [isAuthenticated, authLoading, activeSection]);
+
+  // Effects
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as Theme;
-    if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
+    if (savedTheme === 'light' || savedTheme === 'dark') {
       setTheme(savedTheme);
-      if (savedTheme === 'dark') {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-    }
-  }, []);
-
-  // Load language from localStorage
-  useEffect(() => {
-    const savedLanguage = localStorage.getItem('language') as Language;
-    if (savedLanguage && ['en', 'pt'].includes(savedLanguage)) {
-      setLanguage(savedLanguage);
-      return;
-    }
-    if (savedLanguage) {
-      localStorage.removeItem('language');
+      document.documentElement.classList.toggle('dark', savedTheme === 'dark');
     }
   }, []);
 
@@ -138,115 +140,42 @@ const App: React.FC = () => {
       }
     };
     window.addEventListener('hashchange', handleHashChange);
-    handleHashChange();
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
-
-  useEffect(() => {
-    localStorage.setItem(SIDEBAR_AUTO_EXPAND_SEEN_KEY, String(autoExpandSeen));
-  }, [autoExpandSeen]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (window.location.hash.startsWith('#prompt=')) return;
     const nextHash = `#section=${encodeURIComponent(activeSection)}`;
-    if (window.location.hash !== nextHash) {
+    if (window.location.hash !== nextHash && activeSection !== 'landing' && activeSection !== 'auth') {
       window.history.replaceState(null, document.title, `${window.location.pathname}${window.location.search}${nextHash}`);
+    } else if (activeSection === 'landing' || activeSection === 'auth') {
+      window.history.replaceState(null, document.title, `${window.location.pathname}${window.location.search}#${activeSection}`);
     }
   }, [activeSection]);
 
-  useEffect(() => {
-    if (autoExpandSeen) return;
-    if (!sidebarCollapsed) {
-      setAutoExpandSeen(true);
-      return;
-    }
-
-    let timer = window.setTimeout(() => {
-      if (userInteractedRef.current) return;
-      setSidebarCollapsed(false);
-      setAutoExpandSeen(true);
-    }, 3500);
-
-    const resetTimer = () => {
-      if (userInteractedRef.current) return;
-      window.clearTimeout(timer);
-      timer = window.setTimeout(() => {
-        if (userInteractedRef.current) return;
-        setSidebarCollapsed(false);
-        setAutoExpandSeen(true);
-      }, 3500);
-    };
-
-    window.addEventListener('scroll', resetTimer, { passive: true });
-    window.addEventListener('mousemove', resetTimer);
-    window.addEventListener('keydown', resetTimer);
-    window.addEventListener('touchstart', resetTimer);
-
-    return () => {
-      window.clearTimeout(timer);
-      window.removeEventListener('scroll', resetTimer);
-      window.removeEventListener('mousemove', resetTimer);
-      window.removeEventListener('keydown', resetTimer);
-      window.removeEventListener('touchstart', resetTimer);
-    };
-  }, [autoExpandSeen, sidebarCollapsed]);
-
-  // Fetch backend config to check demo mode
-  useEffect(() => {
-    const fetchConfig = async () => {
-      try {
-        const isDemo = await configService.isDemoMode();
-        setDemoMode(isDemo);
-        console.log('[App] Demo mode status from backend:', isDemo);
-      } catch (error) {
-        console.error('[App] Failed to fetch config:', error);
-        // Keep default demo mode = true on error
-      }
-    };
-    fetchConfig();
-  }, []);
-
-  // Theme toggle handler
   const handleToggleTheme = () => {
     const newTheme: Theme = theme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
     localStorage.setItem('theme', newTheme);
-    if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    document.documentElement.classList.toggle('dark', newTheme === 'dark');
   };
 
-  // Language change handler
   const handleSetLanguage = (lang: Language) => {
     setLanguage(lang);
     localStorage.setItem('language', lang);
   };
 
-  const markSidebarInteraction = () => {
-    if (!userInteractedRef.current) {
-      userInteractedRef.current = true;
-      setAutoExpandSeen(true);
-    }
-  };
-
-  const setSidebarCollapsedPreference = (next: boolean) => {
-    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(next));
-    setSidebarCollapsed(next);
-  };
-
   const handleSidebarToggle = () => {
-    markSidebarInteraction();
     if (window.matchMedia('(min-width: 1024px)').matches) {
-      setSidebarCollapsedPreference(!sidebarCollapsed);
+      const next = !sidebarCollapsed;
+      setSidebarCollapsed(next);
+      localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(next));
       return;
     }
     setSidebarOpen(prev => !prev);
   };
 
-  // Sidebar sections configuration
   const sections: SidebarSection[] = [
     {
       id: 'welcome',
@@ -254,54 +183,35 @@ const App: React.FC = () => {
       description: t('sectionWelcomeDescription'),
     },
     {
-      id: 'gateway-dashboard',
-      label: t('sectionDashboardLabel'),
-      description: t('sectionDashboardDescription'),
+      id: 'group-ops',
+      label: t('sectionGroupOps'),
+      icon: Database,
+      children: [
+        { id: 'gateway-dashboard', label: t('sectionDashboardLabel'), description: t('sectionDashboardDescription') },
+        { id: 'mail-hub', label: t('sectionMailLabel'), description: t('sectionMailDescription') },
+        { id: 'data-sync', label: t('sectionDataLabel'), description: t('sectionDataDescription') },
+      ]
     },
     {
-      id: 'data-analyzer',
-      label: t('sectionAnalyzerLabel'),
-      description: t('sectionAnalyzerDescription'),
+      id: 'group-intell',
+      label: t('sectionGroupIntell'),
+      icon: Bot,
+      children: [
+        { id: 'data-analyzer', label: t('sectionAnalyzerLabel'), description: t('sectionAnalyzerDescription') },
+        { id: 'prompt', label: t('sectionPromptLabel'), description: t('sectionPromptDescription') },
+        { id: 'agents', label: t('sectionAgentsLabel'), description: t('sectionAgentsDescription') },
+        { id: 'chat', label: t('sectionChatLabel'), description: t('sectionChatDescription') },
+      ]
     },
     {
-      id: 'mail-hub',
-      label: t('sectionMailLabel'),
-      description: t('sectionMailDescription'),
-    },
-    {
-      id: 'data-sync',
-      label: t('sectionDataLabel'),
-      description: t('sectionDataDescription'),
-    },
-    {
-      id: 'prompt',
-      label: t('sectionPromptLabel'),
-      description: t('sectionPromptDescription'),
-    },
-    {
-      id: 'agents',
-      label: t('sectionAgentsLabel'),
-      description: t('sectionAgentsDescription'),
-    },
-    {
-      id: 'chat',
-      label: t('sectionChatLabel'),
-      description: t('sectionChatDescription'),
-    },
-    {
-      id: 'summarizer',
-      label: t('sectionSummarizerLabel'),
-      description: t('sectionSummarizerDescription'),
-    },
-    {
-      id: 'code',
-      label: t('sectionCodeLabel'),
-      description: t('sectionCodeDescription'),
-    },
-    {
-      id: 'images',
-      label: t('sectionImagesLabel'),
-      description: t('sectionImagesDescription'),
+      id: 'group-creative',
+      label: t('sectionGroupCreative'),
+      icon: Wand2,
+      children: [
+        { id: 'summarizer', label: t('sectionSummarizerLabel'), description: t('sectionSummarizerDescription') },
+        { id: 'code', label: t('sectionCodeLabel'), description: t('sectionCodeDescription') },
+        { id: 'images', label: t('sectionImagesLabel'), description: t('sectionImagesDescription') },
+      ]
     },
     {
       id: 'providers-settings',
@@ -310,51 +220,40 @@ const App: React.FC = () => {
     },
   ];
 
-  // Render active section content
   const renderContent = () => {
     switch (activeSection) {
-      case 'landing':
-        return <Landing />;
-      case 'auth':
-        return <Auth />;
-      case 'gateway-dashboard':
-        return <GatewayDashboard />;
-      case 'data-analyzer':
-        return <DataAnalyzer theme={theme} />;
-      case 'mail-hub':
-        return <MailHub />;
-      case 'data-sync':
-        return <DataSync />;
-      case 'providers-settings':
-        return <ProvidersSettings />;
-      case 'welcome':
-        return <Welcome onGetStarted={() => setActiveSection('gateway-dashboard')} />;
-      case 'prompt':
-        return <PromptCrafter theme={theme} isApiKeyMissing={demoMode} />;
-      case 'agents':
-        return <AgentsGenerator theme={theme} isApiKeyMissing={demoMode} />;
-      case 'chat':
-        return <ChatInterface theme={theme} isApiKeyMissing={demoMode} />;
-      case 'summarizer':
-        return <ContentSummarizer theme={theme} isApiKeyMissing={demoMode} />;
-      case 'code':
-        return <CodeGenerator theme={theme} isApiKeyMissing={demoMode} />;
-      case 'images':
-        return <ImageGenerator theme={theme} isApiKeyMissing={demoMode} />;
-      default:
-        return <Landing />;
+      case 'landing': return <Landing />;
+      case 'auth': return <Auth />;
+      case 'gateway-dashboard': return <GatewayDashboard />;
+      case 'data-analyzer': return <DataAnalyzer theme={theme} />;
+      case 'mail-hub': return <MailHub />;
+      case 'data-sync': return <DataSync />;
+      case 'providers-settings': return <ProvidersSettings />;
+      case 'welcome': return <Welcome onGetStarted={() => setActiveSection('welcome')} />;
+      case 'prompt': return <PromptCrafter theme={theme} isApiKeyMissing={demoMode} />;
+      case 'agents': return <AgentsGenerator theme={theme} isApiKeyMissing={demoMode} />;
+      case 'chat': return <ChatInterface theme={theme} isApiKeyMissing={demoMode} />;
+      case 'summarizer': return <ContentSummarizer theme={theme} isApiKeyMissing={demoMode} />;
+      case 'code': return <CodeGenerator theme={theme} isApiKeyMissing={demoMode} />;
+      case 'images': return <ImageGenerator theme={theme} isApiKeyMissing={demoMode} />;
+      default: return <Landing />;
     }
   };
 
   const handleSectionChange = (section: string) => {
     if (SECTION_IDS.includes(section as SectionId)) {
       setActiveSection(section as SectionId);
-      return;
     }
-    setActiveSection('landing');
   };
 
-  // Standalone pages (no layout sidebar/header)
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-main flex items-center justify-center">
+        <Loader2 className="animate-spin text-accent-primary" size={48} />
+      </div>
+    );
+  }
+
   const isStandalone = activeSection === 'landing' || activeSection === 'auth';
 
   return (
@@ -382,10 +281,7 @@ const App: React.FC = () => {
           }
           footer={<Footer />}
           sidebarOpen={sidebarOpen}
-          onSidebarClose={() => {
-            markSidebarInteraction();
-            setSidebarOpen(false);
-          }}
+          onSidebarClose={() => setSidebarOpen(false)}
           sidebarCollapsed={sidebarCollapsed}
         >
           {renderContent()}
@@ -394,5 +290,11 @@ const App: React.FC = () => {
     </LanguageContext.Provider>
   );
 };
+
+const App: React.FC = () => (
+  <AuthProvider>
+    <MainApp />
+  </AuthProvider>
+);
 
 export default App;
