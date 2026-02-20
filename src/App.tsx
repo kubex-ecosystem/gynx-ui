@@ -21,6 +21,7 @@ import { Language, Theme } from './types';
 // New Pages
 import Landing from './pages/Landing';
 import Auth from './pages/Auth';
+import AcceptInvite from './pages/AcceptInvite';
 import GatewayDashboard from './pages/GatewayDashboard';
 import MailHub from './pages/MailHub';
 import DataSync from './pages/DataSync';
@@ -32,6 +33,7 @@ const SIDEBAR_AUTO_EXPAND_SEEN_KEY = 'grompt.sidebar.autoExpandSeen';
 const SECTION_IDS = [
   'landing', 
   'auth', 
+  'accept-invite',
   'welcome', 
   'gateway-dashboard', 
   'data-analyzer',
@@ -224,6 +226,7 @@ const MainApp: React.FC = () => {
     switch (activeSection) {
       case 'landing': return <Landing />;
       case 'auth': return <Auth />;
+      case 'accept-invite': return <AcceptInvite />;
       case 'gateway-dashboard': return <GatewayDashboard />;
       case 'data-analyzer': return <DataAnalyzer theme={theme} />;
       case 'mail-hub': return <MailHub />;
@@ -254,7 +257,7 @@ const MainApp: React.FC = () => {
     );
   }
 
-  const isStandalone = activeSection === 'landing' || activeSection === 'auth';
+  const isStandalone = activeSection === 'landing' || activeSection === 'auth' || activeSection === 'accept-invite';
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage: handleSetLanguage, t }}>

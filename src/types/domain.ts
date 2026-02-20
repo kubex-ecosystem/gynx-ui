@@ -19,6 +19,32 @@ export interface GNyxDataTable {
   sourceType: 'csv_upload' | 'go_integration' | 'mock';
 }
 
+// Invite System Interfaces
+export interface InviteDTO {
+  id: string;
+  name?: string;
+  token?: string;
+  email: string;
+  role: string;
+  tenant_id: string;
+  team_id?: string;
+  status: 'pending' | 'accepted' | 'revoked' | 'expired';
+  expires_at: string;
+  type?: 'internal' | 'partner';
+}
+
+export interface AcceptInviteReq {
+  name?: string;
+  last_name?: string;
+  password?: string;
+}
+
+export interface AcceptResult {
+  user_id: string;
+  tenant_id: string;
+  membership: string;
+}
+
 export interface AnalysisResult {
   table: {
     headers: string[];

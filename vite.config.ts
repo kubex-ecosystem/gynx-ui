@@ -29,7 +29,7 @@ export default defineConfig(({ mode }) => {
   const env: Record<string, string> = getEnvResilient(mode, process.cwd());
   return {
     root: '.',
-    base: './',
+    base: '/',
     publicDir: 'public',
     cacheDir: 'node_modules/.vite',
     mode: mode,
