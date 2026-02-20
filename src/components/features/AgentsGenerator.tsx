@@ -101,7 +101,7 @@ const mcpCatalog: { name: string; desc: string }[] = [
   { name: "kubernetes", desc: "☸️ Kubernetes" },
   { name: "slack", desc: "💬 Slack" },
   { name: "github", desc: "🐙 GitHub" },
-  { name: "notion", desc: "📝 Notion" },
+  { name: "notion", desc: "Notion" },
   { name: "calendar", desc: "📅 Calendar" },
 ];
 

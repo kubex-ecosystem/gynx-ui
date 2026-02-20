@@ -235,7 +235,7 @@ export class EnhancedGromptAPI {
         }
 
         // Future object stores can be added here
-        console.log('✅ EnhancedGromptDB initialized (version ' + db.version + ')');
+        console.log('EnhancedGromptDB initialized (version ' + db.version + ')');
 
         // On upgrade, clear outdated data using the current upgrade transaction
         if (oldVersion < 2) {
@@ -816,7 +816,7 @@ Formate sua resposta como um plano de ação detalhado.`
 
           if (response.ok) {
             await db.delete('offline_queue', item.id!);
-            console.log(`✅ Synced offline request: ${item.method} ${item.endpoint}`);
+            console.log(`Synced offline request: ${item.method} ${item.endpoint}`);
           } else {
             throw new Error(`HTTP ${response.status}`);
           }

@@ -81,8 +81,8 @@ export function usePWA(): PWAState & PWAActions {
     try {
       // Check if app is already installed
       const isInstalled = window.matchMedia('(display-mode: standalone)').matches ||
-                         (window.navigator as any).standalone ||
-                         document.referrer.includes('android-app://');
+        (window.navigator as any).standalone ||
+        document.referrer.includes('android-app://');
 
       setState(prev => ({ ...prev, isInstalled }));
 
@@ -93,7 +93,7 @@ export function usePWA(): PWAState & PWAActions {
         });
 
         setServiceWorkerRegistration(registration);
-        console.log('✅ Service Worker registered:', registration.scope);
+        console.log('Service Worker registered:', registration.scope);
 
         // Check for updates
         registration.addEventListener('updatefound', () => {
@@ -112,7 +112,7 @@ export function usePWA(): PWAState & PWAActions {
       }
 
     } catch (error) {
-      console.error('❌ PWA initialization failed:', error);
+      console.error('PWA initialization failed:', error);
     }
 
     setState(prev => ({ ...prev, isLoading: false }));
@@ -183,15 +183,15 @@ export function usePWA(): PWAState & PWAActions {
       const choiceResult = await deferredPrompt.userChoice;
 
       if (choiceResult.outcome === 'accepted') {
-        console.log('✅ User accepted PWA installation');
+        console.log('User accepted PWA installation');
       } else {
-        console.log('❌ User dismissed PWA installation');
+        console.log('User dismissed PWA installation');
       }
 
       setDeferredPrompt(null);
       setState(prev => ({ ...prev, isInstallable: false }));
     } catch (error) {
-      console.error('❌ PWA installation failed:', error);
+      console.error('PWA installation failed:', error);
       throw error;
     }
   };
@@ -218,7 +218,7 @@ export function usePWA(): PWAState & PWAActions {
         window.location.reload();
       }
     } catch (error) {
-      console.error('❌ App update failed:', error);
+      console.error('App update failed:', error);
       throw error;
     }
   };
@@ -238,7 +238,7 @@ export function usePWA(): PWAState & PWAActions {
         }, 1000);
       }
     } catch (error) {
-      console.error('❌ Offline data sync failed:', error);
+      console.error('Offline data sync failed:', error);
       throw error;
     }
   };
@@ -249,9 +249,9 @@ export function usePWA(): PWAState & PWAActions {
       await enhancedAPI.clearCache();
 
       setState(prev => ({ ...prev, queuedRequestsCount: 0 }));
-      console.log('✅ Offline data cleared');
+      console.log('Offline data cleared');
     } catch (error) {
-      console.error('❌ Failed to clear offline data:', error);
+      console.error('Failed to clear offline data:', error);
       throw error;
     }
   };
@@ -291,8 +291,8 @@ export const PWAUtils = {
   // Check if app is installed
   isInstalled(): boolean {
     return window.matchMedia('(display-mode: standalone)').matches ||
-           (window.navigator as any).standalone ||
-           document.referrer.includes('android-app://');
+      (window.navigator as any).standalone ||
+      document.referrer.includes('android-app://');
   },
 
   // Get installation platforms

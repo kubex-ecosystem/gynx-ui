@@ -1,11 +1,11 @@
-import { Info, Settings, X } from 'lucide-react';
-import * as React from 'react';
-import IdeasInput from '../components/ideas/IdeasInput';
-import IdeasList from '../components/ideas/IdeasList';
-import OutputPanel from '../components/settings/OutputPanel';
-import { DemoMode } from '../config/demoMode';
-import { useGromptAPI } from '../hooks/useGromptAPI';
-import { AgentFramework, Purpose } from '../hooks/usePromptCrafter';
+import { Info, Settings, X } from "lucide-react";
+import * as React from "react";
+import IdeasInput from "../components/ideas/IdeasInput";
+import IdeasList from "../components/ideas/IdeasList";
+import OutputPanel from "../components/settings/OutputPanel";
+import { DemoMode } from "../config/demoMode";
+import { useGromptAPI } from "../hooks/useGromptAPI";
+import { AgentFramework, Purpose } from "../hooks/usePromptCrafter";
 
 interface Theme {
   [key: string]: string;
@@ -16,13 +16,15 @@ const {
   generatePrompt,
   providers,
   health,
-  rateLimit
+  rateLimit,
 } = useGromptAPI();
 
 interface AgentManagementScreenProps {
   // Ideas state
   currentInput: { id: string; text: string; timestamp: Date };
-  setCurrentInput: (value: { id: string; text: string; timestamp: Date }) => void;
+  setCurrentInput: (
+    value: { id: string; text: string; timestamp: Date },
+  ) => void;
   ideas: Array<{ id: string; text: string; timestamp: Date }>;
   editingId: string | null;
   editingText: string;
@@ -111,7 +113,7 @@ const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
   currentTheme,
   apiGenerateState,
   apiRateLimitState,
-  apiHealthState
+  apiHealthState,
 }) => {
   // Modal states
   const [showConfigModal, setShowConfigModal] = React.useState(false);
@@ -119,55 +121,69 @@ const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
   const [showMcpModal, setShowMcpModal] = React.useState(false);
 
   const agentFrameworks: { value: AgentFramework; label: string }[] = [
-    { value: 'crewai' as const, label: 'CrewAI' },
-    { value: 'autogen' as const, label: 'AutoGen' },
-    { value: 'langchain' as const, label: 'LangChain Agents' },
-    { value: 'semantic-kernel' as const, label: 'Semantic Kernel' },
-    { value: 'custom' as const, label: 'Agent Customizado' }
+    { value: "crewai" as const, label: "CrewAI" },
+    { value: "autogen" as const, label: "AutoGen" },
+    { value: "langchain" as const, label: "LangChain Agents" },
+    { value: "semantic-kernel" as const, label: "Semantic Kernel" },
+    { value: "custom" as const, label: "Agent Customizado" },
   ];
 
-  const purposeOptions: Purpose[] = ['Automação', 'Análise', 'Suporte', 'Pesquisa', 'Outros'];
+  const purposeOptions: Purpose[] = [
+    "Automação",
+    "Análise",
+    "Suporte",
+    "Pesquisa",
+    "Outros",
+  ];
 
   const availableProviders = providers?.providers || [];
   const providersLoading = providers?.loading || false;
   const providersError = providers?.error;
 
   const tools: string[] = [
-    'web_search', 'file_handler', 'calculator', 'email_sender',
-    'database', 'api_caller', 'code_executor', 'image_generator',
-    'git_ops', 'docker_manager'
+    "web_search",
+    "file_handler",
+    "calculator",
+    "email_sender",
+    "database",
+    "api_caller",
+    "code_executor",
+    "image_generator",
+    "git_ops",
+    "docker_manager",
   ];
 
   const mcpServersList: { name: string; desc: string }[] = [
-    { name: 'filesystem', desc: '📁 Sistema de arquivos' },
-    { name: 'database', desc: '🗄️ Banco de dados' },
-    { name: 'web-scraper', desc: '🕷️ Web scraping' },
-    { name: 'git', desc: '🔄 Controle de versão' },
-    { name: 'docker', desc: '🐳 Containers' },
-    { name: 'kubernetes', desc: '☸️ Kubernetes' },
-    { name: 'slack', desc: '💬 Slack' },
-    { name: 'github', desc: '🐙 GitHub' },
-    { name: 'notion', desc: '📝 Notion' },
-    { name: 'calendar', desc: '📅 Calendário' }
+    { name: "filesystem", desc: "📁 Sistema de arquivos" },
+    { name: "database", desc: "🗄️ Banco de dados" },
+    { name: "web-scraper", desc: "🕷️ Web scraping" },
+    { name: "git", desc: "🔄 Controle de versão" },
+    { name: "docker", desc: "🐳 Containers" },
+    { name: "kubernetes", desc: "☸️ Kubernetes" },
+    { name: "slack", desc: "💬 Slack" },
+    { name: "github", desc: "🐙 GitHub" },
+    { name: "notion", desc: "Notion" },
+    { name: "calendar", desc: "📅 Calendário" },
   ];
 
   const handleToolToggle = (tool: string) => {
-    setAgentTools(prev =>
-      prev.includes(tool)
-        ? prev.filter(t => t !== tool)
-        : [...prev, tool]
+    setAgentTools((prev) =>
+      prev.includes(tool) ? prev.filter((t) => t !== tool) : [...prev, tool]
     );
   };
 
   const handleMcpServerToggle = (serverName: string) => {
     if (DemoMode.isActive) {
-      const demoResult = DemoMode.handleDemoCall('mcp_real');
-      alert('🔌 ' + serverName + '\n\n' + demoResult.message + '\n\nETA: ' + demoResult.eta);
+      const demoResult = DemoMode.handleDemoCall("mcp_real");
+      alert(
+        "🔌 " + serverName + "\n\n" + demoResult.message + "\n\nETA: " +
+          demoResult.eta,
+      );
       return;
     }
-    setMcpServers(prev =>
+    setMcpServers((prev) =>
       prev.includes(serverName)
-        ? prev.filter(s => s !== serverName)
+        ? prev.filter((s) => s !== serverName)
         : [...prev, serverName]
     );
   };
@@ -175,25 +191,32 @@ const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
   const handleCustomMcpAdd = () => {
     if (customMcpServer.trim()) {
       if (DemoMode.isActive) {
-        const demoResult = DemoMode.handleDemoCall('mcp_real');
-        alert('🔌 Servidor MCP Customizado\n\n' + demoResult.message + '\n\nETA: ' + demoResult.eta);
+        const demoResult = DemoMode.handleDemoCall("mcp_real");
+        alert(
+          "🔌 Servidor MCP Customizado\n\n" + demoResult.message + "\n\nETA: " +
+            demoResult.eta,
+        );
         return;
       }
-      setMcpServers(prev => [...prev, customMcpServer.trim()]);
-      setCustomMcpServer('');
+      setMcpServers((prev) => [...prev, customMcpServer.trim()]);
+      setCustomMcpServer("");
     }
   };
 
   const handleMcpServerRemove = (server: string) => {
-    setMcpServers(prev => prev.filter(s => s !== server));
+    setMcpServers((prev) => prev.filter((s) => s !== server));
   };
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="text-center">
-        <h1 className="text-3xl font-bold mb-2 text-white">🤖 Gestão de Agents</h1>
-        <p className="text-gray-400">Configure e gerencie seus agents de IA especializados</p>
+        <h1 className="text-3xl font-bold mb-2 text-white">
+          🤖 Gestão de Agents
+        </h1>
+        <p className="text-gray-400">
+          Configure e gerencie seus agents de IA especializados
+        </p>
       </div>
 
       {/* Quick Configuration Panel */}
@@ -203,13 +226,13 @@ const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-white">Framework:</span>
               <span className="px-3 py-1 rounded-lg bg-purple-600 text-white text-sm">
-                {agentFrameworks.find(f => f.value === agentFramework)?.label}
+                {agentFrameworks.find((f) => f.value === agentFramework)?.label}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-white">Provider:</span>
               <span className="px-3 py-1 rounded-lg bg-blue-600 text-white text-sm">
-                {agentProvider || 'Não selecionado'}
+                {agentProvider || "Não selecionado"}
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -239,7 +262,6 @@ const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
         {/* Left Column: Input and Role */}
         <div className="space-y-6">
           {/* Ideas Input Card */}
@@ -254,10 +276,14 @@ const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
 
           {/* Agent Role Configuration */}
           <div className="bg-gray-800/50 border border-gray-700/80 rounded-xl p-6 backdrop-blur-sm transition-all duration-300 hover:border-purple-500/50">
-            <h2 className="text-xl font-semibold mb-4 text-white">👤 Papel do Agent</h2>
+            <h2 className="text-xl font-semibold mb-4 text-white">
+              👤 Papel do Agent
+            </h2>
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium mb-2 text-white flex items-center">Especialização</label>
+                <label className="text-sm font-medium mb-2 text-white flex items-center">
+                  Especialização
+                </label>
                 <input
                   type="text"
                   value={agentRole}
@@ -278,16 +304,17 @@ const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
                       <button
                         key={option}
                         onClick={() => setPurpose(option)}
-                        className={`px-3 py-2 rounded-lg text-sm border transition-colors ${purpose === option
-                          ? 'bg-purple-600 text-white border-purple-600'
-                          : 'bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
-                          }`}
+                        className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
+                          purpose === option
+                            ? "bg-purple-600 text-white border-purple-600"
+                            : "bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                        }`}
                       >
                         {option}
                       </button>
                     ))}
                   </div>
-                  {purpose === 'Outros' && (
+                  {purpose === "Outros" && (
                     <input
                       type="text"
                       value={customPurpose}
@@ -343,9 +370,11 @@ const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-gray-800 rounded-xl border border-gray-700 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-gray-800 p-6 border-b border-gray-700 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-white">⚙️ Configurações do Agent</h2>
+              <h2 className="text-xl font-bold text-white">
+                ⚙️ Configurações do Agent
+              </h2>
               <button
-                title='Close Configuration'
+                title="Close Configuration"
                 onClick={() => setShowConfigModal(false)}
                 className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
               >
@@ -357,11 +386,14 @@ const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
               {/* Framework and Provider */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium mb-2 text-white flex items-center">Framework do Agent</label>
+                  <label className="text-sm font-medium mb-2 text-white flex items-center">
+                    Framework do Agent
+                  </label>
                   <select
-                    title='Selecione o framework do agent'
+                    title="Selecione o framework do agent"
                     value={agentFramework}
-                    onChange={(e) => setAgentFramework(e.target.value as AgentFramework)}
+                    onChange={(e) =>
+                      setAgentFramework(e.target.value as AgentFramework)}
                     className="w-full px-3 py-2 rounded-lg border border-gray-600 bg-gray-700/80 text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                   >
                     {agentFrameworks.map((framework) => (
@@ -375,7 +407,9 @@ const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
                 <div>
                   <label className="text-sm font-medium mb-2 text-white flex items-center gap-2">
                     🤖 Provider LLM
-                    {providersLoading && <div className="animate-spin w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full" />}
+                    {providersLoading && (
+                      <div className="animate-spin w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full" />
+                    )}
                   </label>
 
                   {providersError && (
@@ -385,24 +419,27 @@ const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
                   )}
 
                   <select
-                    title='Selecione o provider do agent'
+                    title="Selecione o provider do agent"
                     value={agentProvider}
                     onChange={(e) => setAgentProvider(e.target.value)}
                     className="w-full px-3 py-2 rounded-lg border border-gray-600 bg-gray-700/80 text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     disabled={providersLoading}
                   >
-                    {availableProviders.length > 0 ? (
-                      availableProviders.map((provider) => (
-                        <option key={provider.name} value={provider.name}>
-                          {provider.available
-                            ? `${provider.name} ${provider.defaultModel ? `(${provider.defaultModel})` : ''}`
-                            : `${provider.name} (Indisponível)`
-                          }
-                        </option>
-                      ))
-                    ) : (
-                      <option value="">Carregando providers...</option>
-                    )}
+                    {availableProviders.length > 0
+                      ? (
+                        availableProviders.map((provider) => (
+                          <option key={provider.name} value={provider.name}>
+                            {provider.available
+                              ? `${provider.name} ${
+                                provider.defaultModel
+                                  ? `(${provider.defaultModel})`
+                                  : ""
+                              }`
+                              : `${provider.name} (Indisponível)`}
+                          </option>
+                        ))
+                      )
+                      : <option value="">Carregando providers...</option>}
                   </select>
                 </div>
               </div>
@@ -434,9 +471,11 @@ const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-gray-800 rounded-xl border border-gray-700 w-full max-w-2xl">
             <div className="p-6 border-b border-gray-700 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-white">🔧 Ferramentas Tradicionais</h3>
+              <h3 className="text-lg font-bold text-white">
+                🔧 Ferramentas Tradicionais
+              </h3>
               <button
-                title='Close Configuration'
+                title="Close Configuration"
                 onClick={() => setShowToolsModal(false)}
                 className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
               >
@@ -450,10 +489,11 @@ const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
                   <button
                     key={tool}
                     onClick={() => handleToolToggle(tool)}
-                    className={`px-3 py-2 rounded-lg text-sm border transition-colors ${agentTools.includes(tool)
-                      ? 'bg-teal-600 text-white border-teal-600'
-                      : 'bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
-                      }`}
+                    className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
+                      agentTools.includes(tool)
+                        ? "bg-teal-600 text-white border-teal-600"
+                        : "bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                    }`}
                   >
                     {tool}
                   </button>
@@ -474,8 +514,8 @@ const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
                   🔌 Servidores MCP (Model Context Protocol)
                   {DemoMode.isActive && (
                     <button
-                      title='Learn more about MCP'
-                      onClick={() => showEducation('mcp')}
+                      title="Learn more about MCP"
+                      onClick={() => showEducation("mcp")}
                       className="text-purple-400 hover:text-purple-300"
                     >
                       <Info size={16} />
@@ -487,7 +527,7 @@ const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
                 </p>
               </div>
               <button
-                title='Close Configuration'
+                title="Close Configuration"
                 onClick={() => setShowMcpModal(false)}
                 className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
               >
@@ -502,11 +542,12 @@ const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
                   <button
                     key={server.name}
                     onClick={() => handleMcpServerToggle(server.name)}
-                    className={`px-3 py-2 rounded-lg text-sm border transition-colors ${mcpServers.includes(server.name)
-                      ? 'bg-purple-600 text-white border-purple-600'
-                      : 'bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
-                      }`}
-                    title={server.desc + ' (demo)'}
+                    className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
+                      mcpServers.includes(server.name)
+                        ? "bg-purple-600 text-white border-purple-600"
+                        : "bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                    }`}
+                    title={server.desc + " (demo)"}
                   >
                     {server.desc} 🎪
                   </button>
@@ -515,7 +556,9 @@ const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
 
               {/* Custom MCP Server */}
               <div className="border-t border-gray-700 pt-4">
-                <label className="text-sm font-medium mb-2 text-white block">Servidor Customizado</label>
+                <label className="text-sm font-medium mb-2 text-white block">
+                  Servidor Customizado
+                </label>
                 <div className="flex gap-2">
                   <input
                     type="text"

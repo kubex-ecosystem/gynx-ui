@@ -1,9 +1,9 @@
-import * as React from 'react';
-import IdeasInput from '../components/ideas/IdeasInput';
-import IdeasList from '../components/ideas/IdeasList';
-import OutputPanel from '../components/settings/OutputPanel';
-import { useGromptAPI } from '../hooks/useGromptAPI';
-import { Purpose } from '../hooks/usePromptCrafter';
+import * as React from "react";
+import IdeasInput from "../components/ideas/IdeasInput";
+import IdeasList from "../components/ideas/IdeasList";
+import OutputPanel from "../components/settings/OutputPanel";
+import { useGromptAPI } from "../hooks/useGromptAPI";
+import { Purpose } from "../hooks/usePromptCrafter";
 
 interface Theme {
   [key: string]: string;
@@ -12,15 +12,15 @@ interface Theme {
 const {
   generatePrompt,
   providers,
-  health
-} = useGromptAPI({
-
-});
+  health,
+} = useGromptAPI({});
 
 interface PromptGenerationScreenProps {
   // Ideas state
   currentInput: { id: string; text: string; timestamp: Date };
-  setCurrentInput: (value: { id: string; text: string; timestamp: Date }) => void;
+  setCurrentInput: (
+    value: { id: string; text: string; timestamp: Date },
+  ) => void;
   ideas: Array<{ id: string; text: string; timestamp: Date }>;
   editingId: string | null;
   editingText: string;
@@ -77,21 +77,30 @@ const PromptGenerationScreen: React.FC<PromptGenerationScreenProps> = ({
   generatePrompt,
   copyToClipboard,
   currentTheme,
-  apiGenerateState
+  apiGenerateState,
 }) => {
-  const purposeOptions: Purpose[] = ['Código', 'Imagem', 'Análise', 'Escrita', 'Outros'];
+  const purposeOptions: Purpose[] = [
+    "Código",
+    "Imagem",
+    "Análise",
+    "Escrita",
+    "Outros",
+  ];
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="text-center">
-        <h1 className="text-3xl font-bold mb-2 text-white">📝 Geração de Prompts</h1>
-        <p className="text-gray-400">Transforme suas ideias em prompts eficazes para IA</p>
+        <h1 className="text-3xl font-bold mb-2 text-white">
+          Geração de Prompts
+        </h1>
+        <p className="text-gray-400">
+          Transforme suas ideias em prompts eficazes para IA
+        </p>
       </div>
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
         {/* Left Column: Input and Configuration */}
         <div className="space-y-6">
           {/* Ideas Input Card */}
@@ -106,7 +115,9 @@ const PromptGenerationScreen: React.FC<PromptGenerationScreenProps> = ({
 
           {/* Prompt Configuration */}
           <div className="bg-gray-800/50 border border-gray-700/80 rounded-xl p-6 backdrop-blur-sm transition-all duration-300 hover:border-purple-500/50">
-            <h2 className="text-xl font-semibold mb-4 text-white">⚙️ Configurações do Prompt</h2>
+            <h2 className="text-xl font-semibold mb-4 text-white">
+              ⚙️ Configurações do Prompt
+            </h2>
 
             <div className="space-y-4">
               {/* Purpose Selection */}
@@ -120,16 +131,17 @@ const PromptGenerationScreen: React.FC<PromptGenerationScreenProps> = ({
                       <button
                         key={option}
                         onClick={() => setPurpose(option)}
-                        className={`px-3 py-2 rounded-lg text-sm border transition-colors ${purpose === option
-                          ? 'bg-purple-600 text-white border-purple-600'
-                          : 'bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
-                          }`}
+                        className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
+                          purpose === option
+                            ? "bg-purple-600 text-white border-purple-600"
+                            : "bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                        }`}
                       >
                         {option}
                       </button>
                     ))}
                   </div>
-                  {purpose === 'Outros' && (
+                  {purpose === "Outros" && (
                     <input
                       type="text"
                       value={customPurpose}
@@ -143,11 +155,14 @@ const PromptGenerationScreen: React.FC<PromptGenerationScreenProps> = ({
 
               {/* Max Length */}
               <div>
-                <label className="text-sm font-medium mb-2 text-white flex items-center" htmlFor="max-length-slider">
+                <label
+                  className="text-sm font-medium mb-2 text-white flex items-center"
+                  htmlFor="max-length-slider"
+                >
                   Tamanho Máximo: {maxLength.toLocaleString()} caracteres
                 </label>
                 <input
-                  id='max-length-slider'
+                  id="max-length-slider"
                   type="range"
                   min="500"
                   max="130000"
@@ -188,7 +203,7 @@ const PromptGenerationScreen: React.FC<PromptGenerationScreenProps> = ({
             copied={copied}
             outputType="prompt"
             agentFramework="crewai"
-            agentProvider={(providers.providers[0] || { name: 'openai' }).name}
+            agentProvider={(providers.providers[0] || { name: "openai" }).name}
             maxLength={maxLength}
             mcpServers={[]}
             currentTheme={currentTheme}
