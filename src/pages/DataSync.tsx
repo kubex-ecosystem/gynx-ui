@@ -14,90 +14,92 @@ import React from "react";
 import Card from "../components/ui/Card";
 
 // Types
-type DBConnection = {
-  id: string;
+// Types aligned with Go Backend Schema
+export interface IntegrationConfig {
+  id: string; // UUID
+  tenant_id: string; // UUID
+  type: "MSSQL_ERP" | "REST_API" | "IMAP" | "SMTP" | string;
   name: string;
-  type: "PostgreSQL" | "MySQL" | "Sankhya" | "Oracle";
-  host: string;
-  status: "Connected" | "Error" | "Syncing";
-  lastSync: string;
-};
+  settings: Record<string, any>; // JSON with connection details
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
 
-type Cronjob = {
-  id: string;
-  name: string;
-  schedule: string;
-  lastRun: string;
-  status: "Success" | "Failed" | "Pending";
-  duration: string;
-};
+export interface SyncJob {
+  id: string; // UUID
+  tenant_id: string; // UUID
+  config_id: string; // Reference to IntegrationConfig
+  task_name: string;
+  cron_expression: string;
+  is_active: boolean;
+  last_sync_at: string | null;
+  status?: "Success" | "Failed" | "Pending" | "Syncing"; // For UI State
+  duration?: string; // For UI display
+}
 
 // Mocks
-const mockConnections: DBConnection[] = [
+const mockConnections: IntegrationConfig[] = [
   {
-    id: "1",
+    id: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    tenant_id: "tenant-mock-456",
+    type: "MSSQL_ERP",
     name: "ERP Sankhya Production",
-    type: "Sankhya",
-    host: "10.0.0.42",
-    status: "Connected",
-    lastSync: "10 mins ago",
+    settings: { host: "10.0.0.42", port: 1433 },
+    is_active: true,
+    updated_at: new Date(Date.now() - 10 * 60000).toISOString(),
   },
   {
-    id: "2",
-    name: "Legacy MySQL Warehouse",
+    id: "a3b4c5d6-e7f8-9a0b-1c2d-3e4f5a6b7c8d",
+    tenant_id: "tenant-mock-456",
     type: "MySQL",
-    host: "db.bellube.internal",
-    status: "Syncing",
-    lastSync: "Syncing now...",
+    name: "Legacy MySQL Warehouse",
+    settings: { host: "db.bellube.internal", port: 3306 },
+    is_active: false,
+    updated_at: new Date().toISOString(),
   },
   {
-    id: "3",
-    name: "Customer Analytics (PG)",
-    type: "PostgreSQL",
-    host: "pg-prod-01.kubex.cloud",
-    status: "Connected",
-    lastSync: "1 hour ago",
-  },
-  {
-    id: "4",
-    name: "Oracle Archive DB",
-    type: "Oracle",
-    host: "archive.local",
-    status: "Error",
-    lastSync: "2 days ago",
+    id: "550e8400-e29b-41d4-a716-446655440000",
+    tenant_id: "tenant-mock-456",
+    type: "REST_API",
+    name: "Customer Analytics",
+    settings: { endpoint: "https://api.analytics.com/v1" },
+    is_active: true,
+    updated_at: new Date(Date.now() - 60 * 60000).toISOString(),
   },
 ];
 
-const mockCronjobs: Cronjob[] = [
+const mockCronjobs: SyncJob[] = [
   {
     id: "1",
-    name: "Daily ERP Sync",
-    schedule: "03:00 AM",
-    lastRun: "Today, 03:02 AM",
+    tenant_id: "tenant-mock-456",
+    config_id: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    task_name: "Daily ERP Sync",
+    cron_expression: "0 3 * * *", // 03:00 AM every day
+    is_active: true,
+    last_sync_at: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
     status: "Success",
     duration: "12m 45s",
   },
   {
     id: "2",
-    name: "MailHub AI Indexing",
-    schedule: "Every 30 mins",
-    lastRun: "14:30 PM",
+    tenant_id: "tenant-mock-456",
+    config_id: "550e8400-e29b-41d4-a716-446655440000",
+    task_name: "Customer Data Indexing",
+    cron_expression: "*/30 * * * *", // Every 30 minutes
+    is_active: true,
+    last_sync_at: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
     status: "Success",
     duration: "45s",
   },
   {
-    id: "3",
-    name: "Cache Cleanup Service",
-    schedule: "00:00 AM",
-    lastRun: "Yesterday, 00:01 AM",
-    status: "Success",
-    duration: "12s",
-  },
-  {
     id: "4",
-    name: "Backup Gateway Config",
-    schedule: "Weekly (Sun)",
-    lastRun: "Feb 15, 01:00 AM",
+    tenant_id: "tenant-mock-456",
+    config_id: "a3b4c5d6-e7f8-9a0b-1c2d-3e4f5a6b7c8d",
+    task_name: "Legacy DB Backup",
+    cron_expression: "0 1 * * 0", // 01:00 AM every Sunday
+    is_active: false,
+    last_sync_at: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
     status: "Failed",
     duration: "0s",
   },
@@ -172,7 +174,7 @@ const DataSync: React.FC = () => {
                             {conn.name}
                           </span>
                           <span className="text-[10px] text-muted font-mono">
-                            {conn.host}
+                            {conn.settings?.host || conn.settings?.endpoint || "N/A"}
                           </span>
                         </div>
                       </td>
@@ -183,17 +185,10 @@ const DataSync: React.FC = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2 text-xs font-bold">
-                          {conn.status === "Connected"
+                          {conn.is_active
                             ? (
                               <CheckCircle2
                                 className="text-status-success"
-                                size={14}
-                              />
-                            )
-                            : conn.status === "Syncing"
-                            ? (
-                              <RefreshCcw
-                                className="text-accent-secondary animate-spin"
                                 size={14}
                               />
                             )
@@ -204,18 +199,16 @@ const DataSync: React.FC = () => {
                               />
                             )}
                           <span
-                            className={conn.status === "Connected"
+                            className={conn.is_active
                               ? "text-status-success"
-                              : conn.status === "Syncing"
-                              ? "text-accent-secondary"
                               : "text-status-error"}
                           >
-                            {conn.status}
+                            {conn.is_active ? "Connected" : "Disconnected"}
                           </span>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-xs text-muted">
-                        {conn.lastSync}
+                        {conn.updated_at ? new Date(conn.updated_at).toLocaleString() : "N/A"}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <button
@@ -267,11 +260,11 @@ const DataSync: React.FC = () => {
                     </div>
                     <div className="space-y-1">
                       <h4 className="text-sm font-bold text-primary">
-                        {job.name}
+                        {job.task_name}
                       </h4>
                       <div className="flex items-center gap-3 text-[10px] text-muted uppercase tracking-wider font-bold">
                         <span className="flex items-center gap-1">
-                          <Calendar size={10} /> {job.schedule}
+                          <Calendar size={10} /> {job.cron_expression}
                         </span>
                         <span className="flex items-center gap-1">
                           <Zap size={10} /> {job.duration}
@@ -292,7 +285,7 @@ const DataSync: React.FC = () => {
                       {job.status}
                     </span>
                     <p className="text-[10px] text-muted font-medium">
-                      Last: {job.lastRun}
+                      Last: {job.last_sync_at ? new Date(job.last_sync_at).toLocaleString() : "Never"}
                     </p>
                   </div>
                 </div>
