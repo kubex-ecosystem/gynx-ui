@@ -61,7 +61,7 @@ const Layout: React.FC<LayoutProps> = ({
             {children}
           </main>
 
-          <footer className="border-t border-border-primary bg-surface-primary/80">
+          <footer className="border-t border-border-primary bg-surface-primary/80 px-4 sm:px-6 lg:px-10 py-2">
             {footer}
           </footer>
         </div>
