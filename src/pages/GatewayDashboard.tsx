@@ -8,62 +8,80 @@ import {
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import Card from "../components/ui/Card";
+import { getGatewayMetrics, getGatewayLogs, GatewayMetrics, GatewayLog } from "../services/gatewayService";
 
-// Mocks
-const metrics = [
-  {
-    label: "Gateway Status",
-    value: "ONLINE",
-    icon: ShieldCheck,
-    color: "text-status-success",
-    bg: "bg-status-success/10",
-  },
-  {
-    label: "Requisições / min",
-    value: "1.2k",
-    icon: Activity,
-    color: "text-accent-secondary",
-    bg: "bg-accent-muted",
-  },
-  {
-    label: "Serviços Conectados",
-    value: "4",
-    icon: Server,
-    color: "text-status-info",
-    bg: "bg-status-info/10",
-  },
-  {
-    label: "Latência Média",
-    value: "42ms",
-    icon: Zap,
-    color: "text-status-warning",
-    bg: "bg-status-warning/10",
-  },
-];
+// Helper to convert MS format
+const formatLatency = (ms: number) => {
+  return `${ms.toFixed(0)}ms`;
+};
 
-const mockLogs = [
-  "[INFO] 2026-02-19 14:32:01 - GNyx Gateway v1.0.2 iniciado com sucesso.",
-  "[DEBUG] 2026-02-19 14:32:05 - Conectando ao provedor Gemini Pro via BYOK.",
-  "[INFO] 2026-02-19 14:32:10 - Carregando 4 serviços do manifest GNyx.",
-  "[WARN] 2026-02-19 14:35:42 - Latência elevada detectada no serviço MailHub (85ms).",
-  "[INFO] 2026-02-19 14:40:12 - Cache de rotas atualizado.",
-  "[DEBUG] 2026-02-19 14:42:01 - Requisição recebida: GET /api/v1/status",
-  "[INFO] 2026-02-19 14:45:33 - Sincronização de dados ERP Sankhya concluída.",
-];
+// Map log colors
+const getLogColor = (level: string) => {
+  switch (level) {
+    case 'INFO': return "text-status-info";
+    case 'WARN': return "text-status-warning";
+    case 'ERROR': return "text-status-error";
+    case 'DEBUG': return "text-accent-secondary";
+    default: return "text-primary";
+  }
+};
 
 const GatewayDashboard: React.FC = () => {
-  const [logs, setLogs] = useState<string[]>(mockLogs);
+  const [metrics, setMetrics] = useState<GatewayMetrics | null>(null);
+  const [logs, setLogs] = useState<GatewayLog[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Simple log animation mock
+  const fetchDashboardData = async () => {
+    try {
+      const [metricsData, logsData] = await Promise.all([
+        getGatewayMetrics(),
+        getGatewayLogs(14)
+      ]);
+      setMetrics(metricsData);
+      setLogs(logsData);
+    } catch (error) {
+      console.error("Erro ao carregar dados do Dashboard", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const interval = setInterval(() => {
-      const newLog = `[DEBUG] ${
-        new Date().toISOString().replace("T", " ").split(".")[0]
-      } - Heartbeat: Gateway healthy.`;
-      setLogs((prev) => [...prev.slice(-14), newLog]);
-    }, 5000);
+    fetchDashboardData();
+    const interval = setInterval(fetchDashboardData, 10000); // Polling real/mock a cada 10s
     return () => clearInterval(interval);
   }, []);
+
+  const metricCards = [
+    {
+      label: "Gateway Status",
+      value: metrics?.status || "...",
+      icon: ShieldCheck,
+      color: metrics?.status === 'ONLINE' ? "text-status-success" : "text-status-error",
+      bg: metrics?.status === 'ONLINE' ? "bg-status-success/10" : "bg-status-error/10",
+    },
+    {
+      label: "Requisições / min",
+      value: metrics ? `${(metrics.requestsPerMinute / 1000).toFixed(1)}k` : "...",
+      icon: Activity,
+      color: "text-accent-secondary",
+      bg: "bg-accent-muted",
+    },
+    {
+      label: "Serviços Conectados",
+      value: metrics?.connectedServices.toString() || "...",
+      icon: Server,
+      color: "text-status-info",
+      bg: "bg-status-info/10",
+    },
+    {
+      label: "Latência Média",
+      value: metrics ? formatLatency(metrics.averageLatencyMs) : "...",
+      icon: Zap,
+      color: "text-status-warning",
+      bg: "bg-status-warning/10",
+    },
+  ];
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -81,7 +99,7 @@ const GatewayDashboard: React.FC = () => {
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {metrics.map((metric) => (
+        {metricCards.map((metric) => (
           <Card
             key={metric.label}
             className="p-6 border-border-secondary bg-surface-primary/40 backdrop-blur-sm group hover:border-border-accent transition-all duration-300"
@@ -121,30 +139,16 @@ const GatewayDashboard: React.FC = () => {
           </div>
         </header>
         <div className="p-6 font-mono text-sm leading-relaxed space-y-2 h-[400px] overflow-y-auto bg-surface-primary/40 scrollbar-thin scrollbar-thumb-surface-tertiary">
-          {logs.map((log, i) => {
-            const isInfo = log.includes("[INFO]");
-            const isWarn = log.includes("[WARN]");
-            const isDebug = log.includes("[DEBUG]");
-
-            return (
-              <div key={i} className="flex gap-4 group">
-                <span className="text-muted text-[10px] w-4 opacity-50 group-hover:opacity-100 transition-opacity">
-                  {i + 1}
-                </span>
-                <span
-                  className={isInfo
-                    ? "text-status-info"
-                    : isWarn
-                    ? "text-status-warning"
-                    : isDebug
-                    ? "text-accent-secondary"
-                    : "text-primary"}
-                >
-                  {log}
-                </span>
-              </div>
-            );
-          })}
+          {logs.map((log, i) => (
+            <div key={i} className="flex gap-4 group">
+              <span className="text-muted text-[10px] w-4 opacity-50 group-hover:opacity-100 transition-opacity">
+                {i + 1}
+              </span>
+              <span className={getLogColor(log.level)}>
+                [{log.level}] {log.timestamp.replace("T", " ").split(".")[0]} - {log.message}
+              </span>
+            </div>
+          ))}
           <div className="flex gap-4 animate-pulse">
             <span className="text-muted text-[10px] w-4">_</span>
             <span className="text-accent-primary">▋</span>

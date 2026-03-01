@@ -28,16 +28,33 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Verificar sessão ao carregar
-    const token = Cookies.get(ACCESS_TOKEN_KEY);
-    if (token) {
-      if (SIMULATE_AUTH) {
-        setUser({ id: '1', email: 'rafael@kubex.world', name: 'Rafael Mori' });
-      } else {
-        // TODO: Chamar endpoint /api/v1/auth/me para validar token real
+    const initAuth = async () => {
+      try {
+        if (SIMULATE_AUTH) {
+          const token = Cookies.get(ACCESS_TOKEN_KEY);
+          if (token) {
+            setUser({ id: '1', email: 'rafael@kubex.world', name: 'Rafael Mori' });
+          }
+        } else {
+          // Real backend session validation using HttpOnly cookies
+          const response = await fetch('/api/v1/auth/me', {
+            method: 'GET',
+            credentials: 'include'
+          });
+
+          if (response.ok) {
+            const userData = await response.json();
+            setUser({ id: userData.id, email: userData.email, name: userData.name || userData.email.split('@')[0] });
+          }
+        }
+      } catch (error) {
+        console.error("Falha ao validar sessão", error);
+      } finally {
+        setIsLoading(false);
       }
-    }
-    setIsLoading(false);
+    };
+
+    initAuth();
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -60,26 +77,40 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const response = await fetch('/api/v1/auth/sign-in', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({ email, password }),
         });
 
         if (!response.ok) throw new Error('Credenciais inválidas');
 
-        const data = await response.json();
-        Cookies.set(ACCESS_TOKEN_KEY, data.access_token, { expires: 1 });
-        Cookies.set(REFRESH_TOKEN_KEY, data.refresh_token, { expires: 7 });
+        // With HttpOnly cookies, the browser handles the cookies automatically!
+        // We just fetch the user profile right after successful login
+        const meResponse = await fetch('/api/v1/auth/me', { method: 'GET', credentials: 'include' });
 
-        // Em um app real, buscaríamos os dados do usuário logado
-        setUser({ id: 'real-uuid', email, name: email.split('@')[0] });
+        if (meResponse.ok) {
+          const userData = await meResponse.json();
+          setUser({ id: userData.id, email: userData.email, name: userData.name || email.split('@')[0] });
+        } else {
+          // Fallback if /me endpoint is not available yet in BE but login was successful
+          setUser({ id: 'real-uuid', email, name: email.split('@')[0] });
+        }
       }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const logout = () => {
-    Cookies.remove(ACCESS_TOKEN_KEY);
-    Cookies.remove(REFRESH_TOKEN_KEY);
+  const logout = async () => {
+    if (SIMULATE_AUTH) {
+      Cookies.remove(ACCESS_TOKEN_KEY);
+      Cookies.remove(REFRESH_TOKEN_KEY);
+    } else {
+      try {
+        await fetch('/api/v1/auth/sign-out', { method: 'POST', credentials: 'include' });
+      } catch (e) {
+        console.error("Erro no sign-out", e);
+      }
+    }
     setUser(null);
     window.location.hash = '#landing';
   };
