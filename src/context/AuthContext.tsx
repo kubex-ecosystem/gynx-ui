@@ -19,7 +19,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // FLAG PARA SIMULAÇÃO (Pode ser lida de env futuramente)
-const SIMULATE_AUTH = true; 
+const SIMULATE_AUTH = import.meta.env.VITE_SIMULATE_AUTH === 'true';
 const ACCESS_TOKEN_KEY = 'gnyx_access_token';
 const REFRESH_TOKEN_KEY = 'gnyx_refresh_token';
 
@@ -46,7 +46,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (SIMULATE_AUTH) {
         // Simular delay de rede
         await new Promise(resolve => setTimeout(resolve, 800));
-        
+
         const mockResponse = {
           access_token: "mock_jwt_token_" + Date.now(),
           refresh_token: "mock_refresh_token",
@@ -68,7 +68,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const data = await response.json();
         Cookies.set(ACCESS_TOKEN_KEY, data.access_token, { expires: 1 });
         Cookies.set(REFRESH_TOKEN_KEY, data.refresh_token, { expires: 7 });
-        
+
         // Em um app real, buscaríamos os dados do usuário logado
         setUser({ id: 'real-uuid', email, name: email.split('@')[0] });
       }
@@ -85,13 +85,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      isAuthenticated: !!user, 
-      isLoading, 
-      login, 
+    <AuthContext.Provider value={{
+      user,
+      isAuthenticated: !!user,
+      isLoading,
+      login,
       logout,
-      isSimulated: SIMULATE_AUTH 
+      isSimulated: SIMULATE_AUTH
     }}>
       {children}
     </AuthContext.Provider>
