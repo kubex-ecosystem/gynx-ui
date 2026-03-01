@@ -6,6 +6,7 @@ import CodeGenerator from './components/features/CodeGenerator';
 import ContentSummarizer from './components/features/ContentSummarizer';
 import DataAnalyzer from './components/features/DataAnalyzer';
 import ImageGenerator from './components/features/ImageGenerator';
+import Playground from './components/features/Playground';
 import PromptCrafter from './components/features/PromptCrafter';
 import Welcome from './components/features/Welcome';
 import Footer from './components/layout/Footer';
@@ -31,20 +32,21 @@ const SIDEBAR_COLLAPSED_KEY = 'grompt.sidebar.collapsed';
 const SIDEBAR_AUTO_EXPAND_SEEN_KEY = 'grompt.sidebar.autoExpandSeen';
 
 const SECTION_IDS = [
-  'landing', 
-  'auth', 
+  'landing',
+  'auth',
   'accept-invite',
-  'welcome', 
-  'gateway-dashboard', 
+  'welcome',
+  'gateway-dashboard',
   'data-analyzer',
-  'mail-hub', 
-  'data-sync', 
+  'mail-hub',
+  'data-sync',
   'providers-settings',
-  'prompt', 
-  'agents', 
-  'chat', 
-  'summarizer', 
-  'code', 
+  'playground',
+  'prompt',
+  'agents',
+  'chat',
+  'summarizer',
+  'code',
   'images'
 ] as const;
 type SectionId = (typeof SECTION_IDS)[number];
@@ -64,7 +66,7 @@ const getSectionFromHash = (hash: string): SectionId | null => {
 
 const MainApp: React.FC = () => {
   const { isAuthenticated, isLoading: authLoading, logout } = useAuth();
-  
+
   // State management
   const [theme, setTheme] = useState<Theme>('dark');
   const [language, setLanguage] = useState<Language>('pt');
@@ -106,13 +108,13 @@ const MainApp: React.FC = () => {
     if (authLoading) return;
 
     const publicSections: SectionId[] = ['landing', 'auth'];
-    
+
     // Se não estiver logado e tentar acessar algo privado -> Landing
     if (!isAuthenticated && !publicSections.includes(activeSection)) {
       setActiveSection('landing');
       window.location.hash = '#landing';
     }
-    
+
     // Se logado e tentar acessar landing/auth -> Welcome
     if (isAuthenticated && publicSections.includes(activeSection)) {
       setActiveSection('welcome');
@@ -199,6 +201,7 @@ const MainApp: React.FC = () => {
       label: t('sectionGroupIntell'),
       icon: Bot,
       children: [
+        { id: 'playground', label: 'Playground SSE', description: 'Stream LLM Data' },
         { id: 'data-analyzer', label: t('sectionAnalyzerLabel'), description: t('sectionAnalyzerDescription') },
         { id: 'prompt', label: t('sectionPromptLabel'), description: t('sectionPromptDescription') },
         { id: 'agents', label: t('sectionAgentsLabel'), description: t('sectionAgentsDescription') },
@@ -232,6 +235,7 @@ const MainApp: React.FC = () => {
       case 'mail-hub': return <MailHub />;
       case 'data-sync': return <DataSync />;
       case 'providers-settings': return <ProvidersSettings />;
+      case 'playground': return <Playground />;
       case 'welcome': return <Welcome onGetStarted={() => setActiveSection('welcome')} />;
       case 'prompt': return <PromptCrafter theme={theme} isApiKeyMissing={demoMode} />;
       case 'agents': return <AgentsGenerator theme={theme} isApiKeyMissing={demoMode} />;
