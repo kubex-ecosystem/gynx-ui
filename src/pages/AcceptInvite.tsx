@@ -16,6 +16,7 @@ import {
 import React, { useEffect, useState } from "react";
 import Card from "../components/ui/Card";
 import { AcceptInviteReq, InviteDTO } from "../types";
+import { validateInviteToken, acceptInvite } from "../services/inviteService";
 
 const AcceptInvite: React.FC = () => {
   const [token, setToken] = useState<string | null>(null);
@@ -51,29 +52,9 @@ const AcceptInvite: React.FC = () => {
   const validateToken = async (t: string) => {
     setIsValidating(true);
     try {
-      // Simular validação no BE
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-
-      if (t === "invalid") {
-        throw new Error("Este convite é inválido ou já foi utilizado.");
-      }
-
-      if (t === "expired") {
-        throw new Error("Este convite expirou. Solicite um novo acesso.");
-      }
-
-      // Mock de resposta bem sucedida
-      setInvite({
-        id: "inv_123",
-        email: "rafael@kubex.world",
-        name: "Rafael",
-        role: "Administrator",
-        tenant_id: "tenant_bellube_01",
-        status: "pending",
-        expires_at: new Date(Date.now() + 86400000).toISOString(),
-        type: "internal",
-      });
-      setFormData((prev) => ({ ...prev, name: "Rafael" }));
+      const inviteData = await validateInviteToken(t);
+      setInvite(inviteData);
+      setFormData((prev) => ({ ...prev, name: inviteData.name || "" }));
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -84,12 +65,14 @@ const AcceptInvite: React.FC = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError(null);
     try {
-      // Simular Aceite no BE
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      if (!token) throw new Error("Chave de convite ausente.");
+
+      await acceptInvite(token, formData);
       setSuccess(true);
     } catch (err: any) {
-      setError("Erro ao processar seu cadastro. Tente novamente.");
+      setError(err.message || "Erro ao processar seu cadastro. Tente novamente.");
     } finally {
       setIsSubmitting(false);
     }

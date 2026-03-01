@@ -37,7 +37,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           }
         } else {
           // Real backend session validation using HttpOnly cookies
-          const response = await fetch('/api/v1/auth/me', {
+          const response = await fetch('/api/v1/me', {
             method: 'GET',
             credentials: 'include'
           });
@@ -85,7 +85,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         // With HttpOnly cookies, the browser handles the cookies automatically!
         // We just fetch the user profile right after successful login
-        const meResponse = await fetch('/api/v1/auth/me', { method: 'GET', credentials: 'include' });
+        const meResponse = await fetch('/api/v1/me', { method: 'GET', credentials: 'include' });
 
         if (meResponse.ok) {
           const userData = await meResponse.json();
@@ -106,7 +106,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       Cookies.remove(REFRESH_TOKEN_KEY);
     } else {
       try {
-        await fetch('/api/v1/auth/sign-out', { method: 'POST', credentials: 'include' });
+        await fetch('/api/v1/sign-out', { method: 'POST', credentials: 'include' });
       } catch (e) {
         console.error("Erro no sign-out", e);
       }
