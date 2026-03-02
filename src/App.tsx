@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Database, Bot, Wand2, Loader2 } from 'lucide-react';
+import { Database, Bot, Wand2, Loader2, Settings } from 'lucide-react';
 import AgentsGenerator from './components/features/AgentsGenerator';
 import ChatInterface from './components/features/ChatInterface';
 import CodeGenerator from './components/features/CodeGenerator';
@@ -27,6 +27,7 @@ import GatewayDashboard from './pages/GatewayDashboard';
 import MailHub from './pages/MailHub';
 import DataSync from './pages/DataSync';
 import ProvidersSettings from './pages/ProvidersSettings';
+import WorkspaceSettings from './pages/WorkspaceSettings';
 
 const SIDEBAR_COLLAPSED_KEY = 'grompt.sidebar.collapsed';
 const SIDEBAR_AUTO_EXPAND_SEEN_KEY = 'grompt.sidebar.autoExpandSeen';
@@ -40,6 +41,7 @@ const SECTION_IDS = [
   'data-analyzer',
   'mail-hub',
   'data-sync',
+  'workspace-settings',
   'providers-settings',
   'playground',
   'prompt',
@@ -219,9 +221,13 @@ const MainApp: React.FC = () => {
       ]
     },
     {
-      id: 'providers-settings',
-      label: t('sectionSettingsLabel'),
-      description: t('sectionSettingsDescription'),
+      id: 'group-settings',
+      label: 'Administração',
+      icon: Settings,
+      children: [
+        { id: 'workspace-settings', label: 'Workspace', description: 'Geral & Tenants' },
+        { id: 'providers-settings', label: t('sectionSettingsLabel'), description: t('sectionSettingsDescription') },
+      ]
     },
   ];
 
@@ -234,6 +240,7 @@ const MainApp: React.FC = () => {
       case 'data-analyzer': return <DataAnalyzer theme={theme} />;
       case 'mail-hub': return <MailHub />;
       case 'data-sync': return <DataSync />;
+      case 'workspace-settings': return <WorkspaceSettings />;
       case 'providers-settings': return <ProvidersSettings />;
       case 'playground': return <Playground />;
       case 'welcome': return <Welcome onGetStarted={() => setActiveSection('welcome')} />;
