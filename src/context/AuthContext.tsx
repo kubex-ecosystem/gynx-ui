@@ -18,10 +18,16 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// FLAG PARA SIMULAÇÃO (Pode ser lida de env futuramente)
-const DEMO_MODE = (
-  (process.env.DEMO_MODE || process.env.VITE_DEMO_MODE || import.meta.env.VITE_DEMO_MODE) === 'true'
+const getDemoEnv = () => (
+  process.env.DEMO_MODE === 'true' ||
+  process.env.VITE_DEMO_MODE === 'true' ||
+  import.meta.env.VITE_DEMO_MODE === 'true' ||
+  false
 )
+
+
+// FLAG PARA SIMULAÇÃO (Pode ser lida de env futuramente)
+const DEMO_MODE = getDemoEnv()
 const ACCESS_TOKEN_KEY = 'gnyx_access_token';
 const REFRESH_TOKEN_KEY = 'gnyx_refresh_token';
 
@@ -33,10 +39,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const initAuth = async () => {
       try {
         if (DEMO_MODE) {
-          const token = Cookies.get(ACCESS_TOKEN_KEY);
-          if (token) {
-            setUser({ id: '1', email: 'rafael@kubex.world', name: 'Rafael Mori' });
-          }
+          // const token = Cookies.get(ACCESS_TOKEN_KEY);
+          // if (token) {
+          //   setUser({ id: '1', email: 'rafael@kubex.world', name: 'Rafael Mori' });
+          // }
+          // Aqui nós vamos LITERALMENTE simular somente uma autenticação..
+          // Com qualquer senha ou user (desde que estejam preenchidos)
+          // SEM ABSOLUTAMENTE NENHUMA COMUNICAÇÃO COM O BACKEND DE VERDADE EM NADA
+          // SEM AUTENTICAR ANTES !!!!!
+
+          console.log("DEMO_MODE", DEMO_MODE);
+          console.log("user", user);
+          console.log("isLoading", isLoading);
+          console.log("isSimulated", DEMO_MODE);
+          console.log("isAuthenticated", !!user);
+
+          setUser({ id: '1', email: 'rafael@kubex.world', name: 'Rafael Mori' });
+          setIsLoading(false);
+
+
         } else {
           // Real backend session validation using HttpOnly cookies
           const response = await fetch('/api/v1/me', {

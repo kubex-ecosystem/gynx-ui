@@ -19,13 +19,13 @@
   "license": "MIT",
   "icon": "https://raw.githubusercontent.com/kubex-ecosystem/gnyx-ui/main/public/favicon.ico",
   "scripts": {
-    "build": "vite build",
-    "build:prod": "test -f ./.env.production && source ./.env.production || true && vite build --mode production",
-    "dev": "vite --port 3000",
-    "dev:full": "vite build && vite --port 3000",
-    "dev:preview": "vite preview --port 3000",
-    "prod": "NODE_ENV=production vite preview --port 3000",
-    "prod:full": "export NODE_ENV=production && vite build && vite preview --port 3000"
+    "build": ". ./.env.local || true && vite build",
+    "build:prod": "test -f ./.env.production && . ./.env.production || true && vite build --mode production",
+    "dev": ". ./.env.local && vite --port 3000",
+    "dev:full": ". ./.env.local || true && vite build && vite --port 3000",
+    "dev:preview": ". ./.env.local || true && vite preview --port 3000",
+    "prod": ". ./.env.local || true && NODE_ENV=production vite preview --port 3000",
+    "prod:full": ". ./.env.local || true && export NODE_ENV=production && vite build && vite preview --port 3000"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.63.0",

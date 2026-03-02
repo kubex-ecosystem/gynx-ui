@@ -71,8 +71,8 @@ export default defineConfig(({ mode }) => {
       alias: {
         '@': fileURLToPath(new URL(path.join(__dirname, 'src'), import.meta.url)),
         '@src': fileURLToPath(new URL(path.join(__dirname, 'src'), import.meta.url)),
+        '@assets': fileURLToPath(new URL(path.join(__dirname, 'src/assets'), import.meta.url)),
         '@i18n': fileURLToPath(new URL(path.join(__dirname, 'src/i18n'), import.meta.url)),
-        '@public': fileURLToPath(new URL(path.join(__dirname, 'public'), import.meta.url)),
         '@components': fileURLToPath(new URL(path.join(__dirname, 'src/components'), import.meta.url)),
         '@services': fileURLToPath(new URL(path.join(__dirname, 'src/services'), import.meta.url)),
         '@utils': fileURLToPath(new URL(path.join(__dirname, 'src/utils'), import.meta.url)),

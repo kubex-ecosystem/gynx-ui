@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Settings, Save, RotateCcw, Building, Users, CreditCard, Shield, Zap, Globe, HardDrive } from 'lucide-react';
 import Card from '@/components/ui/Card';
-import lottieAnimation from '@public/imgs/banner_sm-01.json';
+import lottieAnimation from '@assets/lotties/banner_sm-01.json';
 import { useAuth } from '@/context/AuthContext';
 import LottieControl from '@/components/ui/Lottie';
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import Lottie from 'react-lottie';
-import lottieAnimation from '../../../public/imgs/banner_sm-01.json';
+import lottieAnimation from '@assets/lotties/banner_sm-01.json';
 
 interface LottieOptions extends React.ComponentProps<typeof Lottie> {
     autoplay: boolean;

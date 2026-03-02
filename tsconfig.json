@@ -28,6 +28,9 @@
       "@/*": [
         "./src/*",
       ],
+      "@assets/*": [
+        "./src/assets/*"
+      ],
       "@services/*": [
         "./src/services/*"
       ],
