@@ -1,33 +1,20 @@
 // global.d.ts
 import "framer-motion";
-import {
-  MotionStyle,
-  MotionValue,
-  // MotionValueNumber,
-  // MotionValueString,
-} from "framer-motion";
+import { MotionStyle } from "framer-motion";
 
-// Extensão da interface MotionProps para incluir className
+// Extensão da interface MotionProps para incluir as propriedades desejadas sem conflitos
 declare module "framer-motion" {
-  // Apenas estendemos MotionProps — removida a declaração de HTMLMotionProps que causava conflito.
-  interface MotionProps extends React.HTMLAttributes<HTMLElement> {
-    style?: MotionStyle;
-    onDrag?: (event: DragEvent) => void;
-    onDragEnd?: (event: DragEvent) => void;
-    onDragStart?: (event: DragEvent) => void;
-    // onAnimationStart?: (event: AnimationEvent) => void;
+  interface MotionProps {
+    className?: string;
+    disabled?: boolean;
+    // Podemos omitir as re-declarações de onDrag, pois a própria lib já as tipa.
   }
-
 }
-// Preciso estenter a `disabled?: boolean;` para evitar erros em botões animados
+
 declare global {
   interface HTMLMotionProps<T> {
-    style?: MotionStyle;
-    // onAnimationStart?: (event: AnimationEvent) => void;
-  }
-  interface MotionNodeOptions {
-    style?: MotionStyle;
-    // onAnimationStart?: (event: AnimationEvent) => void;
+    className?: string;
+    disabled?: boolean;
   }
 }
 
