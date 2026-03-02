@@ -17,7 +17,7 @@ const Footer: React.FC = () => {
  Kubex Ecosystem
  </a> */}
                     <a
-                        href="https://github.com/kubex-ecosystem/grompt"
+                        href="https://github.com/kubex-ecosystem"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="transition-colors duration-200 hover:text-accent-primary dark:hover:text-[#38cde4]"
@@ -46,7 +46,7 @@ const Footer: React.FC = () => {
                     <p className="mt-1 font-orbitron tracking-wider">{t('motto')}</p>
                 </div>
                 <div className="text-left text-[10px] opacity-70 md:text-right">
-                    <p>Grompt v2.0 • Made with ❤️ in Brasil • Open Source</p>
+                    <p>Gnyx v2.0 • Made with ❤️ in Brasil • Open Source</p>
                 </div>
             </div>
         </footer>
