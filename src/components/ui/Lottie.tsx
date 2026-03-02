@@ -1,40 +1,42 @@
 import React from 'react';
-import Lottie from 'react-lottie';
+import Lottie, { LottieProps, Options } from 'react-lottie';
 import lottieAnimation from '@assets/lotties/banner_sm-01.json';
 
-interface LottieOptions extends React.ComponentProps<typeof Lottie> {
-    autoplay: boolean;
-    loop: boolean;
-    animationData: any;
-    rendererSettings: any;
-    isStopped: boolean;
-    isPaused: boolean;
-}
+class LottieControl extends React.Component<LottieProps, Options> {
+    key: string;
 
+    getLottieState() { return this.state || {}; }
 
-export default class LottieControl extends React.Component<LottieOptions> {
-    constructor(props: LottieOptions) {
+    constructor(props: LottieProps, key?: string) {
         super(props);
-        this.state = props;
+        this.key = key || 'lottie';
+        this.state = { ...props, animationData: lottieAnimation };
     }
 
     render() {
-        const buttonStyle = { display: 'block', margin: '10px auto' };
-        const defaultOptions = {
-            loop: true,
-            autoplay: true,
-            animationData: lottieAnimation,
-            rendererSettings: { preserveAspectRatio: 'xMidYMid slice' }
-        };
-        const currentState = this.state as LottieOptions;
-
         return (
             <div>
-                <Lottie options={defaultOptions} height={400} width={400} isStopped={currentState.isStopped} isPaused={currentState.isPaused} />
-                <button style={buttonStyle} onClick={() => this.setState({ isStopped: true })}>stop</button>
-                <button style={buttonStyle} onClick={() => this.setState({ isStopped: false })}>play</button>
-                <button style={buttonStyle} onClick={() => this.setState({ isPaused: !currentState.isPaused })}>pause</button>
+                <Lottie
+                    key={(this.key || '')}
+                    options={(this.state || {}) as Options}
+                    height={(this.props.height || 512)}
+                    width={(this.props.width || 512)}
+                    isStopped={(this.props.isStopped || false)}
+                    isPaused={(this.props.isPaused || false)}
+                    speed={(this.props.speed || 0.35)}
+                    direction={(this.props.direction || 1)}
+                    eventListeners={(this.props.eventListeners || [])}
+                    style={(this.props.style || {})}
+                    ariaRole={(this.props.ariaRole || '')}
+                    ariaLabel={(this.props.ariaLabel || '')}
+                    title={(this.props.title || '')}
+                    isClickToPauseDisabled={(this.props.isClickToPauseDisabled || false)}
+                    segments={(this.props.segments || [])}
+                />
             </div>
         );
     }
 }
+
+export default LottieControl;
+

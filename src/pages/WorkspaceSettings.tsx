@@ -27,20 +27,35 @@ export default function WorkspaceSettings() {
 
     const lottieControl = new LottieControl(
         {
-            autoplay: true,
-            loop: true,
-            animationData: lottieAnimation,
-            rendererSettings: { preserveAspectRatio: 'xMidYMid slice' },
-            isStopped: false,
-            isPaused: false,
+            ariaRole: 'button',
+            ariaLabel: 'animation',
+            isClickToPauseDisabled: true,
+            title: 'animation',
+            isStopped: true,
+            isPaused: true,
+            height: 400,
+            width: 400,
+            speed: 1,
+            direction: 1,
             options: {
                 autoplay: true,
                 loop: true,
-                animationData: lottieAnimation,
+                animationData: (lottieAnimation || {}),
                 rendererSettings: { preserveAspectRatio: 'xMidYMid slice' }
-            }
+            },
+            // eventListeners: [
+            //     {
+            //         eventName: 'complete',
+            //         callback: () => console.log('animation completed')
+            //     }
+            // ],
+            style: {
+                width: '100%',
+                height: '100%',
+            },
+            segments: []
         }
-    ).render()
+    )
 
     return (
         <div className="space-y-8 animate-fade-in relative">
@@ -83,10 +98,7 @@ export default function WorkspaceSettings() {
                     </div>
 
                     <div className="relative h-64 md:h-full min-h-[300px] flex items-center justify-center pointer-events-none p-6">
-                        <div className="absolute inset-0 bg-gradient-to-l from-transparent via-surface-primary/10 to-surface-primary z-10 hidden md:block" />
-                        {
-                            lottieControl
-                        }
+                        {/* {lottieControl} */}
                     </div>
                 </div>
             </Card>

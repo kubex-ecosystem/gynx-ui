@@ -39,25 +39,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const initAuth = async () => {
       try {
         if (DEMO_MODE) {
-          // const token = Cookies.get(ACCESS_TOKEN_KEY);
-          // if (token) {
-          //   setUser({ id: '1', email: 'rafael@kubex.world', name: 'Rafael Mori' });
-          // }
-          // Aqui nós vamos LITERALMENTE simular somente uma autenticação..
-          // Com qualquer senha ou user (desde que estejam preenchidos)
-          // SEM ABSOLUTAMENTE NENHUMA COMUNICAÇÃO COM O BACKEND DE VERDADE EM NADA
-          // SEM AUTENTICAR ANTES !!!!!
+          // Em Demo Mode, checa o token mockado
+          const token = Cookies.get(ACCESS_TOKEN_KEY);
 
-          console.log("DEMO_MODE", DEMO_MODE);
-          console.log("user", user);
-          console.log("isLoading", isLoading);
-          console.log("isSimulated", DEMO_MODE);
-          console.log("isAuthenticated", !!user);
+          if (token) {
+            setUser({ id: '1', email: 'rafael@kubex.world', name: 'Rafael Mori' });
+          } else {
+            setUser(null);
+          }
 
-          setUser({ id: '1', email: 'rafael@kubex.world', name: 'Rafael Mori' });
           setIsLoading(false);
-
-
+          return;
         } else {
           // Real backend session validation using HttpOnly cookies
           const response = await fetch('/api/v1/me', {

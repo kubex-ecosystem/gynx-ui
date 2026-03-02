@@ -1,7 +1,11 @@
 import { ArrowRight, Compass, Sparkles } from 'lucide-react';
-import React from 'react';
+import React, { useState } from 'react';
 import Card from '@/components/ui/Card';
 import { useTranslations } from '@/i18n/useTranslations';
+import lottieAnimation from '@assets/lotties/banner_sm-01.json';
+import LottieControl from '@/components/ui/Lottie';
+
+const loopLimit = 20;
 
 interface WelcomeProps {
     onGetStarted: () => void;
@@ -9,6 +13,18 @@ interface WelcomeProps {
 
 const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
     const { t } = useTranslations();
+
+    const [animationData, setAnimationData] = useState(lottieAnimation);
+
+    const [loopTimes, setLoopTimes] = useState(0);
+    const [loopSpeed, setLoopSpeed] = useState(0.35);
+
+    const [isStopped, setIsStopped] = useState(true);
+    const [isPaused, setIsPaused] = useState(true);
+    const [isLoaded, setIsLoaded] = useState(false);
+
+
+
     const featureHighlights = [
         {
             phase: t('welcomePhaseCreation'),
@@ -27,52 +43,85 @@ const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
         },
     ];
 
+    const lottieControl = new LottieControl(
+        {
+            ariaRole: 'button',
+            ariaLabel: 'animation',
+            isClickToPauseDisabled: true,
+            title: 'animation',
+            isStopped: isStopped,
+            isPaused: isPaused,
+            width: 550,
+            speed: loopSpeed,
+            direction: 1,
+            options: {
+                autoplay: false,
+                loop: (loopTimes < loopLimit),
+                animationData: (animationData || {}),
+                rendererSettings: { preserveAspectRatio: 'xMidYMid slice' }
+            },
+            eventListeners: [
+                {
+                    eventName: 'loopComplete',
+                    callback: () => {
+                        if (loopTimes < loopLimit) {
+                            setLoopTimes(loopTimes + 1);
+                        } else if (loopTimes === loopLimit) {
+                            setLoopTimes(loopTimes + 1);
+                            setTimeout(() => { setLoopTimes(0); }, 30000);
+                        } else {
+                            setLoopTimes(0);
+                        }
+                    }
+                }, // onComplete
+                {
+                    eventName: 'DOMLoaded',
+                    callback: () => {
+                        if (isStopped) setIsStopped(false);
+                        if (isPaused) setIsPaused(false);
+                    }
+                } // onDOMLoaded
+            ],
+            style: { width: '550px' },
+            segments: []
+        }
+    )
+
     return (
-        <div className="space-y-8">
-            <Card className="bg-gradient-to-br from-surface-primary via-surface-secondary to-surface-tertiary">
-                <div className="flex flex-col gap-6 lg:flex-row lg:items-center">
-                    <div className="flex-1 space-y-4">
+        <div className="space-y-8 animate-fade-in">
+            <Card className="bg-gradient-to-br from-surface-primary via-surface-secondary to-surface-tertiary p-0 overflow-hidden relative">
+                <div className="absolute inset-0 bg-grid opacity-20 pointer-events-none" />
+                <div className="grid md:grid-cols-2 gap-8 items-center p-4 lg:p-8">
+                    <div className="space-y-4 relative z-10">
                         <p className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.4em] text-accent-primary">
                             <Compass size={16} /> {t('welcomeKicker')}
                         </p>
                         <h1 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl md:text-5xl">
                             {t('welcomeHeadline')}
                         </h1>
-                        <p className="text-base text-secondary">
+                        <p className="text-base text-secondary leading-relaxed">
                             {t('welcomeSubheadline')}
                         </p>
-                        <div className="flex flex-col items-start gap-3 sm:flex-row">
+                        <div className="flex flex-col items-start gap-3 sm:flex-row pt-2">
                             <button
                                 type="button"
                                 onClick={onGetStarted}
-                                className="inline-flex items-center gap-2 rounded-full border border-accent-primary bg-accent-primary px-6 py-2 text-sm font-semibold text-white shadow-md transition hover:scale-[1.01] hover:bg-accent-secondary focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
+                                className="inline-flex items-center gap-2 rounded-full border border-accent-primary bg-accent-primary px-8 py-3 text-sm font-semibold text-white shadow-lg transition hover:scale-105 hover:bg-accent-secondary focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
                             >
-                                {t('welcomeCta')}
+                                Explorar o workspace
                                 <ArrowRight size={16} />
                             </button>
                         </div>
                     </div>
-                    <div className="flex-1 rounded-2xl border border-border-primary bg-surface-primary/95 p-6 shadow-md">
-                        <p className="text-xs uppercase tracking-[0.45em] text-muted">{t('welcomeStackTitle')}</p>
-                        <ul className="mt-4 space-y-3 text-sm text-secondary">
-                            <li className="flex items-start gap-3">
-                                <Sparkles className="mt-1 h-4 w-4 text-accent-primary" />
-                                {t('welcomeStackItemOne')}
-                            </li>
-                            <li className="flex items-start gap-3">
-                                <Sparkles className="mt-1 h-4 w-4 text-accent-secondary" />
-                                {t('welcomeStackItemTwo')}
-                            </li>
-                            <li className="flex items-start gap-3">
-                                <Sparkles className="mt-1 h-4 w-4 text-status-info" />
-                                {t('welcomeStackItemThree')}
-                            </li>
-                        </ul>
+
+                    <div className="relative h-64 min-h-[300px] flex items-center justify-center pointer-events-none p-6">
+                        <div className="absolute inset-0 bg-gradient-to-l from-transparent via-surface-primary/10 to-surface-primary z-10 hidden md:block" />
+                        {lottieControl.render()}
                     </div>
                 </div>
             </Card>
 
-            <div className="grid gap-6 md:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
                 {featureHighlights.map((feature) => (
                     <Card key={feature.title} title={feature.title} description={feature.description}>
                         <div className="text-xs font-semibold uppercase tracking-[0.35em] text-accent-primary">
@@ -80,6 +129,19 @@ const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
                         </div>
                     </Card>
                 ))}
+
+                {/* Placeholders for new CTAs */}
+                <div className="rounded-2xl border-2 border-dashed border-border-primary/50 bg-surface-primary/10 flex flex-col items-center justify-center p-6 text-center shadow-none hover:border-accent-primary/50 transition-colors cursor-pointer group min-h-[160px]">
+                    <Sparkles className="h-6 w-6 text-muted group-hover:text-accent-primary transition-colors mb-3" />
+                    <p className="text-sm font-semibold text-secondary group-hover:text-primary transition-colors">Algum CTA pra uma feature</p>
+                    <p className="text-xs text-muted mt-1 flex items-center gap-1 opacity-60">Em breve</p>
+                </div>
+
+                <div className="rounded-2xl border-2 border-dashed border-border-primary/50 bg-surface-primary/10 flex flex-col items-center justify-center p-6 text-center shadow-none hover:border-accent-primary/50 transition-colors cursor-pointer group min-h-[160px]">
+                    <Compass className="h-6 w-6 text-muted group-hover:text-accent-primary transition-colors mb-3" />
+                    <p className="text-sm font-semibold text-secondary group-hover:text-primary transition-colors">Explore as Integrações</p>
+                    <p className="text-xs text-muted mt-1 flex items-center gap-1 opacity-60">Em breve</p>
+                </div>
             </div>
         </div>
     );

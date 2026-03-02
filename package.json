@@ -25,7 +25,8 @@
     "dev:full": ". ./.env.local || true && vite build && vite --port 3000",
     "dev:preview": ". ./.env.local || true && vite preview --port 3000",
     "prod": ". ./.env.local || true && NODE_ENV=production vite preview --port 3000",
-    "prod:full": ". ./.env.local || true && export NODE_ENV=production && vite build && vite preview --port 3000"
+    "prod:full": ". ./.env.local || true && export NODE_ENV=production && vite build && vite preview --port 3000",
+    "preview": ". ./.env.local || true && vite preview --port 3000"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.63.0",
