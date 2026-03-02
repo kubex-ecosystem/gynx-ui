@@ -10,8 +10,9 @@ import {
   RefreshCcw,
   Zap,
 } from "lucide-react";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Card from "../components/ui/Card";
+import { getIntegrationConfigs, getSyncJobs } from "../services/syncService";
 
 // Types
 // Types aligned with Go Backend Schema
@@ -38,74 +39,30 @@ export interface SyncJob {
   duration?: string; // For UI display
 }
 
-// Mocks
-const mockConnections: IntegrationConfig[] = [
-  {
-    id: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-    tenant_id: "tenant-mock-456",
-    type: "MSSQL_ERP",
-    name: "ERP Sankhya Production",
-    settings: { host: "10.0.0.42", port: 1433 },
-    is_active: true,
-    updated_at: new Date(Date.now() - 10 * 60000).toISOString(),
-  },
-  {
-    id: "a3b4c5d6-e7f8-9a0b-1c2d-3e4f5a6b7c8d",
-    tenant_id: "tenant-mock-456",
-    type: "MySQL",
-    name: "Legacy MySQL Warehouse",
-    settings: { host: "db.bellube.internal", port: 3306 },
-    is_active: false,
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: "550e8400-e29b-41d4-a716-446655440000",
-    tenant_id: "tenant-mock-456",
-    type: "REST_API",
-    name: "Customer Analytics",
-    settings: { endpoint: "https://api.analytics.com/v1" },
-    is_active: true,
-    updated_at: new Date(Date.now() - 60 * 60000).toISOString(),
-  },
-];
-
-const mockCronjobs: SyncJob[] = [
-  {
-    id: "1",
-    tenant_id: "tenant-mock-456",
-    config_id: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-    task_name: "Daily ERP Sync",
-    cron_expression: "0 3 * * *", // 03:00 AM every day
-    is_active: true,
-    last_sync_at: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
-    status: "Success",
-    duration: "12m 45s",
-  },
-  {
-    id: "2",
-    tenant_id: "tenant-mock-456",
-    config_id: "550e8400-e29b-41d4-a716-446655440000",
-    task_name: "Customer Data Indexing",
-    cron_expression: "*/30 * * * *", // Every 30 minutes
-    is_active: true,
-    last_sync_at: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-    status: "Success",
-    duration: "45s",
-  },
-  {
-    id: "4",
-    tenant_id: "tenant-mock-456",
-    config_id: "a3b4c5d6-e7f8-9a0b-1c2d-3e4f5a6b7c8d",
-    task_name: "Legacy DB Backup",
-    cron_expression: "0 1 * * 0", // 01:00 AM every Sunday
-    is_active: false,
-    last_sync_at: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-    status: "Failed",
-    duration: "0s",
-  },
-];
-
 const DataSync: React.FC = () => {
+  const [connections, setConnections] = useState<IntegrationConfig[]>([]);
+  const [cronjobs, setCronjobs] = useState<SyncJob[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchSyncData = async () => {
+    setIsLoading(true);
+    try {
+      const [connectionsData, jobsData] = await Promise.all([
+        getIntegrationConfigs(),
+        getSyncJobs()
+      ]);
+      setConnections(connectionsData);
+      setCronjobs(jobsData);
+    } catch (e) {
+      console.error("Erro ao carregar dados de Sincronia", e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSyncData();
+  }, []);
   return (
     <div className="space-y-10 animate-fade-in">
       <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
@@ -118,8 +75,8 @@ const DataSync: React.FC = () => {
           </h2>
         </div>
         <div className="flex gap-3 w-full sm:w-auto">
-          <button className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl border border-border-primary bg-surface-primary text-secondary text-sm font-semibold hover:bg-surface-tertiary transition-all flex items-center justify-center gap-2">
-            <RefreshCcw size={16} /> Refresh All
+          <button onClick={fetchSyncData} className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl border border-border-primary bg-surface-primary text-secondary text-sm font-semibold hover:bg-surface-tertiary transition-all flex items-center justify-center gap-2">
+            <RefreshCcw size={16} className={isLoading ? "animate-spin" : ""} /> Refresh All
           </button>
           <button className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl bg-accent-primary text-white text-sm font-bold hover:scale-105 transition-all flex items-center justify-center gap-2 shadow-lg shadow-accent-primary/20">
             <Plus size={18} /> New Sync Task
@@ -136,7 +93,7 @@ const DataSync: React.FC = () => {
               Active Connections
             </h3>
             <span className="text-xs font-bold text-muted uppercase tracking-widest">
-              {mockConnections.length} Total
+              {connections.length} Total
             </span>
           </div>
 
@@ -163,7 +120,7 @@ const DataSync: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-secondary/50">
-                  {mockConnections.map((conn) => (
+                  {connections.map((conn) => (
                     <tr
                       key={conn.id}
                       className="hover:bg-surface-tertiary/20 transition-colors"
@@ -235,12 +192,12 @@ const DataSync: React.FC = () => {
               Active Cronjobs
             </h3>
             <span className="text-xs font-bold text-muted uppercase tracking-widest">
-              {mockCronjobs.length} Scheduled
+              {cronjobs.length} Scheduled
             </span>
           </div>
 
           <div className="space-y-3">
-            {mockCronjobs.map((job) => (
+            {cronjobs.map((job) => (
               <Card
                 key={job.id}
                 className="p-5 border-border-secondary bg-surface-primary/40 backdrop-blur-sm group hover:border-border-accent transition-all duration-300"
@@ -248,13 +205,12 @@ const DataSync: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div
-                      className={`p-3 rounded-2xl ${
-                        job.status === "Success"
+                      className={`p-3 rounded-2xl ${job.status === "Success"
                           ? "bg-status-success/10 text-status-success"
                           : job.status === "Failed"
-                          ? "bg-status-error/10 text-status-error"
-                          : "bg-status-warning/10 text-status-warning"
-                      } border border-transparent group-hover:border-current/30 transition-colors`}
+                            ? "bg-status-error/10 text-status-error"
+                            : "bg-status-warning/10 text-status-warning"
+                        } border border-transparent group-hover:border-current/30 transition-colors`}
                     >
                       <Clock size={20} />
                     </div>
@@ -274,13 +230,12 @@ const DataSync: React.FC = () => {
                   </div>
                   <div className="text-right space-y-2">
                     <span
-                      className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
-                        job.status === "Success"
+                      className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${job.status === "Success"
                           ? "bg-status-success/10 text-status-success border border-status-success/30"
                           : job.status === "Failed"
-                          ? "bg-status-error/10 text-status-error border border-status-error/30"
-                          : "bg-status-warning/10 text-status-warning border border-status-warning/30"
-                      }`}
+                            ? "bg-status-error/10 text-status-error border border-status-error/30"
+                            : "bg-status-warning/10 text-status-warning border border-status-warning/30"
+                        }`}
                     >
                       {job.status}
                     </span>
