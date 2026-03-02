@@ -243,7 +243,7 @@ const MainApp: React.FC = () => {
       case 'workspace-settings': return <WorkspaceSettings />;
       case 'providers-settings': return <ProvidersSettings />;
       case 'playground': return <Playground />;
-      case 'welcome': return <Welcome onGetStarted={() => setActiveSection('welcome')} />;
+      case 'welcome': return <Welcome onGetStarted={() => window.location.hash = '#gateway-dashboard'} />;
       case 'prompt': return <PromptCrafter theme={theme} isApiKeyMissing={demoMode} />;
       case 'agents': return <AgentsGenerator theme={theme} isApiKeyMissing={demoMode} />;
       case 'chat': return <ChatInterface theme={theme} isApiKeyMissing={demoMode} />;

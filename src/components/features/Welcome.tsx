@@ -30,16 +30,19 @@ const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
             phase: t('welcomePhaseCreation'),
             title: t('welcomePromptTitle'),
             description: t('welcomePromptDescription'),
+            hash: '#prompt'
         },
         {
             phase: t('welcomePhaseAnalysis'),
             title: t('welcomeChatTitle'),
             description: t('welcomeChatDescription'),
+            hash: '#chat'
         },
         {
             phase: t('welcomePhaseConsolidation'),
             title: t('welcomeSummaryTitle'),
             description: t('welcomeSummaryDescription'),
+            hash: '#summarizer'
         },
     ];
 
@@ -123,24 +126,36 @@ const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
                 {featureHighlights.map((feature) => (
-                    <Card key={feature.title} title={feature.title} description={feature.description}>
-                        <div className="text-xs font-semibold uppercase tracking-[0.35em] text-accent-primary">
-                            {feature.phase}
-                        </div>
-                    </Card>
+                    <div
+                        key={feature.title}
+                        onClick={() => window.location.hash = feature.hash}
+                        className="cursor-pointer group h-full"
+                    >
+                        <Card title={feature.title} description={feature.description} className="h-full transition-all duration-300 group-hover:border-accent-primary/50 group-hover:shadow-md group-hover:-translate-y-1">
+                            <div className="text-xs font-semibold uppercase tracking-[0.35em] text-accent-primary transition-colors duration-300 group-hover:text-accent-secondary">
+                                {feature.phase}
+                            </div>
+                        </Card>
+                    </div>
                 ))}
 
                 {/* Placeholders for new CTAs */}
-                <div className="rounded-2xl border-2 border-dashed border-border-primary/50 bg-surface-primary/10 flex flex-col items-center justify-center p-6 text-center shadow-none hover:border-accent-primary/50 transition-colors cursor-pointer group min-h-[160px]">
-                    <Sparkles className="h-6 w-6 text-muted group-hover:text-accent-primary transition-colors mb-3" />
-                    <p className="text-sm font-semibold text-secondary group-hover:text-primary transition-colors">Algum CTA pra uma feature</p>
-                    <p className="text-xs text-muted mt-1 flex items-center gap-1 opacity-60">Em breve</p>
+                <div
+                    onClick={() => window.location.hash = '#workspace-settings'}
+                    className="rounded-2xl border-2 border-dashed border-border-primary/50 bg-surface-primary/10 flex flex-col items-center justify-center p-6 text-center shadow-none hover:border-accent-primary/50 hover:bg-surface-primary/30 transition-all duration-300 cursor-pointer group min-h-[160px] hover:-translate-y-1"
+                >
+                    <Sparkles className="h-6 w-6 text-muted group-hover:text-accent-primary transition-colors mb-3 group-hover:scale-110 duration-300" />
+                    <p className="text-sm font-semibold text-secondary group-hover:text-primary transition-colors">Upgrade de Assinatura</p>
+                    <p className="text-xs text-muted mt-1 flex items-center gap-1 opacity-60">Gerenciar Plano</p>
                 </div>
 
-                <div className="rounded-2xl border-2 border-dashed border-border-primary/50 bg-surface-primary/10 flex flex-col items-center justify-center p-6 text-center shadow-none hover:border-accent-primary/50 transition-colors cursor-pointer group min-h-[160px]">
-                    <Compass className="h-6 w-6 text-muted group-hover:text-accent-primary transition-colors mb-3" />
-                    <p className="text-sm font-semibold text-secondary group-hover:text-primary transition-colors">Explore as Integrações</p>
-                    <p className="text-xs text-muted mt-1 flex items-center gap-1 opacity-60">Em breve</p>
+                <div
+                    onClick={() => window.location.hash = '#providers-settings'}
+                    className="rounded-2xl border-2 border-dashed border-border-primary/50 bg-surface-primary/10 flex flex-col items-center justify-center p-6 text-center shadow-none hover:border-accent-primary/50 hover:bg-surface-primary/30 transition-all duration-300 cursor-pointer group min-h-[160px] hover:-translate-y-1"
+                >
+                    <Compass className="h-6 w-6 text-muted group-hover:text-accent-primary transition-colors mb-3 group-hover:scale-110 duration-300" />
+                    <p className="text-sm font-semibold text-secondary group-hover:text-primary transition-colors">Configurar Modelos</p>
+                    <p className="text-xs text-muted mt-1 flex items-center gap-1 opacity-60">Explorar Provedores</p>
                 </div>
             </div>
         </div>
