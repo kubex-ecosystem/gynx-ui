@@ -69,7 +69,7 @@ export default defineConfig(({ mode }) => {
     },
     resolve: {
       alias: {
-        '@': fileURLToPath(new URL(path.join(__dirname, '.'), import.meta.url)),
+        '@': fileURLToPath(new URL(path.join(__dirname, 'src'), import.meta.url)),
         '@src': fileURLToPath(new URL(path.join(__dirname, 'src'), import.meta.url)),
         '@i18n': fileURLToPath(new URL(path.join(__dirname, 'src/i18n'), import.meta.url)),
         '@public': fileURLToPath(new URL(path.join(__dirname, 'public'), import.meta.url)),
