@@ -3,7 +3,7 @@
  */
 
 import { useEffect, useCallback } from 'react'
-import { multiProviderService, MultiProviderConfig } from '../services/multiProviderService'
+import { multiProviderService, MultiProviderConfig } from '@/services/multiProviderService'
 
 export function useMultiProvider() {
   const loadPersistedConfig = useCallback(async () => {

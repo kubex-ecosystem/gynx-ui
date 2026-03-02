@@ -4,7 +4,7 @@
 
 import { AIProvider } from '@/types/common';
 import { beforeEach, describe, expect, test } from 'vitest';
-import { MultiProviderConfig, multiProviderService } from '../services/multiProviderService';
+import { MultiProviderConfig, multiProviderService } from '@/services/multiProviderService';
 
 describe('MultiProviderService', () => {
   beforeEach(() => {

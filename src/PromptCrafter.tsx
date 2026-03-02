@@ -1,21 +1,21 @@
 import * as React from 'react';
-import DemoStatusFooter from './components/demo/DemoStatusFooter';
-import EducationalModal from './components/onboarding/EducationalModal';
-import Header from './components/layout/Header';
-import OnboardingModal from './components/onboarding/OnboardingModal';
-import ScreenNavigation, { Screen } from './components/navigation/ScreenNavigation';
-import PromptGenerationScreen from './screens/PromptGenerationScreen';
-import AgentManagementScreen from './screens/AgentManagementScreen';
-import { themes } from './constants/themes';
-import usePromptCrafter from './hooks/usePromptCrafter';
-import { useGromptAPI } from './hooks/useGromptAPI';
+import DemoStatusFooter from '@/components/demo/DemoStatusFooter';
+import EducationalModal from '@/components/onboarding/EducationalModal';
+import Header from '@/components/layout/Header';
+import OnboardingModal from '@/components/onboarding/OnboardingModal';
+import ScreenNavigation, { Screen } from '@/components/navigation/ScreenNavigation';
+import PromptGenerationScreen from '@/screens/PromptGenerationScreen';
+import AgentManagementScreen from '@/screens/AgentManagementScreen';
+import { themes } from '@/constants/themes';
+import usePromptCrafter from '@/hooks/usePromptCrafter';
+import { useGromptAPI } from '@/hooks/useGromptAPI';
 
 const PromptCrafter: React.FC = () => {
   // Screen navigation state
   const [currentScreen, setCurrentScreen] = React.useState<Screen>('prompts');
 
   // Initialize API hooks
-  const { generatePrompt: apiGenerate, providers, health } = useGromptAPI({
+  const { generatePrompt: apiGenerate, providers, health, rateLimit } = useGromptAPI({
     autoFetchProviders: true,
     autoCheckHealth: true,
     healthCheckInterval: 60000
@@ -45,6 +45,8 @@ const PromptCrafter: React.FC = () => {
     currentStep,
     showEducational,
     educationalTopic,
+    isSidebarOpen,
+    isEducationOpen,
 
     // Setters
     setDarkMode,
@@ -61,6 +63,8 @@ const PromptCrafter: React.FC = () => {
     setMcpServers,
     setCustomMcpServer,
     setShowEducational,
+    setIsEducationOpen,
+    setSidebarOpen,
 
     // Actions
     addIdea,
@@ -83,13 +87,17 @@ const PromptCrafter: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <Header
-        darkMode={darkMode}
-        setDarkMode={setDarkMode}
-        currentTheme={currentTheme}
+        theme={darkMode ? 'dark' : 'light'}
+        onToggleTheme={() => setDarkMode(!darkMode)}
+        onToggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
+        collapsed={isSidebarOpen}
         startOnboarding={startOnboarding}
-        showEducation={showEducation}
+        showEducational={showEducational}
+        educationalTopic={educationalTopic ? educationalTopic : ''}
         providers={providers}
-        health={health}
+        currentStep={currentStep}
+        isSidebarOpen={isSidebarOpen}
+        showEducation={showEducation}
       />
 
       {/* Onboarding Modal */}
@@ -117,6 +125,7 @@ const PromptCrafter: React.FC = () => {
       {/* Main Content - Screen Based */}
       {currentScreen === 'prompts' && (
         <PromptGenerationScreen
+          key={'prompts'}
           currentInput={currentInput}
           setCurrentInput={setCurrentInput}
           ideas={ideas}
@@ -139,8 +148,11 @@ const PromptCrafter: React.FC = () => {
           cancelEdit={cancelEdit}
           generatePrompt={generatePrompt}
           copyToClipboard={copyToClipboard}
-          currentTheme={currentTheme}
+          // currentTheme={currentTheme}
+          currentTheme={themes.dark}
           apiGenerateState={apiGenerate}
+          apiRateLimitState={rateLimit}
+          apiHealthState={health}
         />
       )}
 
@@ -182,7 +194,9 @@ const PromptCrafter: React.FC = () => {
           handleFeatureClick={handleFeatureClick}
           currentTheme={currentTheme}
           apiGenerateState={apiGenerate}
-          providers={providers}
+          apiProviders={providers}
+          apiRateLimitState={rateLimit}
+          apiHealthState={health}
         />
       )}
 

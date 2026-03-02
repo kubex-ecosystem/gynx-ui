@@ -1,7 +1,11 @@
 import * as React from "react";
-import { DemoMode } from "../../config/demoMode";
+import { DemoMode } from "@/config/demoMode";
+import { useTranslations } from "@/i18n/useTranslations";
 
 const DemoStatusFooter: React.FC = () => {
+
+  const { t } = useTranslations();
+
   if (DemoMode.isActive !== true) {
     return null;
   }
@@ -17,63 +21,63 @@ const DemoStatusFooter: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
             <div>
               <h4 className="font-medium text-blue-700 dark:text-blue-300 mb-1">
-                Funcionais:
+                {t("funcionais")}
               </h4>
               <ul className="text-blue-600 dark:text-blue-400 space-y-1">
-                <li>• Claude API</li>
-                <li>• Interface React</li>
-                <li>• Geração de código</li>
-                <li>• Engine Kubex</li>
+                <li>• {t("claudeApi")}</li>
+                <li>• {t("interfaceReact")}</li>
+                <li>• {t("geracaoDeCodigo")}</li>
+                <li>• {t("engineKubex")}</li>
               </ul>
             </div>
             <div>
               <h4 className="font-medium text-blue-700 dark:text-blue-300 mb-1">
-                🎪 Em Breve:
+                {t("emBreve")}
               </h4>
               <ul className="text-blue-600 dark:text-blue-400 space-y-1">
-                <li>• Ollama Local</li>
-                <li>• Servidores MCP</li>
-                <li>• Multi-Providers</li>
-                <li>• Execução de Agents</li>
+                <li>• {t("ollamaLocal")}</li>
+                <li>• {t("mcpServers")}</li>
+                <li>• {t("multiProviders")}</li>
+                <li>• {t("agentsExecution")}</li>
               </ul>
             </div>
             <div>
               <h4 className="font-medium text-blue-700 dark:text-blue-300 mb-1">
-                🏗️ Arquitetura:
+                {t("arquitetura")}
               </h4>
               <ul className="text-blue-600 dark:text-blue-400 space-y-1">
                 <li>• DemoMode System</li>
-                <li>• Single Source Truth</li>
-                <li>• Onboarding Ready</li>
-                <li>• Kubex Backend</li>
+                <li>• {t("singleSourceTruth")}</li>
+                <li>• {t("onboardingReady")}</li>
+                <li>• {t("kubexBackend")}</li>
               </ul>
             </div>
             <div>
               <h4 className="font-medium text-blue-700 dark:text-blue-300 mb-1">
-                🎯 Inspirado em:
+                {t("inspirado")}
               </h4>
               <ul className="text-blue-600 dark:text-blue-400 space-y-1">
-                <li>• GNyx CLI v2.0</li>
-                <li>• Kubex Ecosystem</li>
-                <li>• Simplicidade Radical</li>
-                <li>• No Lock-in Philosophy</li>
+                <li>• {t("gnyxCli")}</li>
+                <li>• {t("kubexEcosystem")}</li>
+                <li>• {t("designedToStayFree")}</li>
+                <li>• {t("freedomEngineered")}</li>
               </ul>
             </div>
           </div>
           <div className="mt-3 p-3 bg-blue-100 dark:bg-blue-800/50 rounded-lg">
             <p className="text-blue-700 dark:text-blue-300 text-sm">
+              💡 <strong>{t("inspirado")}</strong>{" "}
+              {t("inspiradoDescription")}
+            </p>
+            {/*             <p className="text-blue-700 dark:text-blue-300 text-sm">
               💡 <strong>Inspirado nos projetos Grompt e GemX Analyzer:</strong>{" "}
               Esta interface web é uma fruto do uso de IA's por engenheiros e arquitetos, que visam
               criar uma experiência de desenvolvimento mais simples, prática, criativa e de baixo custo.
               Com isso, o desenvolvimento de software se torna mais acessível, divertido e produtivo.
-            </p>
+            </p> */}
             <p className="text-blue-700 dark:text-blue-300 text-sm">
               💡 <strong>GNyx CLI v2.0:</strong>{" "}
-              GNyx CLI v2.0 é uma ferramenta de linha de comando onde é possível gerar código
-              com IA, permitindo que os engenheiros e arquitetos criem software mais rápido, com menos erros,
-              de forma programática. Ela possui comandos intuitivos e desenhados para serem facilmente
-              usados por engenheiros, arquitetos ou qualquer pessoa que queira criar software e automações
-              interativamente.
+              {t("gnyxCliDescription")}
             </p>
             <div className="mt-4 flex flex-col gap-3 text-xs w-full max-w-full overflow-hidden">
               <div className="bg-[#0D1117] border border-[#30363D] rounded-md overflow-hidden flex flex-col w-full shadow-md">
@@ -86,7 +90,7 @@ const DemoStatusFooter: React.FC = () => {
                   <span className="text-[#8B949E] text-[10px] font-mono ml-2">gnyx-cli — sh</span>
                 </div>
                 <div className="p-3 overflow-x-auto custom-scrollbar font-mono text-[11px] leading-relaxed text-[#E6EDF3]">
-                  <span className="text-[#3FB950]">❯</span> <span className="text-[#79C0FF]">gnyx</span> <span className="text-[#D2A8FF]">ask</span> <span className="text-[#A5D6FF]">"Como otimizar queries no Postgres?"</span> <span className="text-[#8B949E]">--provider</span> <span className="text-[#FF7B72]">gemini</span>
+                  <span className="text-[#3FB950]">❯</span> <span className="text-[#79C0FF]">gnyx</span> <span className="text-[#D2A8FF]">ask</span> <span className="text-[#A5D6FF]">"{t("gnyxCliExample")}"</span> <span className="text-[#8B949E]">--provider</span> <span className="text-[#FF7B72]">gemini</span>
                 </div>
               </div>
 
@@ -100,8 +104,8 @@ const DemoStatusFooter: React.FC = () => {
                   <span className="text-[#8B949E] text-[10px] font-mono ml-2">gnyx-cli — sh</span>
                 </div>
                 <div className="p-3 overflow-x-auto custom-scrollbar font-mono text-[11px] leading-relaxed text-[#E6EDF3]">
-                  <span className="text-[#3FB950]">❯</span> <span className="text-[#79C0FF]">gnyx</span> <span className="text-[#D2A8FF]">generate</span> <span className="text-[#8B949E]">--model</span> <span className="text-[#A5D6FF]">'gemini-3.1-pro'</span> <span className="text-[#8B949E]">--ideas</span> <span className="text-[#A5D6FF]">'Criar um microserviço em Go'</span> <span className="text-[#8B949E]">\</span><br />
-                  &nbsp;&nbsp;<span className="text-[#8B949E]">--ideas</span> <span className="text-[#A5D6FF]">'Deve usar Clean Architecture'</span> <span className="text-[#8B949E]">--ideas</span> <span className="text-[#A5D6FF]">'Conexão com PostgreSQL'</span>
+                  <span className="text-[#3FB950]">❯</span> <span className="text-[#79C0FF]">gnyx</span> <span className="text-[#D2A8FF]">generate</span> <span className="text-[#8B949E]">--model</span> <span className="text-[#A5D6FF]">'gemini-3.1-pro'</span> <span className="text-[#8B949E]">--ideas</span> <span className="text-[#A5D6FF]">'{t("gnyxCliExample")}'</span> <span className="text-[#8B949E]">\</span><br />
+                  &nbsp;&nbsp;<span className="text-[#8B949E]">--ideas</span> <span className="text-[#A5D6FF]">'{t("gnyxCliExample2")}'</span> <span className="text-[#8B949E]">--ideas</span> <span className="text-[#A5D6FF]">'Conexão com PostgreSQL'</span>
                 </div>
               </div>
 
@@ -116,17 +120,13 @@ const DemoStatusFooter: React.FC = () => {
                 </div>
                 <div className="p-3 overflow-x-auto custom-scrollbar font-mono text-[10px] sm:text-[11px] leading-relaxed text-[#E6EDF3] whitespace-pre">
                   <span className="text-[#FF7B72]">export</span> GEMINI_API_KEY=<span className="text-[#A5D6FF]">'sua_chave_aqui'</span><br />
-                  <span className="text-[#FF7B72]">export</span> _IDEAS=<span className="text-[#A5D6FF]">'Preciso de um sistema que fragmente um modelo de dados grande em pedaços
-                    menores para processamento. Requisitos:
-                    1. Aceitar um modelo grande como entrada.
-                    2. Dividir garantindo independência e coesão.
-                    3. Fornecer interface para manipular fragmentos.'</span><br /><br />
+                  <span className="text-[#FF7B72]">export</span> IDEAS=<span className="text-[#A5D6FF]">'{t("gnyxCliExample3")}'</span><br /><br />
 
-                  <span className="text-[#FF7B72]">export</span> _PROMPT=<span className="text-[#3FB950]">$(</span><span className="text-[#79C0FF]">gnyx</span> <span className="text-[#D2A8FF]">generate</span> <span className="text-[#8B949E]">--provider</span> <span className="text-[#FF7B72]">gemini</span> <span className="text-[#8B949E]">\</span><br />
-                  &nbsp;&nbsp;<span className="text-[#8B949E]">--model</span> <span className="text-[#A5D6FF]">'gemini-2.0-flash'</span> <span className="text-[#8B949E]">--ideas</span> <span className="text-[#A5D6FF]">"</span><span className="text-[#79C0FF]">${_IDEAS}</span><span className="text-[#A5D6FF]">"</span> <span className="text-[#8B949E]">\</span><br />
+                  <span className="text-[#FF7B72]">export</span> PROMPT=<span className="text-[#3FB950]">$(</span><span className="text-[#79C0FF]">gnyx</span> <span className="text-[#D2A8FF]">generate</span> <span className="text-[#8B949E]">--provider</span> <span className="text-[#FF7B72]">gemini</span> <span className="text-[#8B949E]">\</span><br />
+                  &nbsp;&nbsp;<span className="text-[#8B949E]">--model</span> <span className="text-[#A5D6FF]">'gemini-3.1-flash'</span> <span className="text-[#8B949E]">--ideas</span> <span className="text-[#A5D6FF]">"</span><span className="text-[#79C0FF]">$IDEAS</span><span className="text-[#A5D6FF]">"</span> <span className="text-[#8B949E]">\</span><br />
                   &nbsp;&nbsp;<span className="text-[#8B949E]">--max-tokens</span> <span className="text-[#79C0FF]">10000</span> <span className="text-[#8B949E]">--purpose</span> <span className="text-[#A5D6FF]">'code'</span><span className="text-[#3FB950]">)</span><br /><br />
 
-                  <span className="text-[#79C0FF]">echo</span> <span className="text-[#A5D6FF]">"</span><span className="text-[#79C0FF]">${_PROMPT}</span><span className="text-[#A5D6FF]">"</span> <span className="text-[#FF7B72]">|</span> <span className="text-[#79C0FF]">tail</span> <span className="text-[#8B949E]">-n</span> <span className="text-[#79C0FF]">+3</span> <span className="text-[#FF7B72]">|</span> <span className="text-[#79C0FF]">tee</span> output.txt
+                  <span className="text-[#79C0FF]">echo</span> <span className="text-[#A5D6FF]">"</span><span className="text-[#79C0FF]">$PROMPT</span><span className="text-[#A5D6FF]">"</span> <span className="text-[#FF7B72]">|</span> <span className="text-[#79C0FF]">tail</span> <span className="text-[#8B949E]">-n</span> <span className="text-[#79C0FF]">+3</span> <span className="text-[#FF7B72]">|</span> <span className="text-[#79C0FF]">tee</span> output.txt
                 </div>
               </div>
 

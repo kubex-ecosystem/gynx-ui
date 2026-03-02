@@ -11,10 +11,10 @@ import {
   HealthResponse,
   isAPIError,
   Provider
-} from '../services/api'
-import { enhancedAPI } from '../services/enhancedAPI'
+} from '@/services/api'
+import { enhancedAPI } from '@/services/enhancedAPI'
 
-interface UseGeneratePromptState {
+export interface UseGeneratePromptState {
   generateStream: (request: GenerateRequest) => Promise<void>
   generateSync: (request: GenerateRequest) => Promise<GenerateResponse>
   cancel: () => void
@@ -29,14 +29,14 @@ interface UseGeneratePromptState {
   }
 }
 
-interface UseProvidersState {
+export interface UseProvidersState {
   providers: Provider[]
   loading: boolean
   error: APIError | null
   lastFetched: number | null
 }
 
-interface UseHealthState {
+export interface UseHealthState {
   isHealthy: boolean
   health: HealthResponse | null
   loading: boolean
@@ -426,6 +426,10 @@ function useRateLimit() {
   return {
     ...rateLimitStatus,
     updateStatus
+  } as {
+    updateStatus: () => void;
+    canMakeRequest: boolean;
+    timeUntilReset: number;
   }
 }
 

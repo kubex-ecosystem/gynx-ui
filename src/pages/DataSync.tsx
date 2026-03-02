@@ -11,8 +11,8 @@ import {
   Zap,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import Card from "../components/ui/Card";
-import { getIntegrationConfigs, getSyncJobs } from "../services/syncService";
+import Card from "@/components/ui/Card";
+import { getIntegrationConfigs, getSyncJobs } from "@/services/syncService";
 
 // Types
 // Types aligned with Go Backend Schema
@@ -206,10 +206,10 @@ const DataSync: React.FC = () => {
                   <div className="flex items-center gap-4">
                     <div
                       className={`p-3 rounded-2xl ${job.status === "Success"
-                          ? "bg-status-success/10 text-status-success"
-                          : job.status === "Failed"
-                            ? "bg-status-error/10 text-status-error"
-                            : "bg-status-warning/10 text-status-warning"
+                        ? "bg-status-success/10 text-status-success"
+                        : job.status === "Failed"
+                          ? "bg-status-error/10 text-status-error"
+                          : "bg-status-warning/10 text-status-warning"
                         } border border-transparent group-hover:border-current/30 transition-colors`}
                     >
                       <Clock size={20} />
@@ -231,10 +231,10 @@ const DataSync: React.FC = () => {
                   <div className="text-right space-y-2">
                     <span
                       className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${job.status === "Success"
-                          ? "bg-status-success/10 text-status-success border border-status-success/30"
-                          : job.status === "Failed"
-                            ? "bg-status-error/10 text-status-error border border-status-error/30"
-                            : "bg-status-warning/10 text-status-warning border border-status-warning/30"
+                        ? "bg-status-success/10 text-status-success border border-status-success/30"
+                        : job.status === "Failed"
+                          ? "bg-status-error/10 text-status-error border border-status-error/30"
+                          : "bg-status-warning/10 text-status-warning border border-status-warning/30"
                         }`}
                     >
                       {job.status}

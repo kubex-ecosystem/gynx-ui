@@ -1,8 +1,8 @@
 // Unified AI Service for Grompt frontend
 // Communicates with backend's unified API endpoints
 
-import { Idea } from '@/types';
-import { configService, type ProviderInfo, type ServerConfig } from './configService';
+import { Ideas } from '@/types';
+import { configService, type ProviderInfo, type ServerConfig } from '@/services/configService';
 
 export interface UnifiedRequest {
   lang?: string;
@@ -49,7 +49,7 @@ class UnifiedAIService {
    * @param apiKey - Optional external API key for BYOK (Bring Your Own Key)
    */
   async generateStructuredPrompt(
-    ideas: Idea[],
+    ideas: Ideas,
     purpose: string,
     provider?: string,
     model?: string,
@@ -232,7 +232,7 @@ class UnifiedAIService {
   /**
    * Fallback demo prompt generation
    */
-  private generateDemoPrompt(ideas: Idea[], purpose: string): GenerationResult {
+  private generateDemoPrompt(ideas: Ideas, purpose: string): GenerationResult {
     const ideasText = ideas.map((idea, index) => `- ${idea.text}`).join('\n');
 
     const demoPrompt = `# ${purpose} Expert Assistant

@@ -19,7 +19,7 @@ import { useEffect, useState } from "react";
 import {
   type MultiProviderConfig,
   multiProviderService,
-} from "../../services/multiProviderService";
+} from "@/services/multiProviderService";
 
 export interface MultiProviderConfigProps {
   isOpen: boolean;
@@ -172,8 +172,8 @@ export function MultiProviderConfig(
       const backendProviderName = provider === AIProvider.ANTHROPIC
         ? "anthropic"
         : provider === AIProvider.GEMINI
-        ? "gemini"
-        : "openai";
+          ? "gemini"
+          : "openai";
       const result = await multiProviderService.testProvider(
         backendProviderName,
       );
@@ -303,9 +303,8 @@ export function MultiProviderConfig(
                           value={providerState.apiKey}
                           onChange={(e) =>
                             updateProvider(provider, "apiKey", e.target.value)}
-                          placeholder={`Digite sua chave da API ${
-                            PROVIDER_LABELS[provider]
-                          }`}
+                          placeholder={`Digite sua chave da API ${PROVIDER_LABELS[provider]
+                            }`}
                           className="w-full px-3 py-2 pr-10 rounded-lg border border-gray-600 bg-gray-700 text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                         />
                         <button
@@ -371,11 +370,10 @@ export function MultiProviderConfig(
                   {/* Test Result */}
                   {providerState.testResult !== undefined && (
                     <div
-                      className={`mt-3 p-3 rounded-lg flex items-center gap-2 ${
-                        providerState.testResult
+                      className={`mt-3 p-3 rounded-lg flex items-center gap-2 ${providerState.testResult
                           ? "bg-green-900/50 text-green-400 border border-green-700"
                           : "bg-red-900/50 text-red-400 border border-red-700"
-                      }`}
+                        }`}
                     >
                       {providerState.testResult
                         ? (

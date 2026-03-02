@@ -12,7 +12,7 @@ import {
   type AIResponse,
   type GenerateContentParams,
   type MultiAIConfig
-} from "../../../types/common";
+} from "@/types/common";
 import { MessagesPage } from "openai/resources/beta/threads/messages";
 
 export class DeepSeekProvider extends BaseProvider {

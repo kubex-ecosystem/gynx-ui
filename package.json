@@ -30,7 +30,6 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.63.0",
     "@google/genai": "^1.20.0",
-    "@lottiefiles/react-lottie-player": "^3.6.0",
     "@tailwindcss/vite": "^4.1.15",
     "framer-motion": "^12.34.3",
     "idb": "^8.0.3",
@@ -39,15 +38,19 @@
     "openai": "^5.22.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "react-lottie": "^1.2.10",
     "recharts": "^3.7.0",
     "remark-gfm": "^4.0.0",
     "zustand": "^5.0.11"
   },
   "devDependencies": {
+    "@jest/globals": "^30.2.0",
+    "@testing-library/react": "^16.3.2",
     "@types/js-cookie": "^3.0.6",
     "@types/node": "^22.17.0",
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
+    "@types/react-lottie": "^1.2.10",
     "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.19",
     "postcss": "^8.4.38",

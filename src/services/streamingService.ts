@@ -1,4 +1,4 @@
-import { useProvidersStore } from '../store/useProvidersStore';
+import { useProvidersStore } from '@/store/useProvidersStore';
 
 export interface StreamCallbacks {
   onChunk: (text: string) => void;
@@ -78,7 +78,7 @@ export const streamChat = async (
             callbacks.onChunk(data.chunk);
           }
         } catch (e) {
-            console.warn('Silent JSON parse error in stream buffer', e);
+          console.warn('Silent JSON parse error in stream buffer', e);
         }
       }
     }

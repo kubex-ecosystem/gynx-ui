@@ -1,5 +1,5 @@
 import React from 'react';
-import { useRBAC } from '../../hooks/useRBAC';
+import { useRBAC } from '@/hooks/useRBAC';
 
 interface CanProps {
   I?: string; // Código de permissão (ex: 'deal.create')

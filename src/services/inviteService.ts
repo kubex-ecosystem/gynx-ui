@@ -1,4 +1,4 @@
-import { AcceptInviteReq, InviteDTO } from '../types';
+import { AcceptInviteReq, InviteDTO } from '@/types';
 
 const isSimulated = import.meta.env.VITE_SIMULATE_AUTH === 'true';
 

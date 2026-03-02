@@ -7,8 +7,8 @@ import {
   Zap,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import Card from "../components/ui/Card";
-import { getGatewayMetrics, getGatewayLogs, GatewayMetrics, GatewayLog } from "../services/gatewayService";
+import Card from "@/components/ui/Card";
+import { getGatewayMetrics, getGatewayLogs, GatewayMetrics, GatewayLog } from "@/services/gatewayService";
 
 // Helper to convert MS format
 const formatLatency = (ms: number) => {

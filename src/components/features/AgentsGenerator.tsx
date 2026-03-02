@@ -21,10 +21,10 @@ import React, {
   useState,
 } from "react";
 import ReactMarkdown from "react-markdown";
-import { LanguageContext } from "../../context/LanguageContext";
-import { agentsService } from "../../services/agentsService";
-import { configService, type ProviderInfo } from "../../services/configService";
-import Card from "../ui/Card";
+import { LanguageContext } from "@/context/LanguageContext";
+import { agentsService } from "@/services/agentsService";
+import { configService, type ProviderInfo } from "@/services/configService";
+import Card from "@/components/ui/Card";
 
 type AgentFramework =
   | "crewai"
@@ -52,32 +52,32 @@ const frameworks: {
   label: string;
   description: string;
 }[] = [
-  {
-    value: "crewai",
-    label: "CrewAI",
-    description: "Orquestra squads multi-agentes focados em produtividade.",
-  },
-  {
-    value: "autogen",
-    label: "AutoGen",
-    description: "Fluxos cooperativos entre agentes conversacionais.",
-  },
-  {
-    value: "langchain",
-    label: "LangChain",
-    description: "Tooling maduro com LangGraph e integrações robustas.",
-  },
-  {
-    value: "semantic-kernel",
-    label: "Semantic Kernel",
-    description: "Pipeline .NET com planejamento dinâmico de tarefas.",
-  },
-  {
-    value: "custom",
-    label: "Custom",
-    description: "Adapter próprio seguindo padrões Kubex.",
-  },
-];
+    {
+      value: "crewai",
+      label: "CrewAI",
+      description: "Orquestra squads multi-agentes focados em produtividade.",
+    },
+    {
+      value: "autogen",
+      label: "AutoGen",
+      description: "Fluxos cooperativos entre agentes conversacionais.",
+    },
+    {
+      value: "langchain",
+      label: "LangChain",
+      description: "Tooling maduro com LangGraph e integrações robustas.",
+    },
+    {
+      value: "semantic-kernel",
+      label: "Semantic Kernel",
+      description: "Pipeline .NET com planejamento dinâmico de tarefas.",
+    },
+    {
+      value: "custom",
+      label: "Custom",
+      description: "Adapter próprio seguindo padrões Kubex.",
+    },
+  ];
 
 const toolCatalog: string[] = [
   "web_search",
@@ -549,13 +549,11 @@ const AgentsGenerator: React.FC<AgentsGeneratorProps> = (
       lines.push(`LLM Provider: ${agentProvider}`);
     }
     lines.push(
-      `Tools: ${
-        agentTools.length > 0 ? agentTools.join(", ") : "none specified"
+      `Tools: ${agentTools.length > 0 ? agentTools.join(", ") : "none specified"
       }`,
     );
     lines.push(
-      `MCP Servers: ${
-        mcpServers.length > 0 ? mcpServers.join(", ") : "none selected"
+      `MCP Servers: ${mcpServers.length > 0 ? mcpServers.join(", ") : "none selected"
       }`,
     );
     if (ideas.length > 0) {
@@ -707,8 +705,8 @@ const AgentsGenerator: React.FC<AgentsGeneratorProps> = (
   const providerStatusTone = selectedProviderInfo?.status === "ready"
     ? "text-emerald-600 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-500/10"
     : selectedProviderInfo?.status === "needs_api_key"
-    ? "text-amber-600 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10"
-    : "text-rose-600 dark:text-rose-300 bg-rose-50 dark:bg-rose-500/10";
+      ? "text-amber-600 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10"
+      : "text-rose-600 dark:text-rose-300 bg-rose-50 dark:bg-rose-500/10";
 
   const formatTimestamp = useCallback((timestamp: number) => {
     try {
@@ -805,8 +803,8 @@ const AgentsGenerator: React.FC<AgentsGeneratorProps> = (
                 currentBlueprint
                   ? setBlueprintModalOpen(true)
                   : history[0]
-                  ? handleOpenBlueprint(history[0])
-                  : null}
+                    ? handleOpenBlueprint(history[0])
+                    : null}
               disabled={!currentBlueprint && history.length === 0}
               className="inline-flex items-center gap-2 rounded-full border border-border-primary bg-surface-primary px-3 py-1.5 text-xs font-semibold text-muted transition hover:border-border-accent hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
             >
@@ -887,11 +885,10 @@ const AgentsGenerator: React.FC<AgentsGeneratorProps> = (
                     type="button"
                     key={item}
                     onClick={() => setPurpose(item)}
-                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                      purpose === item
-                        ? "border-accent-primary bg-accent-primary text-white shadow-md"
-                        : "border-border-primary bg-surface-primary text-secondary hover:border-border-accent"
-                    }`}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${purpose === item
+                      ? "border-accent-primary bg-accent-primary text-white shadow-md"
+                      : "border-border-primary bg-surface-primary text-secondary hover:border-border-accent"
+                      }`}
                   >
                     {t(`purpose_${item}`)}
                   </button>
@@ -917,11 +914,10 @@ const AgentsGenerator: React.FC<AgentsGeneratorProps> = (
                     type="button"
                     key={framework.value}
                     onClick={() => setAgentFramework(framework.value)}
-                    className={`w-full rounded-2xl border px-4 py-3 text-left text-sm transition ${
-                      agentFramework === framework.value
-                        ? "border-accent-primary bg-accent-primary/10 text-primary shadow-md"
-                        : "border-border-primary bg-surface-primary text-secondary hover:border-border-accent"
-                    }`}
+                    className={`w-full rounded-2xl border px-4 py-3 text-left text-sm transition ${agentFramework === framework.value
+                      ? "border-accent-primary bg-accent-primary/10 text-primary shadow-md"
+                      : "border-border-primary bg-surface-primary text-secondary hover:border-border-accent"
+                      }`}
                   >
                     <span className="block font-semibold">
                       {framework.label}
@@ -948,8 +944,8 @@ const AgentsGenerator: React.FC<AgentsGeneratorProps> = (
                   {providersLoading
                     ? "Loading..."
                     : providersError
-                    ? providersError
-                    : "--"}
+                      ? providersError
+                      : "--"}
                 </option>
                 {providers.map((provider) => (
                   <option key={provider.name} value={provider.name}>
@@ -969,11 +965,10 @@ const AgentsGenerator: React.FC<AgentsGeneratorProps> = (
                     type="button"
                     key={tool}
                     onClick={() => toggleTool(tool)}
-                    className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${
-                      agentTools.includes(tool)
-                        ? "border-emerald-400 bg-emerald-50 text-emerald-700 dark:border-emerald-400/70 dark:bg-emerald-400/10 dark:text-emerald-200"
-                        : " text-secondary hover:border-border-accent border-border-primary bg-surface-primary dark:text-muted"
-                    }`}
+                    className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${agentTools.includes(tool)
+                      ? "border-emerald-400 bg-emerald-50 text-emerald-700 dark:border-emerald-400/70 dark:bg-emerald-400/10 dark:text-emerald-200"
+                      : " text-secondary hover:border-border-accent border-border-primary bg-surface-primary dark:text-muted"
+                      }`}
                   >
                     {tool}
                   </button>
@@ -991,11 +986,10 @@ const AgentsGenerator: React.FC<AgentsGeneratorProps> = (
                     type="button"
                     key={server.name}
                     onClick={() => toggleMcp(server.name)}
-                    className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${
-                      mcpServers.includes(server.name)
-                        ? "border-[#7c4dff] bg-[#7c4dff]/10 text-[#4c1d95] dark:border-[#7c4dff]/70 dark:bg-[#7c4dff]/20 dark:text-[#e0d7ff]"
-                        : " text-secondary hover:border-border-accent border-border-primary bg-surface-primary dark:text-muted"
-                    }`}
+                    className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${mcpServers.includes(server.name)
+                      ? "border-[#7c4dff] bg-[#7c4dff]/10 text-[#4c1d95] dark:border-[#7c4dff]/70 dark:bg-[#7c4dff]/20 dark:text-[#e0d7ff]"
+                      : " text-secondary hover:border-border-accent border-border-primary bg-surface-primary dark:text-muted"
+                      }`}
                     title={server.desc}
                   >
                     {server.desc}
@@ -1122,67 +1116,67 @@ const AgentsGenerator: React.FC<AgentsGeneratorProps> = (
             </div>
           )
           : storedAgents.length === 0
-          ? (
-            <p className="rounded-xl border border-dashed border-border-primary bg-slate-50/80 p-4 text-sm text-slate-500 border-border-primary bg-surface-primary/60 dark:text-muted">
-              {t("emptyStoredAgents")}
-            </p>
-          )
-          : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-[#13263a]">
-                <thead className="bg-slate-100/80 dark:bg-[#101926]">
-                  <tr>
-                    <th className="px-3 py-2 text-left font-semibold text-secondary text-secondary">
-                      {t("idColumn")}
-                    </th>
-                    <th className="px-3 py-2 text-left font-semibold text-secondary text-secondary">
-                      {t("titleColumn")}
-                    </th>
-                    <th className="px-3 py-2 text-left font-semibold text-secondary text-secondary">
-                      {t("roleColumn")}
-                    </th>
-                    <th className="px-3 py-2 text-left font-semibold text-secondary text-secondary">
-                      {t("skillsColumn")}
-                    </th>
-                    <th className="px-3 py-2 text-left font-semibold text-secondary text-secondary">
-                      {t("actionsColumn")}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-[#13263a]">
-                  {storedAgents.map((agent) => (
-                    <tr
-                      key={agent.ID}
-                      className="bg-surface-secondary/90 bg-surface-primary/70"
-                    >
-                      <td className="px-3 py-2 text-secondary text-secondary">
-                        {agent.ID}
-                      </td>
-                      <td className="px-3 py-2 text-[#0f172a] text-primary">
-                        {agent.Title}
-                      </td>
-                      <td className="px-3 py-2 text-secondary text-secondary">
-                        {agent.Role}
-                      </td>
-                      <td className="px-3 py-2 text-secondary text-secondary">
-                        {agent.Skills.join(", ")}
-                      </td>
-                      <td className="px-3 py-2">
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteAgent(agent.ID)}
-                          className="inline-flex items-center gap-1 rounded-full border border-rose-400 bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-600 transition hover:bg-rose-100 dark:border-rose-400/70 dark:bg-rose-500/10 dark:text-rose-200"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                          {t("deleteAction")}
-                        </button>
-                      </td>
+            ? (
+              <p className="rounded-xl border border-dashed border-border-primary bg-slate-50/80 p-4 text-sm text-slate-500 border-border-primary bg-surface-primary/60 dark:text-muted">
+                {t("emptyStoredAgents")}
+              </p>
+            )
+            : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-[#13263a]">
+                  <thead className="bg-slate-100/80 dark:bg-[#101926]">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-semibold text-secondary text-secondary">
+                        {t("idColumn")}
+                      </th>
+                      <th className="px-3 py-2 text-left font-semibold text-secondary text-secondary">
+                        {t("titleColumn")}
+                      </th>
+                      <th className="px-3 py-2 text-left font-semibold text-secondary text-secondary">
+                        {t("roleColumn")}
+                      </th>
+                      <th className="px-3 py-2 text-left font-semibold text-secondary text-secondary">
+                        {t("skillsColumn")}
+                      </th>
+                      <th className="px-3 py-2 text-left font-semibold text-secondary text-secondary">
+                        {t("actionsColumn")}
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 dark:divide-[#13263a]">
+                    {storedAgents.map((agent) => (
+                      <tr
+                        key={agent.ID}
+                        className="bg-surface-secondary/90 bg-surface-primary/70"
+                      >
+                        <td className="px-3 py-2 text-secondary text-secondary">
+                          {agent.ID}
+                        </td>
+                        <td className="px-3 py-2 text-[#0f172a] text-primary">
+                          {agent.Title}
+                        </td>
+                        <td className="px-3 py-2 text-secondary text-secondary">
+                          {agent.Role}
+                        </td>
+                        <td className="px-3 py-2 text-secondary text-secondary">
+                          {agent.Skills.join(", ")}
+                        </td>
+                        <td className="px-3 py-2">
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteAgent(agent.ID)}
+                            className="inline-flex items-center gap-1 rounded-full border border-rose-400 bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-600 transition hover:bg-rose-100 dark:border-rose-400/70 dark:bg-rose-500/10 dark:text-rose-200"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            {t("deleteAction")}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
       </Card>
 
       {isBlueprintModalOpen && currentBlueprint && (
@@ -1226,7 +1220,7 @@ const AgentsGenerator: React.FC<AgentsGeneratorProps> = (
                   </button>
                 </div>
                 <pre className="mt-3 max-h-64 overflow-y-auto rounded-2xl border border-dashed border-border-primary/80 bg-surface-secondary/90 p-4 text-xs text-secondary shadow-sm border-border-secondary/80 bg-surface-primary/70 text-secondary">
- {currentBlueprint.requirements}
+                  {currentBlueprint.requirements}
                 </pre>
               </section>
 
@@ -1264,11 +1258,10 @@ const AgentsGenerator: React.FC<AgentsGeneratorProps> = (
 
                 {saveStatus && (
                   <p
-                    className={`mt-3 text-xs ${
-                      saveStatus.variant === "success"
-                        ? "text-emerald-600 dark:text-emerald-300"
-                        : "text-rose-600 dark:text-rose-300"
-                    }`}
+                    className={`mt-3 text-xs ${saveStatus.variant === "success"
+                      ? "text-emerald-600 dark:text-emerald-300"
+                      : "text-rose-600 dark:text-rose-300"
+                      }`}
                   >
                     {saveStatus.message}
                   </p>
@@ -1311,17 +1304,17 @@ const AgentsGenerator: React.FC<AgentsGeneratorProps> = (
 
               {currentBlueprint.result.markdown &&
                 currentBlueprint.result.agents.length > 0 && (
-                <section>
-                  <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-muted dark:text-secondary">
-                    {t("markdownSection")}
-                  </h3>
-                  <div className="mt-3 max-h-72 overflow-y-auto rounded-2xl border border-border-primary/80 bg-surface-secondary/90 p-4 text-xs text-secondary shadow-sm border-border-secondary/80 bg-surface-primary/70 text-secondary">
-                    <ReactMarkdown>
-                      {currentBlueprint.result.markdown}
-                    </ReactMarkdown>
-                  </div>
-                </section>
-              )}
+                  <section>
+                    <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-muted dark:text-secondary">
+                      {t("markdownSection")}
+                    </h3>
+                    <div className="mt-3 max-h-72 overflow-y-auto rounded-2xl border border-border-primary/80 bg-surface-secondary/90 p-4 text-xs text-secondary shadow-sm border-border-secondary/80 bg-surface-primary/70 text-secondary">
+                      <ReactMarkdown>
+                        {currentBlueprint.result.markdown}
+                      </ReactMarkdown>
+                    </div>
+                  </section>
+                )}
             </div>
           </div>
         </div>

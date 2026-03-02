@@ -20,8 +20,8 @@ export interface PromptGenerationResult {
   };
 }
 
-const createMetaPrompt = (ideas: Idea[], purpose: string): string => {
-  const ideasText = ideas.map((idea, index) => `- ${idea.text}`).join('\n');
+const createMetaPrompt = (ideas: Idea, purpose: string): string => {
+  const ideasText = `- ${ideas.text}`;
 
   return `
 You are a world-class prompt engineering expert, a key copilot in the Kubex Ecosystem. Your mission is to transform a user's raw, unstructured ideas into a clean, effective, and professional prompt for large language models, adhering strictly to Kubex principles.
@@ -90,11 +90,11 @@ const formatApiError = (error: any): string => {
 };
 
 
-export const generateStructuredPrompt = async (ideas: Idea[], purpose: string): Promise<PromptGenerationResult> => {
+export const generateStructuredPrompt = async (idea: Idea, purpose: string): Promise<PromptGenerationResult> => {
   if (!API_KEY) {
     // Mock response for environments without an API key
     await new Promise(resolve => setTimeout(resolve, 1500));
-    const ideasText = ideas.map((idea, index) => `- ${idea.text}`).join('\n');
+    const ideasText = idea.text;
     const mockPrompt = `
 **Persona:** You are a mock AI assistant.
 
@@ -131,7 +131,7 @@ ${purpose}
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
-      const metaPrompt = createMetaPrompt(ideas, purpose);
+      const metaPrompt = createMetaPrompt(idea, purpose);
       const response: GenerateContentResponse = await ai.models.generateContent({
         model: model,
         contents: metaPrompt,

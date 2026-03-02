@@ -1,4 +1,4 @@
-import { useAuthStore } from '../store/useAuthStore';
+import { useAuthStore } from '@/store/useAuthStore';
 
 export const useRBAC = () => {
   const { permissions, activeRoleCode } = useAuthStore();

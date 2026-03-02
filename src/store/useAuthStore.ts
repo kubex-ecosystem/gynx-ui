@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { AuthContext, Tenant } from '../types/auth';
+import { AuthContext, Tenant } from '@/types/auth';
 
 interface AuthStore extends AuthContext {
   login: (context: AuthContext) => void;

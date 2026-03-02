@@ -8,8 +8,8 @@ import {
   MultiAIWrapper as llm,
   MultiAIConfig,
   OpenAIModels
-} from "../core/llm";
-import { extractDiffFenced, pack } from "../utils/lookatni";
+} from "@/core/llm";
+import { extractDiffFenced, pack } from "@/utils/lookatni";
 
 /** Seleciona provider a partir do env sem travar UI */
 export function selectProvider(providers: string[], defaultProvider: string | null, isDemoMode: boolean): string | null {

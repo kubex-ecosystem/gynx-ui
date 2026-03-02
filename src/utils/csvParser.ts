@@ -1,4 +1,4 @@
-import { GNyxDataTable } from '../types';
+import { GNyxDataTable } from '@/types';
 
 // Robust CSV Parser
 export const parseCSV = (text: string): { headers: string[]; rows: Record<string, any>[] } => {

@@ -14,9 +14,9 @@ import {
   User,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import Card from "../components/ui/Card";
-import { AcceptInviteReq, InviteDTO } from "../types";
-import { validateInviteToken, acceptInvite } from "../services/inviteService";
+import Card from "@/components/ui/Card";
+import { AcceptInviteReq, InviteDTO } from "@/types";
+import { validateInviteToken, acceptInvite } from "@/services/inviteService";
 
 const AcceptInvite: React.FC = () => {
   const [token, setToken] = useState<string | null>(null);

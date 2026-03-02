@@ -23,10 +23,10 @@ import {
   Zap,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import Card from "../components/ui/Card";
-import { useTranslations } from "../i18n/useTranslations";
-import { unifiedAIService } from "../services/unifiedAIService";
-import { ProviderStatus, useProvidersStore } from "../store/useProvidersStore";
+import Card from "@/components/ui/Card";
+import { useTranslations } from "@/i18n/useTranslations";
+import { unifiedAIService } from "@/services/unifiedAIService";
+import { ProviderStatus, useProvidersStore } from "@/store/useProvidersStore";
 
 interface ProviderMeta {
   id: string;
@@ -170,7 +170,7 @@ const ProvidersSettings: React.FC = () => {
 
     setStatus(providerId, "TESTING");
     try {
-      const result = await unifiedAIService.testProvider(providerId, key);
+      const result = await unifiedAIService.testProvider(providerId);
       setStatus(providerId, result.available ? "READY" : "ERROR");
     } catch (err) {
       setStatus(providerId, "ERROR");
@@ -251,11 +251,10 @@ const ProvidersSettings: React.FC = () => {
             <button
               title={t("expertMode")}
               onClick={() => setExpertMode(!expertMode)}
-              className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${
-                expertMode
-                  ? "bg-accent-primary shadow-[0_0_15px_rgba(106,13,173,0.5)]"
-                  : "bg-surface-tertiary"
-              }`}
+              className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${expertMode
+                ? "bg-accent-primary shadow-[0_0_15px_rgba(106,13,173,0.5)]"
+                : "bg-surface-tertiary"
+                }`}
             >
               <motion.div
                 animate={{ x: expertMode ? 26 : 2 }}
@@ -271,11 +270,10 @@ const ProvidersSettings: React.FC = () => {
         {PROVIDERS_META.map((provider) => (
           <Card
             key={provider.id}
-            className={`p-6 bg-surface-primary/50 backdrop-blur-sm border-border-primary transition-all hover:border-accent-primary/30 group ${
-              globalDefault === provider.id
-                ? "ring-1 ring-accent-primary/50"
-                : ""
-            }`}
+            className={`p-6 bg-surface-primary/50 backdrop-blur-sm border-border-primary transition-all hover:border-accent-primary/30 group ${globalDefault === provider.id
+              ? "ring-1 ring-accent-primary/50"
+              : ""
+              }`}
           >
             <div className="flex items-start justify-between mb-6">
               <div className="flex items-center gap-3">
@@ -288,11 +286,10 @@ const ProvidersSettings: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <h3 className="font-bold text-primary">{provider.name}</h3>
                     <span
-                      className={`text-[8px] font-black px-1.5 py-0.5 rounded border ${
-                        provider.type === "CLOUD"
-                          ? "text-cyan-400 border-cyan-400/30 bg-cyan-400/5"
-                          : "text-purple-400 border-purple-400/30 bg-purple-400/5"
-                      }`}
+                      className={`text-[8px] font-black px-1.5 py-0.5 rounded border ${provider.type === "CLOUD"
+                        ? "text-cyan-400 border-cyan-400/30 bg-cyan-400/5"
+                        : "text-purple-400 border-purple-400/30 bg-purple-400/5"
+                        }`}
                     >
                       {provider.type}
                     </span>
@@ -303,11 +300,10 @@ const ProvidersSettings: React.FC = () => {
 
               <button
                 onClick={() => setGlobalDefault(provider.id)}
-                className={`p-2 rounded-lg transition-all ${
-                  globalDefault === provider.id
-                    ? "text-accent-primary bg-accent-muted shadow-sm"
-                    : "text-muted hover:text-primary hover:bg-surface-tertiary"
-                }`}
+                className={`p-2 rounded-lg transition-all ${globalDefault === provider.id
+                  ? "text-accent-primary bg-accent-muted shadow-sm"
+                  : "text-muted hover:text-primary hover:bg-surface-tertiary"
+                  }`}
                 title="Definir como padrão global"
               >
                 <Star

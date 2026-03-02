@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Terminal, Loader2, StopCircle } from 'lucide-react';
-import Card from '../ui/Card';
-import { streamChat } from '../../services/streamingService';
-import { useProvidersStore } from '../../store/useProvidersStore';
+import Card from '@/components/ui/Card';
+import { streamChat } from '@/services/streamingService';
+import { useProvidersStore } from '@/store/useProvidersStore';
 
 const Playground: React.FC = () => {
   const [prompt, setPrompt] = useState<string>('');
@@ -119,11 +119,10 @@ const Playground: React.FC = () => {
           <button
             onClick={handleSend}
             disabled={!prompt.trim() || isStreaming}
-            className={`absolute bottom-3 right-3 p-3 rounded-xl transition-all shadow-sm ${
-              !prompt.trim() || isStreaming
-                ? 'bg-surface-tertiary text-muted cursor-not-allowed'
-                : 'bg-accent-primary text-white hover:bg-accent-secondary hover:scale-105'
-            }`}
+            className={`absolute bottom-3 right-3 p-3 rounded-xl transition-all shadow-sm ${!prompt.trim() || isStreaming
+              ? 'bg-surface-tertiary text-muted cursor-not-allowed'
+              : 'bg-accent-primary text-white hover:bg-accent-secondary hover:scale-105'
+              }`}
           >
             {isStreaming ? <StopCircle size={18} /> : <Send size={18} />}
           </button>

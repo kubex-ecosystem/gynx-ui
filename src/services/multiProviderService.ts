@@ -4,7 +4,7 @@
  * Provides unified interface for all AI providers (OpenAI, Anthropic, Gemini)
  */
 
-import { MultiAIWrapper } from '../core/llm/wrapper/MultiAIWrapper'
+import { MultiAIWrapper } from '@/core/llm/wrapper/MultiAIWrapper'
 import {
   AIModel,
   AIProvider,
@@ -13,9 +13,9 @@ import {
   GeminiModels,
   MultiAIConfig,
   OpenAIModels
-} from '../types/common'
-import { GenerateRequest, GenerateResponse, Provider } from './api'
-import { enhancedAPI } from './enhancedAPI'
+} from '@/types/common'
+import { GenerateRequest, GenerateResponse, Provider } from '@/services/api'
+import { enhancedAPI } from '@/services/enhancedAPI'
 
 /**
  * Configuration for multi-provider service

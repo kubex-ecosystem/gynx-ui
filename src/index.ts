@@ -1,1 +1,1 @@
-export { default } from './PromptCrafter';
+export { default } from '@/components/features/PromptCrafter';

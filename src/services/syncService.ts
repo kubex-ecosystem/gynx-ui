@@ -1,4 +1,4 @@
-import { IntegrationConfig, SyncJob } from '../pages/DataSync';
+import { IntegrationConfig, SyncJob } from '@/pages/DataSync';
 
 const isSimulated = import.meta.env.VITE_SIMULATE_AUTH === 'true';
 

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Player } from '@lottiefiles/react-lottie-player';
 import { Settings, Save, RotateCcw, Building, Users, CreditCard, Shield, Zap, Globe, HardDrive } from 'lucide-react';
-import Card from '../components/ui/Card';
-import lottieAnimation from '../../public/imgs/banner_sm-01.json';
-import { useAuth } from '../context/AuthContext';
+import Card from '@/components/ui/Card';
+import lottieAnimation from '@public/imgs/banner_sm-01.json';
+import { useAuth } from '@/context/AuthContext';
+import LottieControl from '@/components/ui/Lottie';
 
 export default function WorkspaceSettings() {
     const { isSimulated } = useAuth();
@@ -24,6 +24,23 @@ export default function WorkspaceSettings() {
         await new Promise(r => setTimeout(r, 800));
         setSaving(false);
     };
+
+    const lottieControl = new LottieControl(
+        {
+            autoplay: true,
+            loop: true,
+            animationData: lottieAnimation,
+            rendererSettings: { preserveAspectRatio: 'xMidYMid slice' },
+            isStopped: false,
+            isPaused: false,
+            options: {
+                autoplay: true,
+                loop: true,
+                animationData: lottieAnimation,
+                rendererSettings: { preserveAspectRatio: 'xMidYMid slice' }
+            }
+        }
+    ).render()
 
     return (
         <div className="space-y-8 animate-fade-in relative">
@@ -67,13 +84,9 @@ export default function WorkspaceSettings() {
 
                     <div className="relative h-64 md:h-full min-h-[300px] flex items-center justify-center pointer-events-none p-6">
                         <div className="absolute inset-0 bg-gradient-to-l from-transparent via-surface-primary/10 to-surface-primary z-10 hidden md:block" />
-                        <Player
-                            autoplay
-                            loop
-                            src={lottieAnimation}
-                            style={{ height: '100%', width: '100%', filter: 'drop-shadow(0px 10px 30px rgba(168,85,247,0.3))' }}
-                            className="transform group-hover:scale-105 transition-transform duration-1000 ease-in-out"
-                        />
+                        {
+                            lottieControl
+                        }
                     </div>
                 </div>
             </Card>

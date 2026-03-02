@@ -1,75 +1,75 @@
 import { ChevronDown } from 'lucide-react';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { Language } from '@/types';
-import { LanguageContext } from '../../context/LanguageContext';
-import { useTranslations } from '../../i18n/useTranslations';
+import { LanguageContext } from '@/context/LanguageContext';
+import { useTranslations } from '@/i18n/useTranslations';
 
 const languageOptions: { code: Language; flag: React.ReactNode; }[] = [
- { code: 'en', flag: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 48"><path fill="#bd3d44" d="M0 0h640v480H0" /><path d="M0 55.3h640M0 129h640M0 203h640M0 277h640M0 351h640M0 425h640" /><path fill="#192f5d" d="M0 0h364.8v258.5H0" /><path fill="#fff" d="m14 0 9 27L0 10h28L5 27z" /><path fill="none" d="m0 0 16 11h61 61 61 61 60L47 37h61 61 60 61L16 63h61 61 61 61 60L47 89h61 61 60 61L16 115h61 61 61 61 60L47 141h61 61 60 61L16 166h61 61 61 61 60L47 192h61 61 60 61L16 218h61 61 61 61 60z" /></svg> },
- { code: 'pt', flag: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 48"><path fill="#009b3a" d="M0 0h72v48H0z" /><path fill="#ffdf00" d="m36 6 22 18-22 18-22-18z" /><path fill="#002776" d="M36 33a9 9 0 1 0 0-18 9 9 0 0 0 0 18z" /><path fill="#fff" d="M26 23.5a16 16 0 0 1 20 1v-2a18 18 0 0 0-20-1z" /></svg> },
+    { code: 'en', flag: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 48"><path fill="#bd3d44" d="M0 0h640v480H0" /><path d="M0 55.3h640M0 129h640M0 203h640M0 277h640M0 351h640M0 425h640" /><path fill="#192f5d" d="M0 0h364.8v258.5H0" /><path fill="#fff" d="m14 0 9 27L0 10h28L5 27z" /><path fill="none" d="m0 0 16 11h61 61 61 61 60L47 37h61 61 60 61L16 63h61 61 61 61 60L47 89h61 61 60 61L16 115h61 61 61 61 60L47 141h61 61 60 61L16 166h61 61 61 61 60L47 192h61 61 60 61L16 218h61 61 61 61 60z" /></svg> },
+    { code: 'pt', flag: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 48"><path fill="#009b3a" d="M0 0h72v48H0z" /><path fill="#ffdf00" d="m36 6 22 18-22 18-22-18z" /><path fill="#002776" d="M36 33a9 9 0 1 0 0-18 9 9 0 0 0 0 18z" /><path fill="#fff" d="M26 23.5a16 16 0 0 1 20 1v-2a18 18 0 0 0-20-1z" /></svg> },
 ];
 
 const LanguageSelector: React.FC = () => {
- const { language, setLanguage } = useContext(LanguageContext);
- const { t } = useTranslations();
- const [isOpen, setIsOpen] = useState(false);
- const dropdownRef = useRef<HTMLDivElement>(null);
+    const { language, setLanguage } = useContext(LanguageContext);
+    const { t } = useTranslations();
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
- const currentLanguage = languageOptions.find(lang => lang.code === language) || languageOptions[0];
+    const currentLanguage = languageOptions.find(lang => lang.code === language) || languageOptions[0];
 
- useEffect(() => {
- const handleClickOutside = (event: MouseEvent) => {
- if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
- setIsOpen(false);
- }
- };
- document.addEventListener("mousedown", handleClickOutside);
- return () => document.removeEventListener("mousedown", handleClickOutside);
- }, []);
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
- const handleSelectLanguage = (langCode: Language) => {
- setLanguage(langCode);
- setIsOpen(false);
- };
+    const handleSelectLanguage = (langCode: Language) => {
+        setLanguage(langCode);
+        setIsOpen(false);
+    };
 
- return (
- <div className="relative" ref={dropdownRef}>
- <button
- type="button"
- title={t('lang_' + currentLanguage.code)}
- onClick={() => setIsOpen(!isOpen)}
- className="flex items-center gap-2 rounded-full border border-[#e2e8f0] bg-surface-secondary/80 p-2 transition-colors duration-200 hover:bg-[#ecfeff] border-border-primary bg-surface-primary dark:hover:bg-[#1b2534]"
- aria-haspopup="true"
- aria-expanded={isOpen}
- aria-label="Select language"
- >
- <div className="w-6 h-6 rounded-full overflow-hidden">{currentLanguage.flag}</div>
- <span className="text-sm font-semibold uppercase text-secondary text-primary">{currentLanguage.code}</span>
- <ChevronDown size={16} className={`text-muted dark:text-secondary transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
- </button>
- {isOpen && (
- <div
- className="absolute right-0 top-full z-50 mt-2 w-48 rounded-lg border border-[#e2e8f0] bg-surface-secondary/90 py-1 backdrop-blur-md shadow-md border-border-primary bg-surface-primary/85"
- role="menu"
- >
- {languageOptions.map(lang => (
- <button
- type="button"
- title={t('lang_' + lang.code)}
- key={lang.code}
- onClick={() => handleSelectLanguage(lang.code)}
- className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-secondary transition-colors duration-150 hover:bg-[#ecfeff] disabled:text-muted text-primary dark:hover:bg-[#1b2534]"
- role="menuitem"
- disabled={language === lang.code}
- >
- <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0">{lang.flag}</div>
- <span>{t(`lang_${lang.code}`)}</span>
- </button>
- ))}
- </div>
- )}
- </div>
- );
+    return (
+        <div className="relative" ref={dropdownRef}>
+            <button
+                type="button"
+                title={t('lang_' + currentLanguage.code)}
+                onClick={() => setIsOpen(!isOpen)}
+                className="flex items-center gap-2 rounded-full border border-[#e2e8f0] bg-surface-secondary/80 p-2 transition-colors duration-200 hover:bg-[#ecfeff] border-border-primary bg-surface-primary dark:hover:bg-[#1b2534]"
+                aria-haspopup="true"
+                aria-expanded={isOpen}
+                aria-label="Select language"
+            >
+                <div className="w-6 h-6 rounded-full overflow-hidden">{currentLanguage.flag}</div>
+                <span className="text-sm font-semibold uppercase text-secondary text-primary">{currentLanguage.code}</span>
+                <ChevronDown size={16} className={`text-muted dark:text-secondary transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {isOpen && (
+                <div
+                    className="absolute right-0 top-full z-50 mt-2 w-48 rounded-lg border border-[#e2e8f0] bg-surface-secondary/90 py-1 backdrop-blur-md shadow-md border-border-primary bg-surface-primary/85"
+                    role="menu"
+                >
+                    {languageOptions.map(lang => (
+                        <button
+                            type="button"
+                            title={t('lang_' + lang.code)}
+                            key={lang.code}
+                            onClick={() => handleSelectLanguage(lang.code)}
+                            className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-secondary transition-colors duration-150 hover:bg-[#ecfeff] disabled:text-muted text-primary dark:hover:bg-[#1b2534]"
+                            role="menuitem"
+                            disabled={language === lang.code}
+                        >
+                            <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0">{lang.flag}</div>
+                            <span>{t(`lang_${lang.code}`)}</span>
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
 };
 
 export default LanguageSelector;

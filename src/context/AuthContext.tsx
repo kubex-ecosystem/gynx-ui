@@ -19,7 +19,9 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // FLAG PARA SIMULAÇÃO (Pode ser lida de env futuramente)
-const SIMULATE_AUTH = import.meta.env.VITE_SIMULATE_AUTH === 'true';
+const DEMO_MODE = (
+  (process.env.DEMO_MODE || process.env.VITE_DEMO_MODE || import.meta.env.VITE_DEMO_MODE) === 'true'
+)
 const ACCESS_TOKEN_KEY = 'gnyx_access_token';
 const REFRESH_TOKEN_KEY = 'gnyx_refresh_token';
 
@@ -30,7 +32,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     const initAuth = async () => {
       try {
-        if (SIMULATE_AUTH) {
+        if (DEMO_MODE) {
           const token = Cookies.get(ACCESS_TOKEN_KEY);
           if (token) {
             setUser({ id: '1', email: 'rafael@kubex.world', name: 'Rafael Mori' });
@@ -60,7 +62,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      if (SIMULATE_AUTH) {
+      if (DEMO_MODE) {
         // Simular delay de rede
         await new Promise(resolve => setTimeout(resolve, 800));
 
@@ -101,7 +103,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const logout = async () => {
-    if (SIMULATE_AUTH) {
+    if (DEMO_MODE) {
       Cookies.remove(ACCESS_TOKEN_KEY);
       Cookies.remove(REFRESH_TOKEN_KEY);
     } else {
@@ -122,7 +124,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       isLoading,
       login,
       logout,
-      isSimulated: SIMULATE_AUTH
+      isSimulated: DEMO_MODE
     }}>
       {children}
     </AuthContext.Provider>

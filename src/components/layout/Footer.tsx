@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTranslations } from '../../i18n/useTranslations';
+import { useTranslations } from '@/i18n/useTranslations';
 
 const Footer: React.FC = () => {
     const { t } = useTranslations();

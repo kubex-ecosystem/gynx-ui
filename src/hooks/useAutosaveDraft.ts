@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Idea } from '@/types';
-import { getDraft, saveDraft } from '../services/storageService';
+import { getDraft, saveDraft } from '@/services/storageService';
 
 export const useAutosaveDraft = () => {
     const [ideas, setIdeas] = useState<Idea[]>([]);

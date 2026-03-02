@@ -1,11 +1,12 @@
 import { Info, Settings, X } from "lucide-react";
 import * as React from "react";
-import IdeasInput from "../components/ideas/IdeasInput";
-import IdeasList from "../components/ideas/IdeasList";
-import OutputPanel from "../components/settings/OutputPanel";
-import { DemoMode } from "../config/demoMode";
-import { useGromptAPI } from "../hooks/useGromptAPI";
-import { AgentFramework, Purpose } from "../hooks/usePromptCrafter";
+import IdeasInput from "@/components/ideas/IdeasInput";
+import IdeasList from "@/components/ideas/IdeasList";
+import OutputPanel from "@/components/settings/OutputPanel";
+import { DemoMode } from "@/config/demoMode";
+import { useGromptAPI } from "@/hooks/useGromptAPI";
+import { AgentFramework, Purpose } from "@/hooks/usePromptCrafter";
+import { Ideas } from "@/types";
 
 interface Theme {
   [key: string]: string;
@@ -21,11 +22,11 @@ const {
 
 interface AgentManagementScreenProps {
   // Ideas state
-  currentInput: { id: string; text: string; timestamp: Date };
+  currentInput: Ideas;
   setCurrentInput: (
-    value: { id: string; text: string; timestamp: Date },
+    value: Ideas,
   ) => void;
-  ideas: Array<{ id: string; text: string; timestamp: Date }>;
+  ideas: Ideas;
   editingId: string | null;
   editingText: string;
   setEditingText: (value: string) => void;
@@ -54,7 +55,7 @@ interface AgentManagementScreenProps {
   copied: boolean;
 
   // Actions
-  addIdea: (text: { id: string; text: string; timestamp: Date }) => void;
+  addIdea: (value: Ideas) => void;
   removeIdea: (id: string) => void;
   startEditing: (id: string, text: string) => void;
   saveEdit: () => void;
@@ -114,6 +115,7 @@ const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
   apiGenerateState,
   apiRateLimitState,
   apiHealthState,
+  apiProviders,
 }) => {
   // Modal states
   const [showConfigModal, setShowConfigModal] = React.useState(false);
@@ -177,7 +179,7 @@ const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
       const demoResult = DemoMode.handleDemoCall("mcp_real");
       alert(
         "🔌 " + serverName + "\n\n" + demoResult.message + "\n\nETA: " +
-          demoResult.eta,
+        demoResult.eta,
       );
       return;
     }
@@ -194,7 +196,7 @@ const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
         const demoResult = DemoMode.handleDemoCall("mcp_real");
         alert(
           "🔌 Servidor MCP Customizado\n\n" + demoResult.message + "\n\nETA: " +
-            demoResult.eta,
+          demoResult.eta,
         );
         return;
       }
@@ -304,11 +306,10 @@ const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
                       <button
                         key={option}
                         onClick={() => setPurpose(option)}
-                        className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
-                          purpose === option
-                            ? "bg-purple-600 text-white border-purple-600"
-                            : "bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
-                        }`}
+                        className={`px-3 py-2 rounded-lg text-sm border transition-colors ${purpose === option
+                          ? "bg-purple-600 text-white border-purple-600"
+                          : "bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                          }`}
                       >
                         {option}
                       </button>
@@ -430,10 +431,9 @@ const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
                         availableProviders.map((provider) => (
                           <option key={provider.name} value={provider.name}>
                             {provider.available
-                              ? `${provider.name} ${
-                                provider.defaultModel
-                                  ? `(${provider.defaultModel})`
-                                  : ""
+                              ? `${provider.name} ${provider.defaultModel
+                                ? `(${provider.defaultModel})`
+                                : ""
                               }`
                               : `${provider.name} (Indisponível)`}
                           </option>
@@ -489,11 +489,10 @@ const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
                   <button
                     key={tool}
                     onClick={() => handleToolToggle(tool)}
-                    className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
-                      agentTools.includes(tool)
-                        ? "bg-teal-600 text-white border-teal-600"
-                        : "bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
-                    }`}
+                    className={`px-3 py-2 rounded-lg text-sm border transition-colors ${agentTools.includes(tool)
+                      ? "bg-teal-600 text-white border-teal-600"
+                      : "bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                      }`}
                   >
                     {tool}
                   </button>
@@ -542,11 +541,10 @@ const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
                   <button
                     key={server.name}
                     onClick={() => handleMcpServerToggle(server.name)}
-                    className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
-                      mcpServers.includes(server.name)
-                        ? "bg-purple-600 text-white border-purple-600"
-                        : "bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
-                    }`}
+                    className={`px-3 py-2 rounded-lg text-sm border transition-colors ${mcpServers.includes(server.name)
+                      ? "bg-purple-600 text-white border-purple-600"
+                      : "bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                      }`}
                     title={server.desc + " (demo)"}
                   >
                     {server.desc} 🎪
