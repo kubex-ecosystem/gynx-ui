@@ -1,6 +1,8 @@
 // Configuration service for Grompt frontend
 // Handles communication with backend /api/v1/config endpoint
 
+import { httpClient } from "@/core/http/client";
+
 export type ProviderStatus = 'ready' | 'needs_api_key' | 'offline';
 export type ProviderMode = 'server' | 'byok' | 'demo' | 'offline';
 
@@ -136,18 +138,7 @@ class ConfigService {
     }
 
     try {
-      const response = await fetch('/api/v1/config', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Config fetch failed: ${response.statusText}`);
-      }
-
-      const config: ServerConfig = await response.json();
+      const config = await httpClient.get<ServerConfig>('/config');
 
       // Cache the result
       this.cache.set(cacheKey, {
@@ -204,22 +195,13 @@ class ConfigService {
    */
   async updateProviderConfig(provider: string, apiKey: string): Promise<boolean> {
     try {
-      const response = await fetch('/api/v1/config', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      await httpClient.post('/config', {
           [`${provider}_api_key`]: apiKey,
-        }),
       });
 
-      if (response.ok) {
-        // Clear cache to force refresh
-        this.cache.clear();
-        return true;
-      }
-      return false;
+      // Clear cache to force refresh
+      this.cache.clear();
+      return true;
     } catch (error) {
       console.error('Failed to update provider config:', error);
       return false;

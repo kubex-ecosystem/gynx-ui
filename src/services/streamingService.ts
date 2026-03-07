@@ -1,4 +1,5 @@
 import { useProvidersStore } from '@/store/useProvidersStore';
+import { httpClient } from '@/core/http/client';
 
 export interface StreamCallbacks {
   onChunk: (text: string) => void;
@@ -15,23 +16,22 @@ export const streamChat = async (
   const apiKey = store.getDecryptedKey(provider);
 
   try {
-    const response = await fetch('/api/v1/unified/stream', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(apiKey ? { 'x-api-key': apiKey } : {}),
-      },
-      body: JSON.stringify({
+    const response = await httpClient.post<Response, { prompt: string; provider: string }>(
+      '/unified/stream',
+      {
         prompt,
         provider,
-      }),
-      credentials: 'omit', // Ou 'include' se usar cookies de sessão
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`API Error ${response.status}: ${errorText}`);
-    }
+      },
+      {
+        parseAs: 'response',
+        timeoutMs: 300000,
+        credentials: 'omit', // Ou 'include' se usar cookies de sessão
+        headers: {
+          'Content-Type': 'application/json',
+          ...(apiKey ? { 'x-api-key': apiKey } : {}),
+        },
+      }
+    );
 
     if (!response.body) {
       throw new Error('ReadableStream not supported in this browser.');

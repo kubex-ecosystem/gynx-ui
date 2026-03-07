@@ -2,6 +2,7 @@
 // Communicates with backend's unified API endpoints
 
 import { Ideas } from '@/types';
+import { HttpError, httpClient } from '@/core/http/client';
 import { configService, type ProviderInfo, type ServerConfig } from '@/services/configService';
 
 export interface UnifiedRequest {
@@ -42,7 +43,30 @@ export interface GenerationResult {
 }
 
 class UnifiedAIService {
-  private baseUrl = '';
+  private readonly unifiedEndpoint = '/unified';
+  private readonly providerTestEndpoint = '/test';
+
+  private buildHeaders(apiKey?: string): Record<string, string> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    if (apiKey) {
+      headers['X-API-Key'] = apiKey;
+    }
+
+    return headers;
+  }
+
+  private getErrorMessage(error: unknown): string {
+    if (error instanceof HttpError) {
+      return error.message || `HTTP ${error.status}: ${error.statusText}`;
+    }
+    if (error instanceof Error) {
+      return error.message;
+    }
+    return String(error);
+  }
 
   /**
    * Generate a structured prompt using backend's unified API
@@ -83,29 +107,12 @@ class UnifiedAIService {
         max_tokens: 5000,
       };
 
-      // Prepare headers with BYOK support
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-
-      // BYOK Support: Add external API key if provided
-      if (apiKey) {
-        headers['X-API-Key'] = apiKey;
-      }
-
-      // Call unified API
-      const response = await fetch('/api/v1/unified', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(request),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`API Error ${response.status}: ${errorText}`);
-      }
-
-      const data: UnifiedResponse = await response.json();
+      // Call unified API through centralized HTTP client
+      const data = await httpClient.post<UnifiedResponse, UnifiedRequest>(
+        this.unifiedEndpoint,
+        request,
+        { headers: this.buildHeaders(apiKey) }
+      );
 
       // Transform response to match expected format
       return {
@@ -158,31 +165,14 @@ class UnifiedAIService {
         max_tokens: maxTokens,
       };
 
-      // Prepare headers with BYOK support
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-
-      // BYOK Support: Add external API key if provided
-      if (apiKey) {
-        headers['X-API-Key'] = apiKey;
-      }
-
-      const response = await fetch('/api/v1/unified', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(request),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`API Error ${response.status}: ${errorText}`);
-      }
-
-      return await response.json();
+      return await httpClient.post<UnifiedResponse, UnifiedRequest>(
+        this.unifiedEndpoint,
+        request,
+        { headers: this.buildHeaders(apiKey) }
+      );
     } catch (error) {
       console.error('Failed to generate direct prompt:', error);
-      throw error;
+      throw new Error(this.getErrorMessage(error));
     }
   }
 
@@ -205,18 +195,10 @@ class UnifiedAIService {
    */
   async testProvider(provider: string): Promise<{ available: boolean; message: string }> {
     try {
-      const response = await fetch(`/api/v1/test?provider=${provider}`, {
-        method: 'GET',
-      });
-
-      if (!response.ok) {
-        return {
-          available: false,
-          message: `HTTP ${response.status}: ${response.statusText}`,
-        };
-      }
-
-      const data = await response.json();
+      const data = await httpClient.get<{ available?: boolean; message?: string }>(
+        this.providerTestEndpoint,
+        { query: { provider } }
+      );
       return {
         available: data.available || false,
         message: data.message || 'Unknown status',
@@ -224,7 +206,7 @@ class UnifiedAIService {
     } catch (error) {
       return {
         available: false,
-        message: `Connection error: ${error}`,
+        message: `Connection error: ${this.getErrorMessage(error)}`,
       };
     }
   }
