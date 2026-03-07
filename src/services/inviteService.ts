@@ -1,6 +1,21 @@
 import { AcceptInviteReq, InviteDTO } from '@/types';
+import { HttpError, httpClient } from '@/core/http/client';
 
 const isSimulated = import.meta.env.VITE_SIMULATE_AUTH === 'true';
+
+const getErrorMessage = (error: unknown, fallback: string): string => {
+    if (error instanceof HttpError) {
+        const data = error.data as Record<string, unknown> | undefined;
+        if (typeof data?.message === 'string' && data.message.length > 0) {
+            return data.message;
+        }
+        return error.message || fallback;
+    }
+    if (error instanceof Error && error.message) {
+        return error.message;
+    }
+    return fallback;
+};
 
 export const validateInviteToken = async (token: string): Promise<InviteDTO> => {
     if (isSimulated) {
@@ -25,17 +40,15 @@ export const validateInviteToken = async (token: string): Promise<InviteDTO> => 
         };
     }
 
-    const response = await fetch(`/api/v1/invites/validate?token=${encodeURIComponent(token)}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-    });
-
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Falha ao validar convite. Ele pode ser inválido ou expirado.');
+    try {
+        return await httpClient.get<InviteDTO>('/invites/validate', {
+            query: { token },
+        });
+    } catch (error) {
+        throw new Error(
+            getErrorMessage(error, 'Falha ao validar convite. Ele pode ser inválido ou expirado.')
+        );
     }
-
-    return response.json();
 };
 
 export const acceptInvite = async (token: string, data: AcceptInviteReq): Promise<void> => {
@@ -44,14 +57,15 @@ export const acceptInvite = async (token: string, data: AcceptInviteReq): Promis
         return;
     }
 
-    const response = await fetch('/api/v1/invites/accept', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, ...data })
-    });
-
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Erro ao processar seu cadastro. Tente novamente.');
+    try {
+        await httpClient.post<void, AcceptInviteReq & { token: string }>(
+            '/invites/accept',
+            { token, ...data },
+            { parseAs: 'void' }
+        );
+    } catch (error) {
+        throw new Error(
+            getErrorMessage(error, 'Erro ao processar seu cadastro. Tente novamente.')
+        );
     }
 };

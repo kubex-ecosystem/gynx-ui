@@ -4,6 +4,8 @@
  * Following backend endpoint structure from internal/gateway/transport/grompt_v1.go
  */
 
+import { HttpError, httpClient, type HttpMethod } from '../core/http/client';
+
 export interface GenerateRequest {
   provider: string;
   model?: string;
@@ -183,38 +185,42 @@ export class GromptAPI {
     this.checkRateLimit();
 
     const url = `${this.baseURL}/v1${endpoint}`;
-    const config: RequestInit = {
-      ...options,
-      headers: {
-        ...this.defaultHeaders,
-        ...options.headers
-      }
-    };
+    const method = (options.method?.toUpperCase() || 'GET') as HttpMethod;
+    const mergedHeaders = new Headers(this.defaultHeaders);
+    if (options.headers) {
+      new Headers(options.headers).forEach((value, key) => mergedHeaders.set(key, value));
+    }
+
+    const {
+      method: _ignoredMethod,
+      headers: _ignoredHeaders,
+      signal: requestSignal,
+      ...requestOptions
+    } = options;
 
     try {
-      const response = await fetch(url, config);
+      return await httpClient.request<T>(method, url, {
+        ...requestOptions,
+        headers: mergedHeaders,
+        signal: requestSignal ?? undefined,
+        useBaseURL: false
+      });
+    } catch (error) {
+      if (error instanceof HttpError) {
+        const dataAsRecord = error.data && typeof error.data === 'object'
+          ? (error.data as Record<string, any>)
+          : undefined;
+        const errorMessage = typeof dataAsRecord?.message === 'string'
+          ? dataAsRecord.message
+          : error.message;
+        const errorCode = typeof dataAsRecord?.error === 'string'
+          ? dataAsRecord.error
+          : error.code || (error.status === 0 ? 'NETWORK_ERROR' : 'HTTP_ERROR');
+        const errorDetails = dataAsRecord?.details ?? error.data;
 
-      if (!response.ok) {
-        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-        let errorCode = 'HTTP_ERROR';
-        let errorDetails: any = undefined;
-
-        try {
-          const errorData = await response.json();
-          if (errorData.error) {
-            errorMessage = errorData.message || errorData.error;
-            errorCode = errorData.error;
-            errorDetails = errorData.details;
-          }
-        } catch {
-          // Fallback to status text if JSON parsing fails
-        }
-
-        throw new APIError(errorMessage, response.status, errorCode, errorDetails);
+        throw new APIError(errorMessage, error.status, errorCode, errorDetails);
       }
 
-      return await response.json();
-    } catch (error) {
       if (error instanceof APIError) {
         throw error;
       }

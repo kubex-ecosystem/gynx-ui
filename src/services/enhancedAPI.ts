@@ -4,7 +4,8 @@
  */
 
 import { openDB, type IDBPDatabase } from 'idb';
-import { Provider } from './api';
+import { httpClient, type HttpMethod, type QueryValue } from '../core/http/client';
+import type { Provider } from './api';
 import { multiProviderService } from './multiProviderService';
 
 // Re-export existing types
@@ -270,6 +271,30 @@ export class EnhancedGromptAPI {
     });
   };
 
+  private resolveEndpoint(endpoint: string): string {
+    if (!this.baseURL) return endpoint;
+
+    const normalizedBase = this.baseURL.replace(/\/+$/, '');
+    const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    return `${normalizedBase}${normalizedEndpoint}`;
+  }
+
+  private async httpRequest<TResponse = unknown, TBody = unknown>(
+    method: HttpMethod,
+    endpoint: string,
+    options: {
+      body?: TBody;
+      headers?: HeadersInit;
+      query?: Record<string, QueryValue>;
+      parseAs?: 'json' | 'text' | 'blob' | 'arrayBuffer' | 'void' | 'response';
+    } = {}
+  ): Promise<TResponse> {
+    return httpClient.request<TResponse, TBody>(method, this.resolveEndpoint(endpoint), {
+      ...options,
+      useBaseURL: false
+    });
+  }
+
   // Enhanced API methods with offline fallbacks
 
   async generatePrompt(request: any): Promise<any> {
@@ -342,12 +367,7 @@ export class EnhancedGromptAPI {
     }
 
     try {
-      const response = await fetch(`${this.baseURL}/v1/providers`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
+      const result = await this.httpRequest<{ data?: Provider[] }>('GET', '/v1/providers');
       const providers = result.data || [];
 
       this.setCachedData(cacheKey, providers);
@@ -370,12 +390,7 @@ export class EnhancedGromptAPI {
     }
 
     try {
-      const response = await fetch(`${this.baseURL}/healthz`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const healthz = await response.json();
+      const healthz = await this.httpRequest<any>('GET', '/healthz');
       this.setCachedData(cacheKey, healthz);
       await this.storeHealth(healthz);
 
@@ -397,19 +412,16 @@ export class EnhancedGromptAPI {
       return await this.getOfflineScorecard(request);
     }
 
+    const scorecardQuery = {
+      repo: request.repo,
+      ...(request.period && { period: request.period.toString() }),
+      ...(request.user && { user: request.user }),
+    };
+
     try {
-      const params = new URLSearchParams({
-        repo: request.repo,
-        ...(request.period && { period: request.period.toString() }),
-        ...(request.user && { user: request.user }),
+      const scorecard = await this.httpRequest<ScorecardResponse>('GET', '/api/v1/scorecard', {
+        query: scorecardQuery
       });
-
-      const response = await fetch(`${this.baseURL}/api/v1/scorecard?${params}`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const scorecard: ScorecardResponse = await response.json();
       this.setCachedData(cacheKey, scorecard);
       await this.storeScorecard(request.repo, scorecard);
 
@@ -417,11 +429,8 @@ export class EnhancedGromptAPI {
     } catch (error) {
       console.error('Get scorecard error:', error);
       if (this.isOnline) {
-        await this.queueOfflineRequest('GET', `/api/v1/scorecard?${new URLSearchParams({
-          repo: request.repo,
-          ...(request.period && { period: request.period.toString() }),
-          ...(request.user && { user: request.user }),
-        })}`);
+        const query = new URLSearchParams(scorecardQuery).toString();
+        await this.queueOfflineRequest('GET', `/api/v1/scorecard?${query}`);
       }
       return await this.getOfflineScorecard(request);
     }
@@ -433,17 +442,10 @@ export class EnhancedGromptAPI {
     }
 
     try {
-      const response = await fetch(`${this.baseURL}/api/v1/scorecard/advice`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(request),
+      return await this.httpRequest<any, ScorecardAdviceRequest>('POST', '/api/v1/scorecard/advice', {
+        body: request,
+        headers: { 'Content-Type': 'application/json' }
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
     } catch (error) {
       console.error('Get scorecard advice error:', error);
       if (this.isOnline) {
@@ -453,7 +455,7 @@ export class EnhancedGromptAPI {
     }
   }
 
-  async getAIMetrics(request: ScorecardRequest, params: any): Promise<AIMetricsResponse> {
+  async getAIMetrics(request: ScorecardRequest, _params: any): Promise<AIMetricsResponse> {
     const cacheKey = `ai_metrics_${request.repo}_${request.period}`;
     const cached = await this.getCachedData<AIMetricsResponse>(cacheKey);
     if (cached) return cached;
@@ -462,19 +464,16 @@ export class EnhancedGromptAPI {
       return await this.getOfflineAIMetrics(request);
     }
 
+    const metricsQuery = {
+      repo: request.repo,
+      ...(request.period && { period: request.period.toString() }),
+      ...(request.user && { user: request.user }),
+    };
+
     try {
-      const params = new URLSearchParams({
-        repo: request.repo,
-        ...(request.period && { period: request.period.toString() }),
-        ...(request.user && { user: request.user }),
+      const metrics = await this.httpRequest<AIMetricsResponse>('GET', '/api/v1/metrics/ai', {
+        query: metricsQuery
       });
-
-      const response = await fetch(`${this.baseURL}/api/v1/metrics/ai?${params}`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const metrics: AIMetricsResponse = await response.json();
       this.setCachedData(cacheKey, metrics);
       await this.storeAIMetrics(request.repo, metrics);
 
@@ -482,7 +481,8 @@ export class EnhancedGromptAPI {
     } catch (error) {
       console.error('Get AI metrics error:', error);
       if (this.isOnline) {
-        await this.queueOfflineRequest('GET', `/api/v1/metrics/ai?${params}`);
+        const query = new URLSearchParams(metricsQuery).toString();
+        await this.queueOfflineRequest('GET', `/api/v1/metrics/ai?${query}`);
       }
       return await this.getOfflineAIMetrics(request);
     }
@@ -808,18 +808,14 @@ Formate sua resposta como um plano de ação detalhado.`
         }
 
         try {
-          const response = await fetch(`${this.baseURL}${item.endpoint}`, {
-            method: item.method,
+          await this.httpRequest<void, unknown>((item.method.toUpperCase() || 'GET') as HttpMethod, item.endpoint, {
             headers: { 'Content-Type': 'application/json' },
-            ...(item.body && { body: JSON.stringify(item.body) })
+            ...(item.body !== undefined && { body: item.body }),
+            parseAs: 'void'
           });
 
-          if (response.ok) {
-            await db.delete('offline_queue', item.id!);
-            console.log(`Synced offline request: ${item.method} ${item.endpoint}`);
-          } else {
-            throw new Error(`HTTP ${response.status}`);
-          }
+          await db.delete('offline_queue', item.id!);
+          console.log(`Synced offline request: ${item.method} ${item.endpoint}`);
         } catch (error) {
           console.warn(`Failed to sync offline request: ${item.method} ${item.endpoint}`, error);
           await db.put('offline_queue', {

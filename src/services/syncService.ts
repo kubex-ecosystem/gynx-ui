@@ -1,4 +1,5 @@
 import { IntegrationConfig, SyncJob } from '@/pages/DataSync';
+import { httpClient } from '@/core/http/client';
 
 const isSimulated = import.meta.env.VITE_SIMULATE_AUTH === 'true';
 
@@ -74,9 +75,9 @@ export const getIntegrationConfigs = async (): Promise<IntegrationConfig[]> => {
         return mockConnections;
     }
 
-    const response = await fetch('/api/v1/integrations', { credentials: 'include' });
-    if (!response.ok) throw new Error('Falha ao buscar integrações');
-    return response.json();
+    return httpClient.get<IntegrationConfig[]>('/integrations', {
+        credentials: 'include',
+    });
 };
 
 export const getSyncJobs = async (): Promise<SyncJob[]> => {
@@ -85,7 +86,7 @@ export const getSyncJobs = async (): Promise<SyncJob[]> => {
         return mockCronjobs;
     }
 
-    const response = await fetch('/api/v1/sync-jobs', { credentials: 'include' });
-    if (!response.ok) throw new Error('Falha ao buscar Cronjobs de sincronização');
-    return response.json();
+    return httpClient.get<SyncJob[]>('/sync-jobs', {
+        credentials: 'include',
+    });
 };

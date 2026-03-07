@@ -17,6 +17,7 @@ import * as React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "@/i18n/useTranslations";
 import { pack } from "@/utils/lookatni";
+import { httpClient } from "@/core/http/client";
 
 /* ========= Types (mantidos / estendidos) ========= */
 
@@ -356,27 +357,27 @@ export default function ProjectExtractor(
           ? projectFile
           : `./${projectFile}`;
 
-      const response = await fetch("/api/v1/lookatni/extract", {
-        method: "POST",
-        signal: ctrl.signal,
-        headers: {
-          "Content-Type": "application/json",
-          "x-kubex-client": "grompt/pe",
-        },
-        body: JSON.stringify({
+      const raw = await httpClient.post<LookAtniExtractedProject, {
+        local_path: string;
+        fragment_by: string;
+        context_depth: number;
+        include_hidden: boolean;
+      }>(
+        "/lookatni/extract",
+        {
           local_path: localPath,
           fragment_by: "file",
           context_depth: 2,
           include_hidden: false,
-        }),
-      });
-
-      if (!response.ok) {
-        const message = await response.text();
-        throw new Error(message || "Falha na extração");
-      }
-
-      const raw: LookAtniExtractedProject = await response.json();
+        },
+        {
+          signal: ctrl.signal,
+          headers: {
+            "Content-Type": "application/json",
+            "x-kubex-client": "grompt/pe",
+          },
+        }
+      );
       setExtractedProject(raw);
 
       const normalized = normalizeExtractedProject(raw);
@@ -520,20 +521,16 @@ export default function ProjectExtractor(
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch("/api/v1/lookatni/archive", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-kubex-client": "grompt/pe",
-        },
-        body: JSON.stringify(extractedProject),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Falha no download (${response.status})`);
-      }
-
-      const result: LookAtniArchiveResponse = await response.json();
+      const result = await httpClient.post<LookAtniArchiveResponse, LookAtniExtractedProject>(
+        "/lookatni/archive",
+        extractedProject,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "x-kubex-client": "grompt/pe",
+          },
+        }
+      );
       const downloadUrl = result.download_url || result.archive_path;
 
       if (!downloadUrl) {

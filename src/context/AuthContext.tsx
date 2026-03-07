@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import Cookies from 'js-cookie';
+import { httpClient } from '@/core/http/client';
 
 interface User {
   id: string;
@@ -52,15 +53,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           return;
         } else {
           // Real backend session validation using HttpOnly cookies
-          const response = await fetch('/api/v1/me', {
-            method: 'GET',
-            credentials: 'include'
-          });
-
-          if (response.ok) {
-            const userData = await response.json();
-            setUser({ id: userData.id, email: userData.email, name: userData.name || userData.email.split('@')[0] });
-          }
+          const userData = await httpClient.get<{ id: string; email: string; name?: string }>(
+            '/me',
+            { credentials: 'include' }
+          );
+          setUser({ id: userData.id, email: userData.email, name: userData.name || userData.email.split('@')[0] });
         }
       } catch (error) {
         console.error("Falha ao validar sessão", error);
@@ -89,23 +86,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         Cookies.set(REFRESH_TOKEN_KEY, mockResponse.refresh_token, { expires: 30, secure: true, sameSite: 'strict' });
         setUser(mockResponse.user);
       } else {
-        const response = await fetch('/api/v1/auth/sign-in', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        await httpClient.post<void, { email: string; password: string }>(
+          '/auth/sign-in',
+          { email, password },
+          {
           credentials: 'include',
-          body: JSON.stringify({ email, password }),
-        });
-
-        if (!response.ok) throw new Error('Credenciais inválidas');
+          parseAs: 'void',
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
 
         // With HttpOnly cookies, the browser handles the cookies automatically!
         // We just fetch the user profile right after successful login
-        const meResponse = await fetch('/api/v1/me', { method: 'GET', credentials: 'include' });
-
-        if (meResponse.ok) {
-          const userData = await meResponse.json();
+        try {
+          const userData = await httpClient.get<{ id: string; email: string; name?: string }>(
+            '/me',
+            { credentials: 'include' }
+          );
           setUser({ id: userData.id, email: userData.email, name: userData.name || email.split('@')[0] });
-        } else {
+        } catch {
           // Fallback if /me endpoint is not available yet in BE but login was successful
           setUser({ id: 'real-uuid', email, name: email.split('@')[0] });
         }
@@ -121,7 +120,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       Cookies.remove(REFRESH_TOKEN_KEY);
     } else {
       try {
-        await fetch('/api/v1/sign-out', { method: 'POST', credentials: 'include' });
+        await httpClient.post<void, undefined>('/sign-out', undefined, {
+          credentials: 'include',
+          parseAs: 'void',
+        });
       } catch (e) {
         console.error("Erro no sign-out", e);
       }

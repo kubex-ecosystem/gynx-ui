@@ -1,94 +1,59 @@
 import type { Agent, AgentsGenerationResult, StoredAgent } from '@/types';
+import { httpClient } from '@/core/http/client';
 
-const BASE_PATH = '/api/v1/agents';
-
-async function parseJSON<T>(response: Response): Promise<T> {
-  if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || `Request failed with status ${response.status}`);
-  }
-  return response.json() as Promise<T>;
-}
-
-async function parseText(response: Response): Promise<string> {
-  if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || `Request failed with status ${response.status}`);
-  }
-  return response.text();
-}
+const BASE_PATH = '/agents';
 
 export const agentsService = {
   async list(): Promise<StoredAgent[]> {
-    const response = await fetch(BASE_PATH, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-      },
-      credentials: 'same-origin',
+    return httpClient.get<StoredAgent[]>(BASE_PATH, {
+      headers: { 'Accept': 'application/json' },
     });
-    return parseJSON<StoredAgent[]>(response);
   },
 
   async create(agent: Agent): Promise<StoredAgent> {
-    const response = await fetch(BASE_PATH, {
-      method: 'POST',
+    return httpClient.post<StoredAgent, Agent>(BASE_PATH, agent, {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      body: JSON.stringify(agent),
-      credentials: 'same-origin',
     });
-    return parseJSON<StoredAgent>(response);
   },
 
   async update(id: number, agent: Agent): Promise<StoredAgent> {
-    const response = await fetch(`${BASE_PATH}/${id}`, {
-      method: 'PUT',
+    return httpClient.put<StoredAgent, Agent>(`${BASE_PATH}/${id}`, agent, {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      body: JSON.stringify(agent),
-      credentials: 'same-origin',
     });
-    return parseJSON<StoredAgent>(response);
   },
 
   async remove(id: number): Promise<void> {
-    const response = await fetch(`${BASE_PATH}/${id}`, {
-      method: 'DELETE',
-      credentials: 'same-origin',
+    await httpClient.delete<void>(`${BASE_PATH}/${id}`, {
+      parseAs: 'void',
     });
-    if (!response.ok && response.status !== 204) {
-      const message = await response.text();
-      throw new Error(message || `Request failed with status ${response.status}`);
-    }
   },
 
   async generate(requirements: string): Promise<AgentsGenerationResult> {
-    const response = await fetch(`${BASE_PATH}/generate`, {
-      method: 'POST',
-      headers: {
+    return httpClient.post<AgentsGenerationResult, { requirements: string }>(
+      `${BASE_PATH}/generate`,
+      { requirements },
+      {
+        headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-      },
-      body: JSON.stringify({ requirements }),
-      credentials: 'same-origin',
-    });
-    return parseJSON<AgentsGenerationResult>(response);
+        },
+      }
+    );
   },
 
   async exportMarkdown(): Promise<string> {
-    const response = await fetch(`${BASE_PATH}.md`, {
-      method: 'GET',
+    return httpClient.get<string>(`${BASE_PATH}.md`, {
+      parseAs: 'text',
       headers: {
         'Accept': 'text/markdown',
       },
-      credentials: 'same-origin',
     });
-    return parseText(response);
   },
 };
 

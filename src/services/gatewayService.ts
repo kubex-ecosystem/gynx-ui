@@ -1,3 +1,5 @@
+import { httpClient } from '@/core/http/client';
+
 export interface GatewayMetrics {
     status: 'ONLINE' | 'OFFLINE' | 'DEGRADED';
     requestsPerMinute: number;
@@ -36,9 +38,9 @@ export const getGatewayMetrics = async (): Promise<GatewayMetrics> => {
         return mockMetrics;
     }
 
-    const response = await fetch('/api/v1/gateway/metrics', { credentials: 'include' });
-    if (!response.ok) throw new Error('Falha ao buscar métricas do gateway');
-    return response.json();
+    return httpClient.get<GatewayMetrics>('/gateway/metrics', {
+        credentials: 'include',
+    });
 };
 
 export const getGatewayLogs = async (limit: number = 20): Promise<GatewayLog[]> => {
@@ -47,7 +49,8 @@ export const getGatewayLogs = async (limit: number = 20): Promise<GatewayLog[]> 
         return mockLogs.slice(-limit);
     }
 
-    const response = await fetch(`/api/v1/gateway/logs?limit=${limit}`, { credentials: 'include' });
-    if (!response.ok) throw new Error('Falha ao buscar logs do gateway');
-    return response.json();
+    return httpClient.get<GatewayLog[]>('/gateway/logs', {
+        credentials: 'include',
+        query: { limit },
+    });
 };
