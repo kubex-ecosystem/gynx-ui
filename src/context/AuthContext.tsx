@@ -4,6 +4,7 @@ import { httpClient } from '@/core/http/client';
 import { HTTP_CREDENTIALS } from '@/core/http/auth';
 import { httpEndpoints } from '@/core/http/endpoints';
 import { navigateToSection } from '@/core/navigation/hashRoutes';
+import { isSimulatedAuthEnabled } from '@/core/runtime/mode';
 
 interface User {
   id: string;
@@ -22,27 +23,18 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const getDemoEnv = () => (
-  process.env.DEMO_MODE === 'true' ||
-  process.env.VITE_DEMO_MODE === 'true' ||
-  import.meta.env.VITE_DEMO_MODE === 'true' ||
-  false
-)
-
-
-// FLAG PARA SIMULAÇÃO (Pode ser lida de env futuramente)
-const DEMO_MODE = getDemoEnv()
 const ACCESS_TOKEN_KEY = 'gnyx_access_token';
 const REFRESH_TOKEN_KEY = 'gnyx_refresh_token';
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const simulatedAuth = isSimulatedAuthEnabled();
 
   useEffect(() => {
     const initAuth = async () => {
       try {
-        if (DEMO_MODE) {
+        if (simulatedAuth) {
           // Em Demo Mode, checa o token mockado
           const token = Cookies.get(ACCESS_TOKEN_KEY);
 
@@ -70,12 +62,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     initAuth();
-  }, []);
+  }, [simulatedAuth]);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      if (DEMO_MODE) {
+      if (simulatedAuth) {
         // Simular delay de rede
         await new Promise(resolve => setTimeout(resolve, 800));
 
@@ -118,7 +110,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const logout = async () => {
-    if (DEMO_MODE) {
+    if (simulatedAuth) {
       Cookies.remove(ACCESS_TOKEN_KEY);
       Cookies.remove(REFRESH_TOKEN_KEY);
     } else {
@@ -142,7 +134,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       isLoading,
       login,
       logout,
-      isSimulated: DEMO_MODE
+      isSimulated: simulatedAuth
     }}>
       {children}
     </AuthContext.Provider>

@@ -6,7 +6,7 @@
 
 import { httpClient } from '../core/http/client';
 import { buildApiV1Path, buildApiV1Url, httpEndpoints } from '../core/http/endpoints';
-import { toHttpError } from '../core/http/errors';
+import { APIError, toHttpError } from '../core/http/errors';
 import type { HttpMethod } from '../core/http/types';
 
 export interface GenerateRequest {
@@ -124,21 +124,6 @@ class RateLimiter {
 }
 
 /**
- * API Error class for structured error handling
- */
-export class APIError extends Error {
-  constructor(
-    public message: string,
-    public status?: number,
-    public code?: string,
-    public details?: any
-  ) {
-    super(message);
-    this.name = 'APIError';
-  }
-}
-
-/**
  * Main API service class
  */
 export class GromptAPI {
@@ -181,7 +166,10 @@ export class GromptAPI {
         `Rate limit exceeded. Try again in ${Math.ceil(resetTime / 1000)} seconds.`,
         429,
         'RATE_LIMIT_EXCEEDED',
-        { resetTimeMs: resetTime }
+        { resetTimeMs: resetTime },
+        {
+          statusText: 'RATE_LIMIT_EXCEEDED',
+        }
       );
     }
   }
@@ -235,7 +223,11 @@ export class GromptAPI {
         : normalizedError.code || (normalizedError.status === 0 ? 'NETWORK_ERROR' : 'HTTP_ERROR');
       const errorDetails = dataAsRecord?.details ?? normalizedError.data;
 
-      throw new APIError(errorMessage, normalizedError.status, errorCode, errorDetails);
+      throw new APIError(errorMessage, normalizedError.status, errorCode, errorDetails, {
+        url: normalizedError.url,
+        method: normalizedError.method,
+        statusText: normalizedError.statusText,
+      });
     }
   }
 
@@ -372,14 +364,18 @@ export function handleStreamingGeneration(
             case 'generation.error':
               callbacks.onError?.(data.error!);
               eventSource.close();
-              reject(new APIError(data.error!, 0, 'GENERATION_ERROR'));
+              reject(new APIError(data.error!, 0, 'GENERATION_ERROR', undefined, {
+                statusText: 'GENERATION_ERROR',
+              }));
               break;
           }
         } catch (parseError) {
           console.error('Failed to parse SSE event:', parseError);
           callbacks.onError?.('Failed to parse server response');
           eventSource.close();
-          reject(new APIError('Failed to parse server response', 0, 'PARSE_ERROR'));
+          reject(new APIError('Failed to parse server response', 0, 'PARSE_ERROR', undefined, {
+            statusText: 'PARSE_ERROR',
+          }));
         }
       };
 
@@ -387,14 +383,18 @@ export function handleStreamingGeneration(
         console.error('EventSource error:', error);
         callbacks.onError?.('Connection to server lost');
         eventSource.close();
-        reject(new APIError('Connection to server lost', 0, 'CONNECTION_ERROR'));
+        reject(new APIError('Connection to server lost', 0, 'CONNECTION_ERROR', undefined, {
+          statusText: 'CONNECTION_ERROR',
+        }));
       };
 
       // Cleanup on timeout
       setTimeout(() => {
         if (eventSource.readyState !== EventSource.CLOSED) {
           eventSource.close();
-          reject(new APIError('Request timeout', 408, 'TIMEOUT'));
+          reject(new APIError('Request timeout', 408, 'TIMEOUT', undefined, {
+            statusText: 'TIMEOUT',
+          }));
         }
       }, 300000); // 5 minutes timeout to match backend
 
@@ -407,6 +407,4 @@ export function handleStreamingGeneration(
 /**
  * Type guard for API errors
  */
-export function isAPIError(error: any): error is APIError {
-  return error instanceof APIError;
-}
+export { APIError, isAPIError, toAPIError } from '../core/http/errors';

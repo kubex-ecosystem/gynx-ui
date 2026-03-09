@@ -2,10 +2,11 @@ import { IntegrationConfig, SyncJob } from '@/pages/DataSync';
 import { httpClient } from '@/core/http/client';
 import { HTTP_CREDENTIALS } from '@/core/http/auth';
 import { httpEndpoints } from '@/core/http/endpoints';
-import { isSimulatedAuthEnabled, mockIntegrationConfigs, mockSyncJobs, waitMock } from '@/mocks';
+import { isSimulatedAuthEnabled } from '@/core/runtime/mode';
+import { mockIntegrationConfigs, mockSyncJobs, waitMock } from '@/mocks';
 
 export const getIntegrationConfigs = async (): Promise<IntegrationConfig[]> => {
-    if (isSimulatedAuthEnabled) {
+    if (isSimulatedAuthEnabled()) {
         await waitMock(600);
         return mockIntegrationConfigs;
     }
@@ -16,7 +17,7 @@ export const getIntegrationConfigs = async (): Promise<IntegrationConfig[]> => {
 };
 
 export const getSyncJobs = async (): Promise<SyncJob[]> => {
-    if (isSimulatedAuthEnabled) {
+    if (isSimulatedAuthEnabled()) {
         await waitMock(600);
         return mockSyncJobs;
     }

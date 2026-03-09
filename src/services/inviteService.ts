@@ -2,7 +2,8 @@ import { AcceptInviteReq, InviteDTO } from '@/types';
 import { httpClient } from '@/core/http/client';
 import { httpEndpoints } from '@/core/http/endpoints';
 import { toHttpError } from '@/core/http/errors';
-import { acceptMockInvite, isSimulatedAuthEnabled, validateMockInviteToken, waitMock } from '@/mocks';
+import { isSimulatedAuthEnabled } from '@/core/runtime/mode';
+import { acceptMockInvite, validateMockInviteToken, waitMock } from '@/mocks';
 
 const getErrorMessage = (error: unknown, fallback: string): string => {
     const normalized = toHttpError(error);
@@ -14,7 +15,7 @@ const getErrorMessage = (error: unknown, fallback: string): string => {
 };
 
 export const validateInviteToken = async (token: string): Promise<InviteDTO> => {
-    if (isSimulatedAuthEnabled) {
+    if (isSimulatedAuthEnabled()) {
         await waitMock(800);
         return validateMockInviteToken(token);
     }
@@ -31,7 +32,7 @@ export const validateInviteToken = async (token: string): Promise<InviteDTO> => 
 };
 
 export const acceptInvite = async (token: string, data: AcceptInviteReq): Promise<void> => {
-    if (isSimulatedAuthEnabled) {
+    if (isSimulatedAuthEnabled()) {
         await waitMock(1500);
         acceptMockInvite(token, data);
         return;
