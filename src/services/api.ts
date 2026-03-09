@@ -4,7 +4,10 @@
  * Following backend endpoint structure from internal/gateway/transport/grompt_v1.go
  */
 
-import { HttpError, httpClient, type HttpMethod } from '../core/http/client';
+import { httpClient } from '../core/http/client';
+import { buildApiV1Path, buildApiV1Url, httpEndpoints } from '../core/http/endpoints';
+import { toHttpError } from '../core/http/errors';
+import type { HttpMethod } from '../core/http/types';
 
 export interface GenerateRequest {
   provider: string;
@@ -160,6 +163,14 @@ export class GromptAPI {
     };
   }
 
+  private resolveRequestTarget(endpoint: string): { target: string; useBaseURL: boolean } {
+    if (this.baseURL) {
+      return { target: buildApiV1Url(this.baseURL, endpoint), useBaseURL: false };
+    }
+
+    return { target: endpoint, useBaseURL: true };
+  }
+
   /**
    * Check rate limiting before making requests
    */
@@ -184,7 +195,7 @@ export class GromptAPI {
   ): Promise<T> {
     this.checkRateLimit();
 
-    const url = `${this.baseURL}/v1${endpoint}`;
+    const { target, useBaseURL } = this.resolveRequestTarget(endpoint);
     const method = (options.method?.toUpperCase() || 'GET') as HttpMethod;
     const mergedHeaders = new Headers(this.defaultHeaders);
     if (options.headers) {
@@ -199,48 +210,41 @@ export class GromptAPI {
     } = options;
 
     try {
-      return await httpClient.request<T>(method, url, {
+      return await httpClient.request<T>(method, target, {
         ...requestOptions,
         headers: mergedHeaders,
         signal: requestSignal ?? undefined,
-        useBaseURL: false
+        useBaseURL
       });
     } catch (error) {
-      if (error instanceof HttpError) {
-        const dataAsRecord = error.data && typeof error.data === 'object'
-          ? (error.data as Record<string, any>)
+      const normalizedError = toHttpError(error, {
+        url: target,
+        method,
+        status: 0,
+        statusText: 'NETWORK_ERROR',
+      });
+
+      const dataAsRecord = normalizedError.data && typeof normalizedError.data === 'object'
+          ? (normalizedError.data as Record<string, any>)
           : undefined;
-        const errorMessage = typeof dataAsRecord?.message === 'string'
-          ? dataAsRecord.message
-          : error.message;
-        const errorCode = typeof dataAsRecord?.error === 'string'
-          ? dataAsRecord.error
-          : error.code || (error.status === 0 ? 'NETWORK_ERROR' : 'HTTP_ERROR');
-        const errorDetails = dataAsRecord?.details ?? error.data;
+      const errorMessage = typeof dataAsRecord?.message === 'string'
+        ? dataAsRecord.message
+        : normalizedError.message;
+      const errorCode = typeof dataAsRecord?.error === 'string'
+        ? dataAsRecord.error
+        : normalizedError.code || (normalizedError.status === 0 ? 'NETWORK_ERROR' : 'HTTP_ERROR');
+      const errorDetails = dataAsRecord?.details ?? normalizedError.data;
 
-        throw new APIError(errorMessage, error.status, errorCode, errorDetails);
-      }
-
-      if (error instanceof APIError) {
-        throw error;
-      }
-
-      // Network or other errors
-      throw new APIError(
-        error instanceof Error ? error.message : 'Unknown error occurred',
-        0,
-        'NETWORK_ERROR',
-        error
-      );
+      throw new APIError(errorMessage, normalizedError.status, errorCode, errorDetails);
     }
   }
 
   /**
    * Generate prompt synchronously
-   * POST /v1/generate
+ * POST /api/v1/generate
    */
   async generatePrompt(request: GenerateRequest): Promise<GenerateResponse> {
-    return this.request<GenerateResponse>('/generate', {
+    return this.request<GenerateResponse>(httpEndpoints.grompt.generate, {
       method: 'POST',
       body: JSON.stringify(request)
     });
@@ -248,7 +252,7 @@ export class GromptAPI {
 
   /**
    * Generate prompt with streaming
-   * GET /v1/generate/stream
+ * GET /api/v1/generate/stream
    *
    * Returns an EventSource for Server-Sent Events
    */
@@ -269,35 +273,38 @@ export class GromptAPI {
       params.append('ideas', idea);
     });
 
-    const url = `${this.baseURL}/v1/generate/stream?${params.toString()}`;
+    const baseStreamURL = this.baseURL
+      ? buildApiV1Url(this.baseURL, httpEndpoints.grompt.generateStream)
+      : buildApiV1Path(httpEndpoints.grompt.generateStream);
+    const url = `${baseStreamURL}?${params.toString()}`;
     return new EventSource(url);
   }
 
   /**
    * List available providers
-   * GET /v1/providers
+ * GET /api/v1/providers
    */
   async listProviders(): Promise<ProvidersListResponse> {
-    return this.request<ProvidersListResponse>('/providers');
+    return this.request<ProvidersListResponse>(httpEndpoints.grompt.providers);
   }
 
   /**
    * Health check
-   * GET /v1/health
+ * GET /api/v1/health
    */
   async healthCheck(): Promise<HealthResponse> {
-    return this.request<HealthResponse>('/healthz');
+    return this.request<HealthResponse>(httpEndpoints.grompt.healthz);
   }
 
   /**
    * Proxy request to GNyx
-   * POST /v1/proxy/*
+ * POST /api/v1/proxy/*
    */
   async proxyToGNyx<T>(
     path: string,
     options: RequestInit = {}
   ): Promise<T> {
-    return this.request<T>(`/proxy${path}`, options);
+    return this.request<T>(httpEndpoints.grompt.proxy(path), options);
   }
 
   /**

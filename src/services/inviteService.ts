@@ -1,20 +1,17 @@
 import { AcceptInviteReq, InviteDTO } from '@/types';
-import { HttpError, httpClient } from '@/core/http/client';
+import { httpClient } from '@/core/http/client';
+import { httpEndpoints } from '@/core/http/endpoints';
+import { toHttpError } from '@/core/http/errors';
 
 const isSimulated = import.meta.env.VITE_SIMULATE_AUTH === 'true';
 
 const getErrorMessage = (error: unknown, fallback: string): string => {
-    if (error instanceof HttpError) {
-        const data = error.data as Record<string, unknown> | undefined;
-        if (typeof data?.message === 'string' && data.message.length > 0) {
-            return data.message;
-        }
-        return error.message || fallback;
+    const normalized = toHttpError(error);
+    const data = normalized.data as Record<string, unknown> | undefined;
+    if (typeof data?.message === 'string' && data.message.length > 0) {
+        return data.message;
     }
-    if (error instanceof Error && error.message) {
-        return error.message;
-    }
-    return fallback;
+    return normalized.message || fallback;
 };
 
 export const validateInviteToken = async (token: string): Promise<InviteDTO> => {
@@ -41,7 +38,7 @@ export const validateInviteToken = async (token: string): Promise<InviteDTO> => 
     }
 
     try {
-        return await httpClient.get<InviteDTO>('/invites/validate', {
+        return await httpClient.get<InviteDTO>(httpEndpoints.invites.validate, {
             query: { token },
         });
     } catch (error) {
@@ -59,7 +56,7 @@ export const acceptInvite = async (token: string, data: AcceptInviteReq): Promis
 
     try {
         await httpClient.post<void, AcceptInviteReq & { token: string }>(
-            '/invites/accept',
+            httpEndpoints.invites.accept,
             { token, ...data },
             { parseAs: 'void' }
         );

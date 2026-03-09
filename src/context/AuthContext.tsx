@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import Cookies from 'js-cookie';
 import { httpClient } from '@/core/http/client';
+import { HTTP_CREDENTIALS } from '@/core/http/auth';
+import { httpEndpoints } from '@/core/http/endpoints';
 
 interface User {
   id: string;
@@ -54,8 +56,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         } else {
           // Real backend session validation using HttpOnly cookies
           const userData = await httpClient.get<{ id: string; email: string; name?: string }>(
-            '/me',
-            { credentials: 'include' }
+            httpEndpoints.auth.me,
+            { credentials: HTTP_CREDENTIALS.session }
           );
           setUser({ id: userData.id, email: userData.email, name: userData.name || userData.email.split('@')[0] });
         }
@@ -87,10 +89,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setUser(mockResponse.user);
       } else {
         await httpClient.post<void, { email: string; password: string }>(
-          '/auth/sign-in',
+          httpEndpoints.auth.signIn,
           { email, password },
           {
-          credentials: 'include',
+          credentials: HTTP_CREDENTIALS.session,
           parseAs: 'void',
             headers: { 'Content-Type': 'application/json' },
           }
@@ -100,8 +102,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // We just fetch the user profile right after successful login
         try {
           const userData = await httpClient.get<{ id: string; email: string; name?: string }>(
-            '/me',
-            { credentials: 'include' }
+            httpEndpoints.auth.me,
+            { credentials: HTTP_CREDENTIALS.session }
           );
           setUser({ id: userData.id, email: userData.email, name: userData.name || email.split('@')[0] });
         } catch {
@@ -120,8 +122,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       Cookies.remove(REFRESH_TOKEN_KEY);
     } else {
       try {
-        await httpClient.post<void, undefined>('/sign-out', undefined, {
-          credentials: 'include',
+        await httpClient.post<void, undefined>(httpEndpoints.auth.signOut, undefined, {
+          credentials: HTTP_CREDENTIALS.session,
           parseAs: 'void',
         });
       } catch (e) {

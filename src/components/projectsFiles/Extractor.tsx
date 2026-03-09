@@ -18,6 +18,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "@/i18n/useTranslations";
 import { pack } from "@/utils/lookatni";
 import { httpClient } from "@/core/http/client";
+import { httpEndpoints } from "@/core/http/endpoints";
 
 /* ========= Types (mantidos / estendidos) ========= */
 
@@ -363,7 +364,7 @@ export default function ProjectExtractor(
         context_depth: number;
         include_hidden: boolean;
       }>(
-        "/lookatni/extract",
+        httpEndpoints.lookatni.extract,
         {
           local_path: localPath,
           fragment_by: "file",
@@ -522,7 +523,7 @@ export default function ProjectExtractor(
     setError(null);
     try {
       const result = await httpClient.post<LookAtniArchiveResponse, LookAtniExtractedProject>(
-        "/lookatni/archive",
+        httpEndpoints.lookatni.archive,
         extractedProject,
         {
           headers: {

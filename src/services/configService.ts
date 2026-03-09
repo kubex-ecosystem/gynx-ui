@@ -2,6 +2,7 @@
 // Handles communication with backend /api/v1/config endpoint
 
 import { httpClient } from "@/core/http/client";
+import { httpEndpoints } from "@/core/http/endpoints";
 
 export type ProviderStatus = 'ready' | 'needs_api_key' | 'offline';
 export type ProviderMode = 'server' | 'byok' | 'demo' | 'offline';
@@ -138,7 +139,7 @@ class ConfigService {
     }
 
     try {
-      const config = await httpClient.get<ServerConfig>('/config');
+      const config = await httpClient.get<ServerConfig>(httpEndpoints.config.root);
 
       // Cache the result
       this.cache.set(cacheKey, {
@@ -195,7 +196,7 @@ class ConfigService {
    */
   async updateProviderConfig(provider: string, apiKey: string): Promise<boolean> {
     try {
-      await httpClient.post('/config', {
+      await httpClient.post(httpEndpoints.config.root, {
           [`${provider}_api_key`]: apiKey,
       });
 

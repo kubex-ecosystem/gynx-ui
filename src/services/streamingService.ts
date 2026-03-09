@@ -1,5 +1,7 @@
-import { useProvidersStore } from '@/store/useProvidersStore';
+import { HTTP_AUTH_HEADERS, withApiKeyHeader } from '@/core/http/auth';
 import { httpClient } from '@/core/http/client';
+import { httpEndpoints } from '@/core/http/endpoints';
+import { useProvidersStore } from '@/store/useProvidersStore';
 
 export interface StreamCallbacks {
   onChunk: (text: string) => void;
@@ -17,7 +19,7 @@ export const streamChat = async (
 
   try {
     const response = await httpClient.post<Response, { prompt: string; provider: string }>(
-      '/unified/stream',
+      httpEndpoints.unified.stream,
       {
         prompt,
         provider,
@@ -26,10 +28,11 @@ export const streamChat = async (
         parseAs: 'response',
         timeoutMs: 300000,
         credentials: 'omit', // Ou 'include' se usar cookies de sessão
-        headers: {
-          'Content-Type': 'application/json',
-          ...(apiKey ? { 'x-api-key': apiKey } : {}),
-        },
+        headers: withApiKeyHeader(
+          { 'Content-Type': 'application/json' },
+          apiKey,
+          HTTP_AUTH_HEADERS.apiKey
+        ),
       }
     );
 

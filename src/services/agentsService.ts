@@ -1,7 +1,8 @@
 import type { Agent, AgentsGenerationResult, StoredAgent } from '@/types';
 import { httpClient } from '@/core/http/client';
+import { httpEndpoints } from '@/core/http/endpoints';
 
-const BASE_PATH = '/agents';
+const BASE_PATH = httpEndpoints.agents.root;
 
 export const agentsService = {
   async list(): Promise<StoredAgent[]> {
@@ -20,7 +21,7 @@ export const agentsService = {
   },
 
   async update(id: number, agent: Agent): Promise<StoredAgent> {
-    return httpClient.put<StoredAgent, Agent>(`${BASE_PATH}/${id}`, agent, {
+    return httpClient.put<StoredAgent, Agent>(httpEndpoints.agents.byId(id), agent, {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -29,26 +30,26 @@ export const agentsService = {
   },
 
   async remove(id: number): Promise<void> {
-    await httpClient.delete<void>(`${BASE_PATH}/${id}`, {
+    await httpClient.delete<void>(httpEndpoints.agents.byId(id), {
       parseAs: 'void',
     });
   },
 
   async generate(requirements: string): Promise<AgentsGenerationResult> {
     return httpClient.post<AgentsGenerationResult, { requirements: string }>(
-      `${BASE_PATH}/generate`,
+      httpEndpoints.agents.generate,
       { requirements },
       {
         headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
       }
     );
   },
 
   async exportMarkdown(): Promise<string> {
-    return httpClient.get<string>(`${BASE_PATH}.md`, {
+    return httpClient.get<string>(httpEndpoints.agents.markdown, {
       parseAs: 'text',
       headers: {
         'Accept': 'text/markdown',

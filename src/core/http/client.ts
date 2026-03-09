@@ -2,65 +2,32 @@
  * HTTP client foundation for GNyx frontend.
  * Goal: centralize request/response handling before service-by-service migration.
  */
+import { HTTP_CREDENTIALS } from "./auth";
+import { API_V1_PREFIX } from "./endpoints";
+import { HttpError } from "./errors";
+import type {
+  HttpClientConfig,
+  HttpMethod,
+  QueryPrimitive,
+  QueryValue,
+  RequestOptions,
+  ResponseParser,
+} from "./types";
 
-export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-export type ResponseParser = "json" | "text" | "blob" | "arrayBuffer" | "void" | "response";
-
-type QueryPrimitive = string | number | boolean | Date;
-export type QueryValue = QueryPrimitive | QueryPrimitive[] | null | undefined;
-
-export interface HttpClientConfig {
-  baseURL?: string;
-  defaultHeaders?: HeadersInit;
-  timeoutMs?: number;
-  credentials?: RequestCredentials;
-}
-
-export interface RequestOptions<TBody = unknown>
-  extends Omit<RequestInit, "method" | "body" | "headers" | "credentials" | "signal"> {
-  body?: TBody;
-  headers?: HeadersInit;
-  query?: Record<string, QueryValue>;
-  timeoutMs?: number;
-  parseAs?: ResponseParser;
-  credentials?: RequestCredentials;
-  useBaseURL?: boolean;
-  signal?: AbortSignal;
-}
-
-export interface HttpErrorContext<TData = unknown> {
-  url: string;
-  method: HttpMethod;
-  status: number;
-  statusText: string;
-  code?: string;
-  data?: TData;
-}
-
-export class HttpError<TData = unknown> extends Error {
-  public readonly url: string;
-  public readonly method: HttpMethod;
-  public readonly status: number;
-  public readonly statusText: string;
-  public readonly code?: string;
-  public readonly data?: TData;
-
-  constructor(message: string, context: HttpErrorContext<TData>) {
-    super(message);
-    this.name = "HttpError";
-    this.url = context.url;
-    this.method = context.method;
-    this.status = context.status;
-    this.statusText = context.statusText;
-    this.code = context.code;
-    this.data = context.data;
-  }
-}
+export type {
+  HttpClientConfig,
+  HttpMethod,
+  QueryPrimitive,
+  QueryValue,
+  RequestOptions,
+  ResponseParser,
+} from "./types";
+export { HttpError, isHttpError, toHttpError } from "./errors";
 
 const DEFAULT_TIMEOUT_MS = 15000;
-const DEFAULT_BASE_URL = import.meta.env.VITE_API_URL || "/api/v1";
+const DEFAULT_BASE_URL = import.meta.env.VITE_API_URL || API_V1_PREFIX;
 const DEFAULT_HEADERS: HeadersInit = { Accept: "application/json" };
-const DEFAULT_CREDENTIALS: RequestCredentials = "same-origin";
+const DEFAULT_CREDENTIALS: RequestCredentials = HTTP_CREDENTIALS.default;
 
 const isAbsoluteURL = (value: string): boolean => /^https?:\/\//i.test(value);
 

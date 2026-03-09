@@ -16,6 +16,7 @@ import {
 import React, { useState } from "react";
 import Card from "@/components/ui/Card";
 import { useAuth } from "@/context/AuthContext";
+import { buildApiV1Path, httpEndpoints } from "@/core/http/endpoints";
 
 const providers = [
   { id: "openai", name: "OpenAI", icon: Bot },
@@ -76,7 +77,7 @@ const Auth: React.FC = () => {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = "/api/v1/auth/google/start?next=/";
+    window.location.href = `${buildApiV1Path(httpEndpoints.auth.oauthGoogleStart)}?next=/`;
   };
 
   return (

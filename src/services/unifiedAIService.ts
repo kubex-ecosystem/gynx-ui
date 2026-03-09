@@ -2,7 +2,10 @@
 // Communicates with backend's unified API endpoints
 
 import { Ideas } from '@/types';
-import { HttpError, httpClient } from '@/core/http/client';
+import { httpClient } from '@/core/http/client';
+import { HTTP_AUTH_HEADERS, withApiKeyHeader } from '@/core/http/auth';
+import { httpEndpoints } from '@/core/http/endpoints';
+import { toHttpError } from '@/core/http/errors';
 import { configService, type ProviderInfo, type ServerConfig } from '@/services/configService';
 
 export interface UnifiedRequest {
@@ -43,29 +46,24 @@ export interface GenerationResult {
 }
 
 class UnifiedAIService {
-  private readonly unifiedEndpoint = '/unified';
-  private readonly providerTestEndpoint = '/test';
+  private readonly unifiedEndpoint = httpEndpoints.unified.root;
+  private readonly providerTestEndpoint = httpEndpoints.unified.providerTest;
 
-  private buildHeaders(apiKey?: string): Record<string, string> {
-    const headers: Record<string, string> = {
+  private buildHeaders(apiKey?: string): Headers {
+    const headers = withApiKeyHeader(
+      {
       'Content-Type': 'application/json',
-    };
-
-    if (apiKey) {
-      headers['X-API-Key'] = apiKey;
-    }
+      },
+      apiKey,
+      HTTP_AUTH_HEADERS.apiKey
+    );
 
     return headers;
   }
 
   private getErrorMessage(error: unknown): string {
-    if (error instanceof HttpError) {
-      return error.message || `HTTP ${error.status}: ${error.statusText}`;
-    }
-    if (error instanceof Error) {
-      return error.message;
-    }
-    return String(error);
+    const normalizedError = toHttpError(error);
+    return normalizedError.message || `HTTP ${normalizedError.status}: ${normalizedError.statusText}`;
   }
 
   /**

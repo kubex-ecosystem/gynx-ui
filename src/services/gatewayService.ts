@@ -1,4 +1,6 @@
 import { httpClient } from '@/core/http/client';
+import { HTTP_CREDENTIALS } from '@/core/http/auth';
+import { httpEndpoints } from '@/core/http/endpoints';
 
 export interface GatewayMetrics {
     status: 'ONLINE' | 'OFFLINE' | 'DEGRADED';
@@ -38,8 +40,8 @@ export const getGatewayMetrics = async (): Promise<GatewayMetrics> => {
         return mockMetrics;
     }
 
-    return httpClient.get<GatewayMetrics>('/gateway/metrics', {
-        credentials: 'include',
+    return httpClient.get<GatewayMetrics>(httpEndpoints.gateway.metrics, {
+        credentials: HTTP_CREDENTIALS.session,
     });
 };
 
@@ -49,8 +51,8 @@ export const getGatewayLogs = async (limit: number = 20): Promise<GatewayLog[]> 
         return mockLogs.slice(-limit);
     }
 
-    return httpClient.get<GatewayLog[]>('/gateway/logs', {
-        credentials: 'include',
+    return httpClient.get<GatewayLog[]>(httpEndpoints.gateway.logs, {
+        credentials: HTTP_CREDENTIALS.session,
         query: { limit },
     });
 };
