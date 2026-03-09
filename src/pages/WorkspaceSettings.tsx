@@ -1,23 +1,18 @@
-import React, { useState } from 'react';
-import { Settings, Save, RotateCcw, Building, Users, CreditCard, Shield, Zap, Globe, HardDrive } from 'lucide-react';
+import React from 'react';
+import { AlertCircle, LoaderCircle, Settings, Save, RotateCcw, Building, Users, CreditCard, Shield, Zap, Globe, HardDrive } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import lottieAnimation from '@assets/lotties/banner_sm-01.json';
 import { useAuth } from '@/context/AuthContext';
 import LottieControl from '@/components/ui/Lottie';
-import { getMockWorkspaceSettings, resetMockWorkspaceSettings, saveMockWorkspaceSettings, type WorkspaceFormData } from '@/mocks';
+import { useWorkspaceSettings } from '@/modules/workspace/hooks/useWorkspaceSettings';
 
 export default function WorkspaceSettings() {
     const { isSimulated } = useAuth();
-    const [formData, setFormData] = useState<WorkspaceFormData>(() => getMockWorkspaceSettings());
-
-    const [saving, setSaving] = useState(false);
+    const { formData, isLoading, isSaving, isDirty, error, status, updateField, save, restoreDefaults, retry } = useWorkspaceSettings();
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        setSaving(true);
-        saveMockWorkspaceSettings(formData);
-        await new Promise(r => setTimeout(r, 800));
-        setSaving(false);
+        await save();
     };
 
     const lottieControl = new LottieControl(
@@ -66,6 +61,48 @@ export default function WorkspaceSettings() {
                 </p>
             </header>
 
+            {status && (
+                <Card className={`p-4 border ${
+                    status.tone === 'success'
+                        ? 'border-status-success/30 bg-status-success/5'
+                        : status.tone === 'error'
+                            ? 'border-status-error/30 bg-status-error/5'
+                            : 'border-status-info/30 bg-status-info/5'
+                }`}>
+                    <div className="flex items-start gap-3">
+                        {status.tone === 'error' ? (
+                            <AlertCircle className="text-status-error mt-0.5" size={18} />
+                        ) : (
+                            <Zap className="text-status-info mt-0.5" size={18} />
+                        )}
+                        <div>
+                            <p className="text-sm font-semibold text-primary">Estado do Workspace</p>
+                            <p className="text-xs text-secondary mt-1">{status.message}</p>
+                        </div>
+                    </div>
+                </Card>
+            )}
+
+            {error && !isLoading && (
+                <Card className="p-4 border-status-error/30 bg-status-error/5">
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                        <div className="flex items-start gap-3">
+                            <AlertCircle className="text-status-error mt-0.5" size={18} />
+                            <div>
+                                <p className="text-sm font-semibold text-primary">Falha ao preparar a tela de workspace</p>
+                                <p className="text-xs text-secondary mt-1">{error}</p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => void retry()}
+                            className="px-4 py-2 rounded-xl border border-status-error/20 bg-status-error/10 text-status-error text-sm font-semibold hover:bg-status-error/15 transition-colors"
+                        >
+                            Recarregar
+                        </button>
+                    </div>
+                </Card>
+            )}
+
             {/* Hero Banner Feature */}
             <Card className="p-0 overflow-hidden relative border-border-primary/40 shadow-2xl group bg-gradient-to-r from-surface-primary to-surface-secondary">
                 <div className="absolute inset-0 bg-grid opacity-20 pointer-events-none" />
@@ -108,6 +145,15 @@ export default function WorkspaceSettings() {
                         <h3 className="font-bold text-primary">Identidade do Workspace</h3>
                     </div>
 
+                    {isLoading || !formData ? (
+                        <div className="rounded-2xl border border-border-primary bg-surface-secondary/40 p-6 flex items-center gap-3 text-secondary">
+                            <LoaderCircle size={18} className="animate-spin" />
+                            <div>
+                                <p className="text-sm font-semibold text-primary">Carregando configuracoes</p>
+                                <p className="text-xs text-muted">Montando estado inicial do workspace.</p>
+                            </div>
+                        </div>
+                    ) : (
                     <form onSubmit={handleSave} className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
@@ -115,7 +161,7 @@ export default function WorkspaceSettings() {
                                 <input
                                     type="text"
                                     value={formData.tenantName}
-                                    onChange={e => setFormData({ ...formData, tenantName: e.target.value })}
+                                    onChange={e => updateField('tenantName', e.target.value)}
                                     className="w-full bg-surface-secondary border border-border-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent-primary transition-all text-primary"
                                 />
                             </div>
@@ -139,7 +185,7 @@ export default function WorkspaceSettings() {
                                     <Globe className="absolute left-3 top-3 text-secondary" size={18} />
                                     <select
                                         value={formData.region}
-                                        onChange={e => setFormData({ ...formData, region: e.target.value })}
+                                        onChange={e => updateField('region', e.target.value)}
                                         className="w-full bg-surface-secondary border border-border-primary rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-accent-primary transition-all text-primary appearance-none cursor-pointer"
                                     >
                                         <option>South America (sa-east-1)</option>
@@ -155,7 +201,7 @@ export default function WorkspaceSettings() {
                                     <HardDrive className="absolute left-3 top-3 text-secondary" size={18} />
                                     <select
                                         value={formData.dataRetention}
-                                        onChange={e => setFormData({ ...formData, dataRetention: e.target.value })}
+                                        onChange={e => updateField('dataRetention', e.target.value)}
                                         className="w-full bg-surface-secondary border border-border-primary rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-accent-primary transition-all text-primary appearance-none cursor-pointer"
                                     >
                                         <option>30 dias</option>
@@ -170,20 +216,21 @@ export default function WorkspaceSettings() {
                         <div className="pt-4 flex items-center justify-end gap-3 border-t border-border-primary">
                             <button
                                 type="button"
-                                onClick={() => setFormData(resetMockWorkspaceSettings())}
+                                onClick={() => void restoreDefaults()}
                                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-secondary hover:text-primary transition-colors hover:bg-surface-tertiary"
                             >
                                 <RotateCcw size={16} /> Restaurar Defaults
                             </button>
                             <button
                                 type="submit"
-                                disabled={saving}
+                                disabled={isSaving || !isDirty}
                                 className="flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-semibold bg-accent-primary text-white shadow-lg hover:scale-105 transition-all disabled:opacity-50"
                             >
-                                {saving ? 'Aplicando...' : 'Salvar Alterações'} <Save size={16} />
+                                {isSaving ? 'Aplicando...' : 'Salvar Alterações'} <Save size={16} />
                             </button>
                         </div>
                     </form>
+                    )}
                 </Card>
 
                 {/* Info Lateral */}
@@ -197,7 +244,7 @@ export default function WorkspaceSettings() {
                         <div className="space-y-4">
                             <div>
                                 <p className="text-[10px] text-muted uppercase font-bold tracking-widest">Nível da Organização</p>
-                                <p className="text-xl font-bold text-primary mt-1">{formData.billingPlan}</p>
+                                <p className="text-xl font-bold text-primary mt-1">{formData?.billingPlan ?? 'Indisponivel'}</p>
                                 <p className="text-xs text-secondary mt-1">Recursos ilimitados habilitados no ambiente local.</p>
                             </div>
 
