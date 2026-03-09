@@ -119,7 +119,7 @@ const ProvidersSettings: React.FC = () => {
 
       {/* Providers Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {providerCards.map(({ provider, apiKey, showKey, status, isGlobalDefault }) => (
+        {providerCards.map(({ provider, apiKey, showKey, status, isGlobalDefault, runtimeInfo, testMessage }) => (
           <Card
             key={provider.id}
             className={`p-6 bg-surface-primary/50 backdrop-blur-sm border-border-primary transition-all hover:border-accent-primary/30 group ${isGlobalDefault
@@ -168,6 +168,27 @@ const ProvidersSettings: React.FC = () => {
             <p className="text-[11px] text-secondary mb-6 leading-relaxed h-8 line-clamp-2">
               {provider.description}
             </p>
+
+            {runtimeInfo && (
+              <div className="mb-4 rounded-xl border border-border-primary bg-main/40 px-3 py-2 text-[11px] text-secondary space-y-1">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="uppercase tracking-widest text-[9px] text-muted font-bold">Runtime</span>
+                  <span className={`font-bold ${runtimeInfo.available ? "text-status-success" : "text-status-error"}`}>
+                    {runtimeInfo.status}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted">Default model:</span>{" "}
+                  <span className="text-primary font-mono">{runtimeInfo.default_model || "n/a"}</span>
+                </div>
+                {runtimeInfo.models.length > 0 && (
+                  <div>
+                    <span className="text-muted">Models:</span>{" "}
+                    <span className="text-primary">{runtimeInfo.models.join(", ")}</span>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="space-y-4">
               <div className="space-y-2">
@@ -218,6 +239,15 @@ const ProvidersSettings: React.FC = () => {
                   <Trash2 size={14} />
                 </button>
               </div>
+
+              {testMessage && (
+                <div className={`rounded-xl border px-3 py-2 text-[11px] leading-relaxed ${status === "ERROR"
+                  ? "border-status-error/20 bg-status-error/5 text-status-error"
+                  : "border-status-success/20 bg-status-success/5 text-status-success"
+                  }`}>
+                  {testMessage}
+                </div>
+              )}
             </div>
           </Card>
         ))}

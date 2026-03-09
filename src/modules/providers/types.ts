@@ -1,5 +1,6 @@
 import type { ComponentType } from "react";
 import type { ProviderStatus } from "@/store/useProvidersStore";
+import type { ProviderInfo } from "@/services/configService";
 
 export interface ProviderMeta {
   id: string;
@@ -23,4 +24,6 @@ export interface ProviderCardState {
   showKey: boolean;
   status: ProviderStatus;
   isGlobalDefault: boolean;
+  runtimeInfo?: ProviderInfo;
+  testMessage?: string;
 }

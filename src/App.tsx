@@ -29,6 +29,7 @@ import type { ChatResponsePayload, ChatMessagePayload } from './modules/chat/typ
 import { chatService } from './modules/chat/services/chatService';
 import { creativeService, type CodeGenerationSpec, type ImagePromptSpec } from './modules/creative/services/creativeService';
 import { configService } from './services/configService';
+import { useProvidersStore } from './store/useProvidersStore';
 import { Language, Theme } from './types';
 
 // New Pages
@@ -75,6 +76,7 @@ const MainApp: React.FC = () => {
   const userInteractedRef = useRef(false);
   const activeSectionRef = useRef(activeSection);
   const [demoMode, setDemoMode] = useState<boolean>(true);
+  const { globalDefault, setGlobalDefault } = useProvidersStore();
 
   // Translation function
   const t = (key: string, params?: Record<string, string>): string => {
@@ -105,9 +107,19 @@ const MainApp: React.FC = () => {
 
     const loadRuntimeFlags = async () => {
       try {
+        const config = await configService.getConfig(true);
         const isDemo = await configService.isDemoMode();
         if (mounted) {
           setDemoMode(isDemo);
+
+          const selectedProvider = config.providers[globalDefault];
+          if (!selectedProvider?.available) {
+            if (config.default_provider && config.providers[config.default_provider]) {
+              setGlobalDefault(config.default_provider);
+            } else if (config.available_providers.length > 0) {
+              setGlobalDefault(config.available_providers[0]);
+            }
+          }
         }
       } catch (error) {
         console.error('Falha ao carregar runtime flags', error);
