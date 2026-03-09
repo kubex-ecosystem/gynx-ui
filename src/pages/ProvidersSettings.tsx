@@ -1,190 +1,43 @@
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertCircle,
-  Bot,
   CheckCircle2,
   ChevronRight,
-  Code2,
-  Cpu,
-  Database,
   Eye,
   EyeOff,
-  Globe,
   Loader2,
   Lock,
-  Network,
   RefreshCw,
   Save,
   Settings2,
   Shield,
   Star,
-  Terminal,
   Trash2,
-  Zap,
 } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import Card from "@/components/ui/Card";
 import { useTranslations } from "@/i18n/useTranslations";
-import { unifiedAIService } from "@/services/unifiedAIService";
-import { ProviderStatus, useProvidersStore } from "@/store/useProvidersStore";
-
-interface ProviderMeta {
-  id: string;
-  name: string;
-  icon: any;
-  type: "CLOUD" | "LOCAL";
-  description: string;
-  color: string;
-}
-
-const PROVIDERS_META: ProviderMeta[] = [
-  {
-    id: "openai",
-    name: "OpenAI",
-    icon: Bot,
-    type: "CLOUD",
-    description: "Modelos GPT-4o e GPT-4o-mini.",
-    color: "text-green-400",
-  },
-  {
-    id: "anthropic",
-    name: "Anthropic",
-    icon: SparklesIcon,
-    type: "CLOUD",
-    description: "Claude 3.5 Sonnet e Opus.",
-    color: "text-orange-400",
-  },
-  {
-    id: "gemini",
-    name: "Google Gemini",
-    icon: Zap,
-    type: "CLOUD",
-    description: "Gemini 1.5 Pro e Flash.",
-    color: "text-blue-400",
-  },
-  {
-    id: "groq",
-    name: "Groq",
-    icon: Terminal,
-    type: "CLOUD",
-    description: "Llama 3 e Mixtral em alta velocidade.",
-    color: "text-purple-400",
-  },
-  {
-    id: "deepseek",
-    name: "DeepSeek",
-    icon: Globe,
-    type: "CLOUD",
-    description: "Modelos DeepSeek V3 e Coder.",
-    color: "text-cyan-400",
-  },
-  {
-    id: "ollama",
-    name: "Ollama",
-    icon: Cpu,
-    type: "LOCAL",
-    description: "Execução local de modelos open-source.",
-    color: "text-white",
-  },
-];
-
-function SparklesIcon(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="m12 3 1.912 5.886 6.182.048-4.978 3.653 1.878 5.903L12 14.875l-5.004 3.615 1.878-5.903-4.978-3.653 6.182-.048Z" />
-    </svg>
-  );
-}
-
-const TOOLS = [
-  {
-    id: "dataAnalyzer",
-    name: "Data Analysis",
-    icon: Database,
-    description: "Motor de análise de CSV e SQL.",
-  },
-  {
-    id: "code",
-    name: "Code Generation",
-    icon: Code2,
-    description: "Geração e refatoração de código.",
-  },
-  {
-    id: "agents",
-    name: "Autonomous Agents",
-    icon: Bot,
-    description: "Orquestração de squads multi-agentes.",
-  },
-  {
-    id: "chat",
-    name: "General Chat",
-    icon: Network,
-    description: "Interface de conversação padrão.",
-  },
-];
+import { ProviderStatus } from "@/store/useProvidersStore";
+import { PROVIDERS_META, PROVIDER_TOOLS } from "@/modules/providers/constants";
+import { useProvidersSettings } from "@/modules/providers/hooks/useProvidersSettings";
 
 const ProvidersSettings: React.FC = () => {
   const { t } = useTranslations();
-
   const {
-    keys,
-    status,
+    providerCards,
     globalDefault,
     expertMode,
     toolPreferences,
-    setKey,
-    removeKey,
-    setStatus,
     setGlobalDefault,
     setExpertMode,
     setToolPreference,
-    getDecryptedKey,
-  } = useProvidersStore();
-
-  const [localKeys, setLocalKeys] = useState<Record<string, string>>({});
-  const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
-
-  useEffect(() => {
-    // Initialize local keys from store (decrypted)
-    const initialLocalKeys: Record<string, string> = {};
-    PROVIDERS_META.forEach((p) => {
-      initialLocalKeys[p.id] = getDecryptedKey(p.id);
-    });
-    setLocalKeys(initialLocalKeys);
-  }, []);
-
-  const handleTestConnection = async (providerId: string) => {
-    const key = localKeys[providerId];
-    if (!key && providerId !== "ollama") return;
-
-    setStatus(providerId, "TESTING");
-    try {
-      const result = await unifiedAIService.testProvider(providerId);
-      setStatus(providerId, result.available ? "READY" : "ERROR");
-    } catch (err) {
-      setStatus(providerId, "ERROR");
-    }
-  };
-
-  const handleSave = (providerId: string) => {
-    setKey(providerId, localKeys[providerId]);
-    handleTestConnection(providerId);
-  };
-
-  const toggleShowKey = (providerId: string) => {
-    setShowKeys((prev) => ({ ...prev, [providerId]: !prev[providerId] }));
-  };
+    handleKeyChange,
+    toggleShowKey,
+    handleSaveProvider,
+    handleRemoveProviderKey,
+    handleTestConnection,
+    handleTestAllProviders,
+  } = useProvidersSettings();
 
   const getStatusBadge = (s: ProviderStatus = "IDLE") => {
     switch (s) {
@@ -231,8 +84,7 @@ const ProvidersSettings: React.FC = () => {
 
         <div className="flex items-center gap-4">
           <button
-            onClick={() =>
-              PROVIDERS_META.forEach((p) => handleTestConnection(p.id))}
+            onClick={() => void handleTestAllProviders()}
             className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border-primary bg-surface-primary hover:bg-surface-tertiary transition-all text-sm font-bold"
           >
             <RefreshCw size={16} /> Test All
@@ -267,10 +119,10 @@ const ProvidersSettings: React.FC = () => {
 
       {/* Providers Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {PROVIDERS_META.map((provider) => (
+        {providerCards.map(({ provider, apiKey, showKey, status, isGlobalDefault }) => (
           <Card
             key={provider.id}
-            className={`p-6 bg-surface-primary/50 backdrop-blur-sm border-border-primary transition-all hover:border-accent-primary/30 group ${globalDefault === provider.id
+            className={`p-6 bg-surface-primary/50 backdrop-blur-sm border-border-primary transition-all hover:border-accent-primary/30 group ${isGlobalDefault
               ? "ring-1 ring-accent-primary/50"
               : ""
               }`}
@@ -294,13 +146,13 @@ const ProvidersSettings: React.FC = () => {
                       {provider.type}
                     </span>
                   </div>
-                  {getStatusBadge(status[provider.id])}
+                  {getStatusBadge(status)}
                 </div>
               </div>
 
               <button
                 onClick={() => setGlobalDefault(provider.id)}
-                className={`p-2 rounded-lg transition-all ${globalDefault === provider.id
+                className={`p-2 rounded-lg transition-all ${isGlobalDefault
                   ? "text-accent-primary bg-accent-muted shadow-sm"
                   : "text-muted hover:text-primary hover:bg-surface-tertiary"
                   }`}
@@ -308,7 +160,7 @@ const ProvidersSettings: React.FC = () => {
               >
                 <Star
                   size={18}
-                  fill={globalDefault === provider.id ? "currentColor" : "none"}
+                  fill={isGlobalDefault ? "currentColor" : "none"}
                 />
               </button>
             </div>
@@ -324,13 +176,9 @@ const ProvidersSettings: React.FC = () => {
                 </label>
                 <div className="relative">
                   <input
-                    type={showKeys[provider.id] ? "text" : "password"}
-                    value={localKeys[provider.id] || ""}
-                    onChange={(e) =>
-                      setLocalKeys({
-                        ...localKeys,
-                        [provider.id]: e.target.value,
-                      })}
+                    type={showKey ? "text" : "password"}
+                    value={apiKey}
+                    onChange={(e) => handleKeyChange(provider.id, e.target.value)}
                     className="w-full bg-main border border-border-primary rounded-xl pl-4 pr-10 py-2.5 text-xs text-primary focus:outline-none focus:border-accent-primary transition-all font-mono"
                     placeholder="sk-..."
                     autoComplete="off"
@@ -341,7 +189,7 @@ const ProvidersSettings: React.FC = () => {
                     onClick={() => toggleShowKey(provider.id)}
                     className="absolute right-3 top-2.5 text-muted hover:text-primary transition-colors"
                   >
-                    {showKeys[provider.id]
+                    {showKey
                       ? <EyeOff size={16} />
                       : <Eye size={16} />}
                   </button>
@@ -350,23 +198,20 @@ const ProvidersSettings: React.FC = () => {
 
               <div className="flex items-center gap-2 pt-2">
                 <button
-                  onClick={() => handleSave(provider.id)}
+                  onClick={() => void handleSaveProvider(provider.id)}
                   className="flex-grow flex items-center justify-center gap-2 py-2.5 rounded-xl bg-accent-primary/10 border border-accent-primary/20 text-accent-secondary text-xs font-bold hover:bg-accent-primary hover:text-white transition-all shadow-sm"
                 >
                   <Save size={14} /> Salvar
                 </button>
                 <button
-                  onClick={() => handleTestConnection(provider.id)}
+                  onClick={() => void handleTestConnection(provider.id)}
                   className="p-2.5 rounded-xl bg-surface-tertiary border border-border-primary text-secondary hover:text-primary transition-all"
                   title="Testar Conexão"
                 >
                   <RefreshCw size={14} />
                 </button>
                 <button
-                  onClick={() => {
-                    removeKey(provider.id);
-                    setLocalKeys({ ...localKeys, [provider.id]: "" });
-                  }}
+                  onClick={() => handleRemoveProviderKey(provider.id)}
                   className="p-2.5 rounded-xl bg-status-error/5 border border-status-error/10 text-status-error/60 hover:text-status-error hover:bg-status-error/10 transition-all"
                   title="Remover Chave"
                 >
@@ -411,7 +256,7 @@ const ProvidersSettings: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-primary/50">
-                  {TOOLS.map((tool) => (
+                  {PROVIDER_TOOLS.map((tool) => (
                     <tr
                       key={tool.id}
                       className="hover:bg-white/[0.02] transition-colors group"
@@ -437,7 +282,7 @@ const ProvidersSettings: React.FC = () => {
                           >
                             {PROVIDERS_META.map((p) => (
                               <option key={p.id} value={p.id}>
-                                {p.name} {status[p.id] === "READY" ? "✓" : ""}
+                                {p.name} {providerCards.find((card) => card.provider.id === p.id)?.status === "READY" ? "✓" : ""}
                               </option>
                             ))}
                           </select>
