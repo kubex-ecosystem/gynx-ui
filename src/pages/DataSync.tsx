@@ -93,7 +93,7 @@ const DataSync: React.FC = () => {
               Active Connections
             </h3>
             <span className="text-xs font-bold text-muted uppercase tracking-widest">
-              {connections.length} Total
+              {(Array.isArray(connections) ? connections : []).length} Total
             </span>
           </div>
 
@@ -120,7 +120,7 @@ const DataSync: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-secondary/50">
-                  {connections.map((conn) => (
+                  {(Array.isArray(connections) ? connections : []).map((conn) => (
                     <tr
                       key={conn.id}
                       className="hover:bg-surface-tertiary/20 transition-colors"
@@ -192,12 +192,12 @@ const DataSync: React.FC = () => {
               Active Cronjobs
             </h3>
             <span className="text-xs font-bold text-muted uppercase tracking-widest">
-              {cronjobs.length} Scheduled
+              {(Array.isArray(cronjobs) ? cronjobs : []).length} Scheduled
             </span>
           </div>
 
           <div className="space-y-3">
-            {cronjobs.map((job) => (
+            {(Array.isArray(cronjobs) ? cronjobs : []).map((job) => (
               <Card
                 key={job.id}
                 className="p-5 border-border-secondary bg-surface-primary/40 backdrop-blur-sm group hover:border-border-accent transition-all duration-300"

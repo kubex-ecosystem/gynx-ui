@@ -11,7 +11,7 @@ export const getIntegrationConfigs = async (): Promise<IntegrationConfig[]> => {
         return mockIntegrationConfigs;
     }
 
-    return httpClient.get<IntegrationConfig[]>(httpEndpoints.sync.integrations, {
+    return await httpClient.get<IntegrationConfig[]>(httpEndpoints.sync.integrations, {
         credentials: HTTP_CREDENTIALS.session,
     });
 };
@@ -22,7 +22,7 @@ export const getSyncJobs = async (): Promise<SyncJob[]> => {
         return mockSyncJobs;
     }
 
-    return httpClient.get<SyncJob[]>(httpEndpoints.sync.jobs, {
+    return await httpClient.get<SyncJob[]>(httpEndpoints.sync.jobs, {
         credentials: HTTP_CREDENTIALS.session,
     });
 };
