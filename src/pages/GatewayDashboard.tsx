@@ -66,7 +66,7 @@ const GatewayDashboard: React.FC = () => {
     },
     {
       label: "Requisições / min",
-      value: metrics ? `${(metrics.requestsPerMinute / 1000).toFixed(1)}k` : "...",
+      value: metrics ? `${(metrics.requestsPerMinute || 0 / 1000).toFixed(1)}k` : "...",
       icon: Activity,
       color: "text-accent-secondary",
       bg: "bg-accent-muted",
