@@ -4,23 +4,18 @@ import Card from '@/components/ui/Card';
 import lottieAnimation from '@assets/lotties/banner_sm-01.json';
 import { useAuth } from '@/context/AuthContext';
 import LottieControl from '@/components/ui/Lottie';
+import { getMockWorkspaceSettings, resetMockWorkspaceSettings, saveMockWorkspaceSettings, type WorkspaceFormData } from '@/mocks';
 
 export default function WorkspaceSettings() {
     const { isSimulated } = useAuth();
-    const [formData, setFormData] = useState({
-        tenantName: 'GNyx Demo Corp',
-        tenantId: 'tenant_demo_123',
-        billingPlan: 'Enterprise API',
-        region: 'South America (sa-east-1)',
-        dataRetention: '90 dias'
-    });
+    const [formData, setFormData] = useState<WorkspaceFormData>(() => getMockWorkspaceSettings());
 
     const [saving, setSaving] = useState(false);
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaving(true);
-        // Simulating save
+        saveMockWorkspaceSettings(formData);
         await new Promise(r => setTimeout(r, 800));
         setSaving(false);
     };
@@ -175,13 +170,7 @@ export default function WorkspaceSettings() {
                         <div className="pt-4 flex items-center justify-end gap-3 border-t border-border-primary">
                             <button
                                 type="button"
-                                onClick={() => setFormData({
-                                    tenantName: 'GNyx Demo Corp',
-                                    tenantId: 'tenant_demo_123',
-                                    billingPlan: 'Enterprise API',
-                                    region: 'South America (sa-east-1)',
-                                    dataRetention: '90 dias'
-                                })}
+                                onClick={() => setFormData(resetMockWorkspaceSettings())}
                                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-secondary hover:text-primary transition-colors hover:bg-surface-tertiary"
                             >
                                 <RotateCcw size={16} /> Restaurar Defaults
