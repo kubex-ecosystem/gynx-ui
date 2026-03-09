@@ -1,10 +1,12 @@
 import { Loader2, NotebookPen, Wand2 } from 'lucide-react';
 import React, { useState } from 'react';
 import Card from '@/components/ui/Card';
+import ToolProviderSelector from '@/components/providers/ToolProviderSelector';
+import { useToolProvider } from '@/modules/providers/hooks/useToolProvider';
 import { Theme } from '@/types';
 
 interface ContentSummarizerProps {
-    onSummarize?: (input: string, tone: string, maxWords: number, apiKey?: string) => Promise<string>;
+    onSummarize?: (input: string, tone: string, maxWords: number, provider?: string, apiKey?: string) => Promise<string>;
     theme: Theme;
     isApiKeyMissing: boolean;
 }
@@ -22,9 +24,9 @@ const ContentSummarizer: React.FC<ContentSummarizerProps> = ({ onSummarize, them
     const [isLoading, setIsLoading] = useState(false);
     const [summary, setSummary] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
-    // BYOK Support
     const [externalApiKey, setExternalApiKey] = useState<string>('');
     const [showApiKeyInput, setShowApiKeyInput] = useState(false);
+    const { availableProviders, selectedProvider, isLoading: isProvidersLoading, setSelectedProvider } = useToolProvider('summarizer');
 
     const handleSummarize = async () => {
         if (!input.trim() || !onSummarize) return;
@@ -32,9 +34,8 @@ const ContentSummarizer: React.FC<ContentSummarizerProps> = ({ onSummarize, them
         setError(null);
         setSummary(null);
         try {
-            // BYOK Support: Pass external API key if provided
             const apiKey = externalApiKey.trim() || undefined;
-            const result = await onSummarize(input.trim(), tone, maxWords, apiKey);
+            const result = await onSummarize(input.trim(), tone, maxWords, selectedProvider || undefined, apiKey);
             setSummary(result);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Não foi possível gerar o resumo.');
@@ -50,6 +51,12 @@ const ContentSummarizer: React.FC<ContentSummarizerProps> = ({ onSummarize, them
             <Card title="Summarizer" description="Transforme briefings longos em entregáveis prontos para stakeholders.">
                 <div className="grid gap-6 lg:grid-cols-2">
                     <div className="space-y-4">
+                        <ToolProviderSelector
+                            availableProviders={availableProviders}
+                            isLoading={isProvidersLoading}
+                            selectedProvider={selectedProvider}
+                            onChange={setSelectedProvider}
+                        />
                         <label className="block text-xs font-semibold uppercase tracking-[0.3em] text-muted dark:text-secondary">
                             Conteúdo base
                         </label>
@@ -92,12 +99,11 @@ const ContentSummarizer: React.FC<ContentSummarizerProps> = ({ onSummarize, them
                             />
                         </div>
 
-                        {/* BYOK Support: Optional API Key Input */}
                         <div>
                             <button
                                 type="button"
                                 onClick={() => setShowApiKeyInput(!showApiKeyInput)}
-                                className="text-xs text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 flex items-center gap-1"
+                                className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400 dark:hover:text-gray-200 hover:text-gray-900"
                             >
                                 {showApiKeyInput ? '🔒 Ocultar API Key' : '🔑 Usar Sua Própria API Key (BYOK)'}
                             </button>
@@ -109,10 +115,10 @@ const ContentSummarizer: React.FC<ContentSummarizerProps> = ({ onSummarize, them
                                         placeholder="sk-... ou AIza... (opcional)"
                                         value={externalApiKey}
                                         onChange={(e) => setExternalApiKey(e.target.value)}
-                                        className="w-full p-2 rounded-lg border text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-400"
+                                        className="w-full rounded-lg border p-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-400"
                                     />
-                                    <p className="text-xs mt-1 text-gray-500 dark:text-gray-400">
-                                        💡 Sua key é usada apenas nesta requisição e nunca armazenada
+                                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                        Sua key é usada apenas nesta requisição e nunca armazenada.
                                     </p>
                                 </div>
                             )}

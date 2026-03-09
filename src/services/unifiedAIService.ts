@@ -112,6 +112,11 @@ class UnifiedAIService {
         { headers: this.buildHeaders(apiKey) }
       );
 
+      const promptTokens = data.usage?.prompt_tokens;
+      const completionTokens = data.usage?.completion_tokens;
+      const totalTokens = data.usage?.total_tokens
+        ?? ((promptTokens ?? 0) + (completionTokens ?? 0) || undefined);
+
       // Transform response to match expected format
       return {
         prompt: data.response,
@@ -119,9 +124,9 @@ class UnifiedAIService {
         model: data.model,
         mode: data.mode, // Include mode from backend
         usageMetadata: {
-          promptTokenCount: data.usage?.prompt_tokens,
-          candidatesTokenCount: data.usage?.completion_tokens,
-          totalTokenCount: data.usage?.total_tokens,
+          promptTokenCount: promptTokens,
+          candidatesTokenCount: completionTokens,
+          totalTokenCount: totalTokens,
         },
       };
     } catch (error) {

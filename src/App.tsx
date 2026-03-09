@@ -294,32 +294,36 @@ const MainApp: React.FC = () => {
   const handleChatSend = async (
     messages: ChatMessagePayload[],
     input: string,
+    provider?: string,
     apiKey?: string,
   ): Promise<ChatResponsePayload | null> => {
-    return chatService.sendMessage(messages, input, apiKey);
+    return chatService.sendMessage(messages, input, provider, apiKey);
   };
 
   const handleSummarize = async (
     input: string,
     tone: string,
     maxWords: number,
+    provider?: string,
     apiKey?: string,
   ): Promise<string> => {
-    return creativeService.summarize(input, tone, maxWords, apiKey);
+    return creativeService.summarize(input, tone, maxWords, provider, apiKey);
   };
 
   const handleCodeGenerate = async (
     spec: CodeGenerationSpec,
+    provider?: string,
     apiKey?: string,
   ): Promise<string> => {
-    return creativeService.generateCode(spec, apiKey);
+    return creativeService.generateCode(spec, provider, apiKey);
   };
 
   const handleImagePrompt = async (
     payload: ImagePromptSpec,
+    provider?: string,
     apiKey?: string,
   ): Promise<string> => {
-    return creativeService.craftImagePrompt(payload, apiKey);
+    return creativeService.craftImagePrompt(payload, provider, apiKey);
   };
 
   if (authLoading) {
