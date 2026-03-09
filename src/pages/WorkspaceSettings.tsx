@@ -3,6 +3,7 @@ import { AlertCircle, LoaderCircle, Settings, Save, RotateCcw, Building, Users, 
 import Card from '@/components/ui/Card';
 import lottieAnimation from '@assets/lotties/banner_sm-01.json';
 import { useAuth } from '@/context/AuthContext';
+import { navigateToSection } from '@/core/navigation/hashRoutes';
 import LottieControl from '@/components/ui/Lottie';
 import { useWorkspaceSettings } from '@/modules/workspace/hooks/useWorkspaceSettings';
 
@@ -273,7 +274,7 @@ export default function WorkspaceSettings() {
                             </p>
 
                             <button
-                                onClick={() => window.location.hash = '#accept-invite'}
+                                onClick={() => navigateToSection('accept-invite', { token: 'demo-workspace-invite' })}
                                 className="w-full py-2 rounded-xl bg-surface-tertiary text-primary text-sm font-semibold border border-border-primary hover:border-accent-primary transition-colors"
                             >
                                 Simular Fluxo de Convite

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import Card from "@/components/ui/Card";
+import { getHashQueryParams, navigateToSection } from "@/core/navigation/hashRoutes";
 import { AcceptInviteReq, InviteDTO } from "@/types";
 import { validateInviteToken, acceptInvite } from "@/services/inviteService";
 
@@ -35,10 +36,7 @@ const AcceptInvite: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
-    // Simular extração de token da URL (ex: #accept-invite?token=xyz)
-    const hash = window.location.hash;
-    const urlParams = new URLSearchParams(hash.split("?")[1]);
-    const tokenParam = urlParams.get("token");
+    const tokenParam = getHashQueryParams(window.location.hash).get("token");
     setToken(tokenParam);
 
     if (tokenParam) {
@@ -103,7 +101,7 @@ const AcceptInvite: React.FC = () => {
             <p className="text-secondary text-sm">{error}</p>
           </div>
           <button
-            onClick={() => window.location.hash = "#landing"}
+            onClick={() => navigateToSection("landing")}
             className="w-full py-3 rounded-xl bg-surface-tertiary text-primary font-bold hover:bg-surface-tertiary/80 transition-all"
           >
             Voltar para o Início
@@ -146,7 +144,7 @@ const AcceptInvite: React.FC = () => {
               </div>
             </div>
             <button
-              onClick={() => window.location.hash = "#auth"}
+              onClick={() => navigateToSection("auth")}
               className="w-full py-4 rounded-xl bg-accent-primary text-white font-bold text-lg shadow-lg shadow-accent-primary/20 hover:scale-[1.02] transition-transform flex items-center justify-center gap-2"
             >
               Ir para o Login <ArrowRight size={20} />

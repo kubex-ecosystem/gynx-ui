@@ -4,6 +4,7 @@ import Card from '@/components/ui/Card';
 import { useTranslations } from '@/i18n/useTranslations';
 import lottieAnimation from '@assets/lotties/banner_sm-01.json';
 import LottieControl from '@/components/ui/Lottie';
+import { navigateToSection, type AppSectionId } from '@/core/navigation/hashRoutes';
 
 const loopLimit = 20;
 
@@ -30,19 +31,19 @@ const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
             phase: t('welcomePhaseCreation'),
             title: t('welcomePromptTitle'),
             description: t('welcomePromptDescription'),
-            hash: '#prompt'
+            section: 'prompt' as AppSectionId
         },
         {
             phase: t('welcomePhaseAnalysis'),
             title: t('welcomeChatTitle'),
             description: t('welcomeChatDescription'),
-            hash: '#chat'
+            section: 'chat' as AppSectionId
         },
         {
             phase: t('welcomePhaseConsolidation'),
             title: t('welcomeSummaryTitle'),
             description: t('welcomeSummaryDescription'),
-            hash: '#summarizer'
+            section: 'summarizer' as AppSectionId
         },
     ];
 
@@ -128,7 +129,7 @@ const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
                 {featureHighlights.map((feature) => (
                     <div
                         key={feature.title}
-                        onClick={() => window.location.hash = feature.hash}
+                        onClick={() => navigateToSection(feature.section)}
                         className="cursor-pointer group h-full"
                     >
                         <Card title={feature.title} description={feature.description} className="h-full transition-all duration-300 group-hover:border-accent-primary/50 group-hover:shadow-md group-hover:-translate-y-1">
@@ -141,7 +142,7 @@ const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
 
                 {/* Placeholders for new CTAs */}
                 <div
-                    onClick={() => window.location.hash = '#workspace-settings'}
+                    onClick={() => navigateToSection('workspace-settings')}
                     className="rounded-2xl border-2 border-dashed border-border-primary/50 bg-surface-primary/10 flex flex-col items-center justify-center p-6 text-center shadow-none hover:border-accent-primary/50 hover:bg-surface-primary/30 transition-all duration-300 cursor-pointer group min-h-[160px] hover:-translate-y-1"
                 >
                     <Sparkles className="h-6 w-6 text-muted group-hover:text-accent-primary transition-colors mb-3 group-hover:scale-110 duration-300" />
@@ -150,7 +151,7 @@ const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
                 </div>
 
                 <div
-                    onClick={() => window.location.hash = '#providers-settings'}
+                    onClick={() => navigateToSection('providers-settings')}
                     className="rounded-2xl border-2 border-dashed border-border-primary/50 bg-surface-primary/10 flex flex-col items-center justify-center p-6 text-center shadow-none hover:border-accent-primary/50 hover:bg-surface-primary/30 transition-all duration-300 cursor-pointer group min-h-[160px] hover:-translate-y-1"
                 >
                     <Compass className="h-6 w-6 text-muted group-hover:text-accent-primary transition-colors mb-3 group-hover:scale-110 duration-300" />

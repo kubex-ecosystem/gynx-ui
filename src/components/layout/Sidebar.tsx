@@ -1,7 +1,7 @@
 import {
   Activity, BarChart3, Bot, Database, Key, LayoutDashboard,
   LucideIcon, Mail, MessageCircle, NotebookPen, Sparkles,
-  Wand2, Workflow, ChevronDown, LogOut
+  Wand2, Workflow, ChevronDown, LogOut, ShieldCheck, Play, Settings
 } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -30,6 +30,7 @@ const defaultIcons: Record<string, LucideIcon> = {
   'mail-hub': Mail,
   'data-sync': Database,
   'providers-settings': Key,
+  'workspace-settings': ShieldCheck,
   welcome: LayoutDashboard,
   prompt: Sparkles,
   agents: Bot,
@@ -37,6 +38,8 @@ const defaultIcons: Record<string, LucideIcon> = {
   summarizer: NotebookPen,
   code: Workflow,
   images: Wand2,
+  playground: Play,
+  'group-settings': Settings,
 };
 
 const NavItem: React.FC<{
@@ -199,6 +202,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sections, activeSection, onSectionCha
         <ul className="flex w-full flex-col items-center gap-3">
           {sections.map((section) => {
             const Icon = section.icon || defaultIcons[section.id] || LayoutDashboard;
+            const targetSection = section.children?.[0]?.id ?? section.id;
             const isActive = activeSection === section.id || section.children?.some(c => c.id === activeSection);
             return (
               <li key={section.id} className="w-full">
@@ -206,7 +210,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sections, activeSection, onSectionCha
                   type="button"
                   title={section.label}
                   aria-label={section.label}
-                  onClick={() => onSectionChange(section.id)}
+                  onClick={() => onSectionChange(targetSection)}
                   className={`mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border text-secondary transition-all duration-200 ${isActive
                     ? 'border-accent-primary bg-accent-muted text-accent-primary shadow-md'
                     : 'border-transparent bg-surface-primary/80 hover:border-border-accent hover:bg-surface-tertiary'

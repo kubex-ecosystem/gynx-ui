@@ -3,6 +3,7 @@ import Cookies from 'js-cookie';
 import { httpClient } from '@/core/http/client';
 import { HTTP_CREDENTIALS } from '@/core/http/auth';
 import { httpEndpoints } from '@/core/http/endpoints';
+import { navigateToSection } from '@/core/navigation/hashRoutes';
 
 interface User {
   id: string;
@@ -131,7 +132,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     }
     setUser(null);
-    window.location.hash = '#landing';
+    navigateToSection('landing');
   };
 
   return (
