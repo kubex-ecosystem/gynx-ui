@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { HistoryItem } from '@/types';
-import { getHistory, saveHistory } from '../services/storageService';
+import { getHistory, saveHistory } from '@/services/storageService';
 
 export const usePromptHistory = () => {
     const [promptHistory, setPromptHistory] = useState<HistoryItem[]>([]);
@@ -25,7 +25,7 @@ export const usePromptHistory = () => {
             }
             checkStorage();
         } else {
-             saveHistory(promptHistory);
+            saveHistory(promptHistory);
         }
     }, [promptHistory]);
 

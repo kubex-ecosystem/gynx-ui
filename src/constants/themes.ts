@@ -13,6 +13,7 @@ export interface Theme {
   button: string;
   buttonSecondary: string;
   accent: string;
+  [key: string]: string;
 }
 
 export interface Themes {

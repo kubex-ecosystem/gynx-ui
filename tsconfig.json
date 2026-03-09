@@ -26,24 +26,49 @@
     "jsx": "react",
     "paths": {
       "@/*": [
-        "./src/*"
+        "./src/*",
       ],
-      "tests/*": [
-        "./tests/*"
+      "@assets/*": [
+        "./src/assets/*"
       ],
-      "test-utils/*": [
-        "./tests/utils/*"
+      "@services/*": [
+        "./src/services/*"
       ],
-      "components/*": [
+      "@pages/*": [
+        "./src/pages/*"
+      ],
+      "@public/*": [
+        "./public/*"
+      ],
+      "@i18n/*": [
+        "./src/i18n/*"
+      ],
+      "@components/*": [
         "./src/components/*"
       ],
-      "hooks/*": [
+      "@ui/*": [
+        "./src/components/ui/*"
+      ],
+      "@hooks/*": [
         "./src/hooks/*"
+      ],
+      "@utils/*": [
+        "./src/utils/*"
+      ],
+      "@config/*": [
+        "./src/config/*"
+      ],
+      "@tests/*": [
+        "./tests/*"
+      ],
+      "@test-utils/*": [
+        "./tests/utils/*"
       ]
     },
     "noEmit": true
   },
   "exclude": [
+    "node_modules",
     "dist",
     "build",
     ".notes",

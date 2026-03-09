@@ -1,88 +1,166 @@
 import { ArrowRight, Compass, Sparkles } from 'lucide-react';
-import React from 'react';
-import Card from '../ui/Card';
-import { useTranslations } from '../../i18n/useTranslations';
+import React, { useState } from 'react';
+import Card from '@/components/ui/Card';
+import { useTranslations } from '@/i18n/useTranslations';
+import lottieAnimation from '@assets/lotties/banner_sm-01.json';
+import LottieControl from '@/components/ui/Lottie';
+import { navigateToSection, type AppSectionId } from '@/core/navigation/hashRoutes';
+
+const loopLimit = 20;
 
 interface WelcomeProps {
- onGetStarted: () => void;
+    onGetStarted: () => void;
 }
 
 const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
- const { t } = useTranslations();
- const featureHighlights = [
- {
- phase: t('welcomePhaseCreation'),
- title: t('welcomePromptTitle'),
- description: t('welcomePromptDescription'),
- },
- {
- phase: t('welcomePhaseAnalysis'),
- title: t('welcomeChatTitle'),
- description: t('welcomeChatDescription'),
- },
- {
- phase: t('welcomePhaseConsolidation'),
- title: t('welcomeSummaryTitle'),
- description: t('welcomeSummaryDescription'),
- },
- ];
+    const { t } = useTranslations();
 
- return (
- <div className="space-y-8">
- <Card className="bg-gradient-to-br from-surface-primary via-surface-secondary to-surface-tertiary">
- <div className="flex flex-col gap-6 lg:flex-row lg:items-center">
- <div className="flex-1 space-y-4">
- <p className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.4em] text-accent-primary">
- <Compass size={16} /> {t('welcomeKicker')}
- </p>
- <h1 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl md:text-5xl">
- {t('welcomeHeadline')}
- </h1>
- <p className="text-base text-secondary">
- {t('welcomeSubheadline')}
- </p>
- <div className="flex flex-col items-start gap-3 sm:flex-row">
- <button
- type="button"
- onClick={onGetStarted}
- className="inline-flex items-center gap-2 rounded-full border border-accent-primary bg-accent-primary px-6 py-2 text-sm font-semibold text-white shadow-md transition hover:scale-[1.01] hover:bg-accent-secondary focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
- >
- {t('welcomeCta')}
- <ArrowRight size={16} />
- </button>
- </div>
- </div>
- <div className="flex-1 rounded-2xl border border-border-primary bg-surface-primary/95 p-6 shadow-md">
- <p className="text-xs uppercase tracking-[0.45em] text-muted">{t('welcomeStackTitle')}</p>
- <ul className="mt-4 space-y-3 text-sm text-secondary">
- <li className="flex items-start gap-3">
- <Sparkles className="mt-1 h-4 w-4 text-accent-primary" />
- {t('welcomeStackItemOne')}
- </li>
- <li className="flex items-start gap-3">
- <Sparkles className="mt-1 h-4 w-4 text-accent-secondary" />
- {t('welcomeStackItemTwo')}
- </li>
- <li className="flex items-start gap-3">
- <Sparkles className="mt-1 h-4 w-4 text-status-info" />
- {t('welcomeStackItemThree')}
- </li>
- </ul>
- </div>
- </div>
- </Card>
+    const [animationData, setAnimationData] = useState(lottieAnimation);
 
- <div className="grid gap-6 md:grid-cols-3">
- {featureHighlights.map((feature) => (
- <Card key={feature.title} title={feature.title} description={feature.description}>
- <div className="text-xs font-semibold uppercase tracking-[0.35em] text-accent-primary">
- {feature.phase}
- </div>
- </Card>
- ))}
- </div>
- </div>
- );
+    const [loopTimes, setLoopTimes] = useState(0);
+    const [loopSpeed, setLoopSpeed] = useState(0.35);
+
+    const [isStopped, setIsStopped] = useState(true);
+    const [isPaused, setIsPaused] = useState(true);
+    const [isLoaded, setIsLoaded] = useState(false);
+
+
+
+    const featureHighlights = [
+        {
+            phase: t('welcomePhaseCreation'),
+            title: t('welcomePromptTitle'),
+            description: t('welcomePromptDescription'),
+            section: 'prompt' as AppSectionId
+        },
+        {
+            phase: t('welcomePhaseAnalysis'),
+            title: t('welcomeChatTitle'),
+            description: t('welcomeChatDescription'),
+            section: 'chat' as AppSectionId
+        },
+        {
+            phase: t('welcomePhaseConsolidation'),
+            title: t('welcomeSummaryTitle'),
+            description: t('welcomeSummaryDescription'),
+            section: 'summarizer' as AppSectionId
+        },
+    ];
+
+    const lottieControl = new LottieControl(
+        {
+            ariaRole: 'button',
+            ariaLabel: 'animation',
+            isClickToPauseDisabled: true,
+            title: 'animation',
+            isStopped: isStopped,
+            isPaused: isPaused,
+            width: 550,
+            speed: loopSpeed,
+            direction: 1,
+            options: {
+                autoplay: false,
+                loop: (loopTimes < loopLimit),
+                animationData: (animationData || {}),
+                rendererSettings: { preserveAspectRatio: 'xMidYMid slice' }
+            },
+            eventListeners: [
+                {
+                    eventName: 'loopComplete',
+                    callback: () => {
+                        if (loopTimes < loopLimit) {
+                            setLoopTimes(loopTimes + 1);
+                        } else if (loopTimes === loopLimit) {
+                            setLoopTimes(loopTimes + 1);
+                            setTimeout(() => { setLoopTimes(0); }, 30000);
+                        } else {
+                            setLoopTimes(0);
+                        }
+                    }
+                }, // onComplete
+                {
+                    eventName: 'DOMLoaded',
+                    callback: () => {
+                        if (isStopped) setIsStopped(false);
+                        if (isPaused) setIsPaused(false);
+                    }
+                } // onDOMLoaded
+            ],
+            style: { width: '550px' },
+            segments: []
+        }
+    )
+
+    return (
+        <div className="space-y-8 animate-fade-in">
+            <Card className="bg-gradient-to-br from-surface-primary via-surface-secondary to-surface-tertiary p-0 overflow-hidden relative">
+                <div className="absolute inset-0 bg-grid opacity-20 pointer-events-none" />
+                <div className="grid md:grid-cols-2 gap-8 items-center p-4 lg:p-8">
+                    <div className="space-y-4 relative z-10">
+                        <p className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.4em] text-accent-primary">
+                            <Compass size={16} /> {t('welcomeKicker')}
+                        </p>
+                        <h1 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl md:text-5xl">
+                            {t('welcomeHeadline')}
+                        </h1>
+                        <p className="text-base text-secondary leading-relaxed">
+                            {t('welcomeSubheadline')}
+                        </p>
+                        <div className="flex flex-col items-start gap-3 sm:flex-row pt-2">
+                            <button
+                                type="button"
+                                onClick={onGetStarted}
+                                className="inline-flex items-center gap-2 rounded-full border border-accent-primary bg-accent-primary px-8 py-3 text-sm font-semibold text-white shadow-lg transition hover:scale-105 hover:bg-accent-secondary focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
+                            >
+                                Explorar o workspace
+                                <ArrowRight size={16} />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="relative h-64 min-h-[300px] flex items-center justify-center pointer-events-none p-6">
+                        <div className="absolute inset-0 bg-gradient-to-l from-transparent via-surface-primary/10 to-surface-primary z-10 hidden md:block" />
+                        {lottieControl.render()}
+                    </div>
+                </div>
+            </Card>
+
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+                {featureHighlights.map((feature) => (
+                    <div
+                        key={feature.title}
+                        onClick={() => navigateToSection(feature.section)}
+                        className="cursor-pointer group h-full"
+                    >
+                        <Card title={feature.title} description={feature.description} className="h-full transition-all duration-300 group-hover:border-accent-primary/50 group-hover:shadow-md group-hover:-translate-y-1">
+                            <div className="text-xs font-semibold uppercase tracking-[0.35em] text-accent-primary transition-colors duration-300 group-hover:text-accent-secondary">
+                                {feature.phase}
+                            </div>
+                        </Card>
+                    </div>
+                ))}
+
+                {/* Placeholders for new CTAs */}
+                <div
+                    onClick={() => navigateToSection('workspace-settings')}
+                    className="rounded-2xl border-2 border-dashed border-border-primary/50 bg-surface-primary/10 flex flex-col items-center justify-center p-6 text-center shadow-none hover:border-accent-primary/50 hover:bg-surface-primary/30 transition-all duration-300 cursor-pointer group min-h-[160px] hover:-translate-y-1"
+                >
+                    <Sparkles className="h-6 w-6 text-muted group-hover:text-accent-primary transition-colors mb-3 group-hover:scale-110 duration-300" />
+                    <p className="text-sm font-semibold text-secondary group-hover:text-primary transition-colors">Upgrade de Assinatura</p>
+                    <p className="text-xs text-muted mt-1 flex items-center gap-1 opacity-60">Gerenciar Plano</p>
+                </div>
+
+                <div
+                    onClick={() => navigateToSection('providers-settings')}
+                    className="rounded-2xl border-2 border-dashed border-border-primary/50 bg-surface-primary/10 flex flex-col items-center justify-center p-6 text-center shadow-none hover:border-accent-primary/50 hover:bg-surface-primary/30 transition-all duration-300 cursor-pointer group min-h-[160px] hover:-translate-y-1"
+                >
+                    <Compass className="h-6 w-6 text-muted group-hover:text-accent-primary transition-colors mb-3 group-hover:scale-110 duration-300" />
+                    <p className="text-sm font-semibold text-secondary group-hover:text-primary transition-colors">Configurar Modelos</p>
+                    <p className="text-xs text-muted mt-1 flex items-center gap-1 opacity-60">Explorar Provedores</p>
+                </div>
+            </div>
+        </div>
+    );
 };
 
 export default Welcome;

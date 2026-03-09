@@ -112,7 +112,7 @@ export function usePWA(): PWAState & PWAActions {
       }
 
     } catch (error) {
-      console.error('PWA initialization failed:', error);
+      console.error('❌ PWA initialization failed:', error);
     }
 
     setState(prev => ({ ...prev, isLoading: false }));
@@ -185,13 +185,13 @@ export function usePWA(): PWAState & PWAActions {
       if (choiceResult.outcome === 'accepted') {
         console.log('User accepted PWA installation');
       } else {
-        console.log('User dismissed PWA installation');
+        console.log('❌ User dismissed PWA installation');
       }
 
       setDeferredPrompt(null);
       setState(prev => ({ ...prev, isInstallable: false }));
     } catch (error) {
-      console.error('PWA installation failed:', error);
+      console.error('❌ PWA installation failed:', error);
       throw error;
     }
   };
@@ -218,7 +218,7 @@ export function usePWA(): PWAState & PWAActions {
         window.location.reload();
       }
     } catch (error) {
-      console.error('App update failed:', error);
+      console.error('❌ App update failed:', error);
       throw error;
     }
   };
@@ -238,7 +238,7 @@ export function usePWA(): PWAState & PWAActions {
         }, 1000);
       }
     } catch (error) {
-      console.error('Offline data sync failed:', error);
+      console.error('❌ Offline data sync failed:', error);
       throw error;
     }
   };
@@ -251,7 +251,7 @@ export function usePWA(): PWAState & PWAActions {
       setState(prev => ({ ...prev, queuedRequestsCount: 0 }));
       console.log('Offline data cleared');
     } catch (error) {
-      console.error('Failed to clear offline data:', error);
+      console.error('❌ Failed to clear offline data:', error);
       throw error;
     }
   };

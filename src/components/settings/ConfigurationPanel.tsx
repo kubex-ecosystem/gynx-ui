@@ -1,12 +1,12 @@
 import { Info, Loader2 } from "lucide-react";
 import * as React from "react";
-import { DemoMode } from "../../config/demoMode";
-import { UseProvidersState } from "../../hooks/useGromptAPI";
+import { DemoMode } from "@/config/demoMode";
+import { UseProvidersState } from "@/hooks/useGromptAPI";
 import {
   AgentFramework,
   OutputType,
   Purpose,
-} from "../../hooks/usePromptCrafter";
+} from "@/hooks/usePromptCrafter";
 
 interface Theme {
   [key: string]: string;
@@ -124,7 +124,7 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
       const demoResult = DemoMode.handleDemoCall("mcp_real");
       alert(
         "🔌 " + serverName + "\n\n" + demoResult.message + "\n\nETA: " +
-          demoResult.eta,
+        demoResult.eta,
       );
       return;
     }
@@ -141,7 +141,7 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
         const demoResult = DemoMode.handleDemoCall("mcp_real");
         alert(
           "🔌 Servidor MCP Customizado\n\n" + demoResult.message + "\n\nETA: " +
-            demoResult.eta,
+          demoResult.eta,
         );
         return;
       }
@@ -166,11 +166,10 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
             <button
               key={option.value}
               onClick={() => setOutputType(option.value)}
-              className={`flex-1 px-4 py-3 rounded-lg text-sm border transition-all ${
-                outputType === option.value
-                  ? "bg-purple-600 text-white border-purple-600 shadow-lg"
-                  : "bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white hover:border-purple-500/50"
-              }`}
+              className={`flex-1 px-4 py-3 rounded-lg text-sm border transition-all ${outputType === option.value
+                ? "bg-purple-600 text-white border-purple-600 shadow-lg"
+                : "bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white hover:border-purple-500/50"
+                }`}
             >
               <div className="text-center">
                 <div className="text-lg mb-1">{option.icon}</div>
@@ -243,10 +242,9 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
                   availableProviders.map((provider) => (
                     <option key={provider.name} value={provider.name}>
                       {provider.available
-                        ? `${provider.name} ${
-                          provider.defaultModel
-                            ? `(${provider.defaultModel})`
-                            : ""
+                        ? `${provider.name} ${provider.defaultModel
+                          ? `(${provider.defaultModel})`
+                          : ""
                         }`
                         : `${provider.name} (Indisponível)`}
                     </option>
@@ -288,11 +286,10 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
                 <button
                   key={tool}
                   onClick={() => handleToolToggle(tool)}
-                  className={`px-3 py-1 rounded-full text-xs border transition-colors ${
-                    agentTools.includes(tool)
-                      ? "bg-teal-600 text-white border-teal-600"
-                      : "bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
-                  }`}
+                  className={`px-3 py-1 rounded-full text-xs border transition-colors ${agentTools.includes(tool)
+                    ? "bg-teal-600 text-white border-teal-600"
+                    : "bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                    }`}
                 >
                   {tool}
                 </button>
@@ -323,11 +320,10 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
                   <button
                     key={server.name}
                     onClick={() => handleMcpServerToggle(server.name)}
-                    className={`px-3 py-2 rounded-lg text-xs border transition-colors ${
-                      mcpServers.includes(server.name)
-                        ? "bg-purple-600 text-white border-purple-600"
-                        : "bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
-                    }`}
+                    className={`px-3 py-2 rounded-lg text-xs border transition-colors ${mcpServers.includes(server.name)
+                      ? "bg-purple-600 text-white border-purple-600"
+                      : "bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                      }`}
                     title={server.desc + " (demo)"}
                   >
                     {server.desc} 🎪
@@ -392,11 +388,10 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
               <button
                 key={option}
                 onClick={() => setPurpose(option)}
-                className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
-                  purpose === option
-                    ? "bg-purple-600 text-white border-purple-600"
-                    : "bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
-                }`}
+                className={`px-3 py-2 rounded-lg text-sm border transition-colors ${purpose === option
+                  ? "bg-purple-600 text-white border-purple-600"
+                  : "bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                  }`}
               >
                 {option}
               </button>

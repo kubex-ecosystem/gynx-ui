@@ -1,5 +1,6 @@
 import { ArrowRight, Box, Globe, Shield, Zap } from "lucide-react";
 import React from "react";
+import { navigateToSection } from "@/core/navigation/hashRoutes";
 
 const Landing: React.FC = () => {
   return (
@@ -30,7 +31,7 @@ const Landing: React.FC = () => {
           </a>
         </div>
         <button
-          onClick={() => window.location.hash = "#auth"}
+          onClick={() => navigateToSection("auth")}
           className="px-5 py-2 rounded-full border border-border-primary bg-surface-primary hover:bg-surface-tertiary transition-all text-sm font-semibold"
         >
           Login
@@ -58,7 +59,7 @@ const Landing: React.FC = () => {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
             <button
-              onClick={() => window.location.hash = "#auth"}
+              onClick={() => navigateToSection("auth")}
               className="w-full sm:w-auto px-8 py-4 rounded-xl bg-accent-primary text-white font-bold text-lg shadow-lg shadow-accent-primary/20 hover:scale-105 transition-transform flex items-center justify-center gap-2"
             >
               Acessar Plataforma <ArrowRight size={20} />

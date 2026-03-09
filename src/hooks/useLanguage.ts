@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Language } from '@/types';
-import { translations } from '../i18n/translations';
+import { translations } from '@/i18n/translations';
 
 export const useLanguage = () => {
   const [language, setLanguage] = useState<Language>('en');
@@ -16,10 +16,10 @@ export const useLanguage = () => {
       const initialLang = preferredLang || (['en', 'pt'].includes(browserLang) ? browserLang : 'en');
       setLanguage(initialLang);
     } catch (error) {
-        console.warn('Could not access localStorage to get language. Using default.', error);
-        // Fallback to browser language if localStorage is not available
-        const browserLang = navigator.language.split('-')[0] as Language;
-        setLanguage((['en', 'pt'].includes(browserLang) ? browserLang : 'en'));
+      console.warn('Could not access localStorage to get language. Using default.', error);
+      // Fallback to browser language if localStorage is not available
+      const browserLang = navigator.language.split('-')[0] as Language;
+      setLanguage((['en', 'pt'].includes(browserLang) ? browserLang : 'en'));
     }
   }, []);
 

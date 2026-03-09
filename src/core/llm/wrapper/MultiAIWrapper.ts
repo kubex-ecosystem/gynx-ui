@@ -7,10 +7,10 @@ import {
   GenerateContentParams,
   MultiAIConfig,
   RefactorCodeParams
-} from "../../../types/common";
-import { AnthropicProvider } from "../providers/anthropic";
-import { GeminiProvider } from "../providers/gemini";
-import { OpenAIProvider } from "../providers/openai";
+} from "@/types/common";
+import { AnthropicProvider } from "@/core/llm/providers/anthropic";
+import { GeminiProvider } from "@/core/llm/providers/gemini";
+import { OpenAIProvider } from "@/core/llm/providers/openai";
 
 export class MultiAIWrapper {
   private providers: Map<AIProvider, BaseProvider>;

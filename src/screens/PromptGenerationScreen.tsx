@@ -1,9 +1,10 @@
 import * as React from "react";
-import IdeasInput from "../components/ideas/IdeasInput";
-import IdeasList from "../components/ideas/IdeasList";
-import OutputPanel from "../components/settings/OutputPanel";
-import { useGromptAPI } from "../hooks/useGromptAPI";
-import { Purpose } from "../hooks/usePromptCrafter";
+import IdeasInput from "@/components/ideas/IdeasInput";
+import IdeasList from "@/components/ideas/IdeasList";
+import OutputPanel from "@/components/settings/OutputPanel";
+import { useGromptAPI } from "@/hooks/useGromptAPI";
+import { Purpose } from "@/hooks/usePromptCrafter";
+import { Ideas } from "@/types";
 
 interface Theme {
   [key: string]: string;
@@ -13,15 +14,16 @@ const {
   generatePrompt,
   providers,
   health,
+  rateLimit,
 } = useGromptAPI({});
 
 interface PromptGenerationScreenProps {
   // Ideas state
-  currentInput: { id: string; text: string; timestamp: Date };
+  currentInput: Ideas;
   setCurrentInput: (
-    value: { id: string; text: string; timestamp: Date },
+    value: Ideas,
   ) => void;
-  ideas: Array<{ id: string; text: string; timestamp: Date }>;
+  ideas: Ideas;
   editingId: string | null;
   editingText: string;
   setEditingText: (value: string) => void;
@@ -40,7 +42,7 @@ interface PromptGenerationScreenProps {
   copied: boolean;
 
   // Actions
-  addIdea: (idea: { id: string; text: string; timestamp: Date }) => void;
+  addIdea: (idea: Ideas) => void;
   removeIdea: (id: string) => void;
   startEditing: (id: string, text: string) => void;
   saveEdit: () => void;
@@ -51,6 +53,8 @@ interface PromptGenerationScreenProps {
   // Theme and API
   currentTheme: Theme;
   apiGenerateState: typeof generatePrompt;
+  apiRateLimitState: typeof rateLimit;
+  apiHealthState: typeof health;
 }
 
 const PromptGenerationScreen: React.FC<PromptGenerationScreenProps> = ({
@@ -78,6 +82,8 @@ const PromptGenerationScreen: React.FC<PromptGenerationScreenProps> = ({
   copyToClipboard,
   currentTheme,
   apiGenerateState,
+  apiRateLimitState,
+  apiHealthState,
 }) => {
   const purposeOptions: Purpose[] = [
     "Código",
@@ -131,11 +137,10 @@ const PromptGenerationScreen: React.FC<PromptGenerationScreenProps> = ({
                       <button
                         key={option}
                         onClick={() => setPurpose(option)}
-                        className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
-                          purpose === option
-                            ? "bg-purple-600 text-white border-purple-600"
-                            : "bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
-                        }`}
+                        className={`px-3 py-2 rounded-lg text-sm border transition-colors ${purpose === option
+                          ? "bg-purple-600 text-white border-purple-600"
+                          : "bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                          }`}
                       >
                         {option}
                       </button>

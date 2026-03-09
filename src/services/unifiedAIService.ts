@@ -1,8 +1,12 @@
 // Unified AI Service for Grompt frontend
 // Communicates with backend's unified API endpoints
 
-import { Idea } from '@/types';
-import { configService, type ProviderInfo, type ServerConfig } from './configService';
+import { Ideas } from '@/types';
+import { httpClient } from '@/core/http/client';
+import { HTTP_AUTH_HEADERS, withApiKeyHeader } from '@/core/http/auth';
+import { httpEndpoints } from '@/core/http/endpoints';
+import { toHttpError } from '@/core/http/errors';
+import { configService, type ProviderInfo, type ServerConfig } from '@/services/configService';
 
 export interface UnifiedRequest {
   lang?: string;
@@ -42,14 +46,32 @@ export interface GenerationResult {
 }
 
 class UnifiedAIService {
-  private baseUrl = '';
+  private readonly unifiedEndpoint = httpEndpoints.unified.root;
+  private readonly providerTestEndpoint = httpEndpoints.unified.providerTest;
+
+  private buildHeaders(apiKey?: string): Headers {
+    const headers = withApiKeyHeader(
+      {
+      'Content-Type': 'application/json',
+      },
+      apiKey,
+      HTTP_AUTH_HEADERS.apiKey
+    );
+
+    return headers;
+  }
+
+  private getErrorMessage(error: unknown): string {
+    const normalizedError = toHttpError(error);
+    return normalizedError.message || `HTTP ${normalizedError.status}: ${normalizedError.statusText}`;
+  }
 
   /**
    * Generate a structured prompt using backend's unified API
    * @param apiKey - Optional external API key for BYOK (Bring Your Own Key)
    */
   async generateStructuredPrompt(
-    ideas: Idea[],
+    ideas: Ideas,
     purpose: string,
     provider?: string,
     model?: string,
@@ -83,29 +105,12 @@ class UnifiedAIService {
         max_tokens: 5000,
       };
 
-      // Prepare headers with BYOK support
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-
-      // BYOK Support: Add external API key if provided
-      if (apiKey) {
-        headers['X-API-Key'] = apiKey;
-      }
-
-      // Call unified API
-      const response = await fetch('/api/v1/unified', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(request),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`API Error ${response.status}: ${errorText}`);
-      }
-
-      const data: UnifiedResponse = await response.json();
+      // Call unified API through centralized HTTP client
+      const data = await httpClient.post<UnifiedResponse, UnifiedRequest>(
+        this.unifiedEndpoint,
+        request,
+        { headers: this.buildHeaders(apiKey) }
+      );
 
       // Transform response to match expected format
       return {
@@ -158,31 +163,14 @@ class UnifiedAIService {
         max_tokens: maxTokens,
       };
 
-      // Prepare headers with BYOK support
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-
-      // BYOK Support: Add external API key if provided
-      if (apiKey) {
-        headers['X-API-Key'] = apiKey;
-      }
-
-      const response = await fetch('/api/v1/unified', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(request),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`API Error ${response.status}: ${errorText}`);
-      }
-
-      return await response.json();
+      return await httpClient.post<UnifiedResponse, UnifiedRequest>(
+        this.unifiedEndpoint,
+        request,
+        { headers: this.buildHeaders(apiKey) }
+      );
     } catch (error) {
       console.error('Failed to generate direct prompt:', error);
-      throw error;
+      throw new Error(this.getErrorMessage(error));
     }
   }
 
@@ -205,18 +193,10 @@ class UnifiedAIService {
    */
   async testProvider(provider: string): Promise<{ available: boolean; message: string }> {
     try {
-      const response = await fetch(`/api/v1/test?provider=${provider}`, {
-        method: 'GET',
-      });
-
-      if (!response.ok) {
-        return {
-          available: false,
-          message: `HTTP ${response.status}: ${response.statusText}`,
-        };
-      }
-
-      const data = await response.json();
+      const data = await httpClient.get<{ available?: boolean; message?: string }>(
+        this.providerTestEndpoint,
+        { query: { provider } }
+      );
       return {
         available: data.available || false,
         message: data.message || 'Unknown status',
@@ -224,7 +204,7 @@ class UnifiedAIService {
     } catch (error) {
       return {
         available: false,
-        message: `Connection error: ${error}`,
+        message: `Connection error: ${this.getErrorMessage(error)}`,
       };
     }
   }
@@ -232,7 +212,7 @@ class UnifiedAIService {
   /**
    * Fallback demo prompt generation
    */
-  private generateDemoPrompt(ideas: Idea[], purpose: string): GenerationResult {
+  private generateDemoPrompt(ideas: Ideas, purpose: string): GenerationResult {
     const ideasText = ideas.map((idea, index) => `- ${idea.text}`).join('\n');
 
     const demoPrompt = `# ${purpose} Expert Assistant

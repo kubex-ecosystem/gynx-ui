@@ -1,8 +1,10 @@
 import {
+  AlertCircle,
   ChevronRight,
   Clock,
   Filter,
   Inbox,
+  LoaderCircle,
   Mail,
   MessageSquare,
   Search,
@@ -11,101 +13,23 @@ import {
   Star,
   Tag,
 } from "lucide-react";
-import React, { useState } from "react";
-
-// Type definition
-type EmailMock = {
-  id: number;
-  sender: string;
-  subject: string;
-  excerpt: string;
-  aiLabel: "Vendas" | "Suporte" | "Faturamento" | "Urgente" | "Informação";
-  aiSummary: string;
-  timestamp: string;
-  isRead: boolean;
-  isStarred?: boolean;
-};
-
-// Mocks
-const mockEmails: EmailMock[] = [
-  {
-    id: 1,
-    sender: "Sankhya ERP Notification",
-    subject: "Faturamento de Pedido 45293",
-    excerpt:
-      "O pedido de compra 45293 foi faturado e enviado para a transportadora selecionada.",
-    aiLabel: "Faturamento",
-    aiSummary:
-      "Confirmação de faturamento do pedido 45293. Status enviado para logística.",
-    timestamp: "14:20",
-    isRead: false,
-    isStarred: true,
-  },
-  {
-    id: 2,
-    sender: "Carlos Alberto (Some Partner Inc)",
-    subject: "Proposta para novo cliente varejo",
-    excerpt:
-      "Segue em anexo a proposta para o cliente varejo que visitamos ontem na unidade de Guarulhos.",
-    aiLabel: "Vendas",
-    aiSummary:
-      "Proposta comercial para novo cliente do varejo (Unidade Guarulhos). Anexo incluído.",
-    timestamp: "13:05",
-    isRead: true,
-  },
-  {
-    id: 3,
-    sender: "Suporte Técnico GCP",
-    subject: "Manutenção programada na região South1-a",
-    excerpt:
-      "Prezado cliente, realizaremos uma manutenção preventiva em nossos servidores na região mencionada.",
-    aiLabel: "Urgente",
-    aiSummary:
-      "Manutenção preventiva programada na região South1-a (GCP). Potencial impacto em infra.",
-    timestamp: "Ontem",
-    isRead: false,
-  },
-  {
-    id: 4,
-    sender: "RH Interno",
-    subject: "Atualização de políticas de home office",
-    excerpt:
-      "Olá time, estamos atualizando as diretrizes de trabalho remoto para o próximo trimestre.",
-    aiLabel: "Informação",
-    aiSummary:
-      "Comunicado interno sobre atualização das políticas de home office para o Q2/2026.",
-    timestamp: "Ontem",
-    isRead: true,
-  },
-  {
-    id: 5,
-    sender: "João Silva (Suporte)",
-    subject: "Ticket #4521 - Erro na integração ERP",
-    excerpt:
-      "Estou com dificuldades para sincronizar os dados do banco MySQL legado com o novo gateway.",
-    aiLabel: "Suporte",
-    aiSummary:
-      "Incidente técnico reportado: Erro na sincronização MySQL Legacy com Gateway GNyx.",
-    timestamp: "Ontem",
-    isRead: true,
-  },
-];
-
-const labelColors: Record<EmailMock["aiLabel"], string> = {
-  "Vendas": "text-accent-secondary border-accent-primary/30 bg-accent-muted",
-  "Suporte": "text-status-info border-status-info/30 bg-status-info/10",
-  "Faturamento":
-    "text-status-success border-status-success/30 bg-status-success/10",
-  "Urgente": "text-status-error border-status-error/30 bg-status-error/10",
-  "Informação":
-    "text-status-warning border-status-warning/30 bg-status-warning/10",
-};
+import React from "react";
+import { mailLabelColors } from "@/mocks";
+import { useMailHub } from "@/modules/mail/hooks/useMailHub";
 
 const MailHub: React.FC = () => {
-  const [emails, setEmails] = useState<EmailMock[]>(mockEmails);
-  const [selectedEmail, setSelectedEmail] = useState<EmailMock | null>(
-    mockEmails[0],
-  );
+  const {
+    emails,
+    totalEmails,
+    searchTerm,
+    selectedEmail,
+    isLoading,
+    error,
+    setSearchTerm,
+    selectEmail,
+    toggleStar,
+    retry,
+  } = useMailHub();
 
   return (
     <div className="flex flex-col h-[calc(100vh-160px)] animate-fade-in">
@@ -124,6 +48,8 @@ const MailHub: React.FC = () => {
             <input
               type="text"
               placeholder="Pesquisar em GNyx Mail..."
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
               className="w-full bg-surface-primary border border-border-primary rounded-xl pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-accent-primary transition-all text-primary"
             />
           </div>
@@ -139,10 +65,50 @@ const MailHub: React.FC = () => {
       <div className="flex flex-1 gap-6 min-h-0">
         {/* Inbox List */}
         <div className="w-full lg:w-1/3 flex flex-col gap-3 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-surface-tertiary">
-          {emails.map((email) => (
+          {isLoading && (
+            <div className="rounded-3xl border border-border-primary bg-surface-primary/30 p-6 flex items-center gap-3 text-secondary">
+              <LoaderCircle size={18} className="animate-spin" />
+              <div>
+                <p className="text-sm font-semibold text-primary">Carregando caixa de entrada</p>
+                <p className="text-xs text-muted">Buscando mensagens do workspace atual.</p>
+              </div>
+            </div>
+          )}
+
+          {!isLoading && error && (
+            <div className="rounded-3xl border border-status-error/30 bg-status-error/5 p-6 space-y-4">
+              <div className="flex items-start gap-3 text-status-error">
+                <AlertCircle size={18} className="mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold">Falha ao carregar mensagens</p>
+                  <p className="text-xs text-secondary">{error}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => void retry()}
+                className="px-4 py-2 rounded-xl bg-status-error/10 border border-status-error/20 text-status-error text-sm font-semibold hover:bg-status-error/15 transition-colors"
+              >
+                Tentar novamente
+              </button>
+            </div>
+          )}
+
+          {!isLoading && !error && emails.length === 0 && (
+            <div className="rounded-3xl border border-border-primary bg-surface-primary/20 p-6 text-center space-y-3">
+              <Inbox size={36} className="mx-auto text-muted opacity-60" />
+              <div>
+                <p className="text-sm font-semibold text-primary">Nenhuma mensagem encontrada</p>
+                <p className="text-xs text-secondary">
+                  Ajuste a busca. O workspace possui {totalEmails} mensagens disponiveis no mock atual.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {!isLoading && !error && emails.map((email) => (
             <button
               key={email.id}
-              onClick={() => setSelectedEmail(email)}
+              onClick={() => selectEmail(email.id)}
               className={`p-4 rounded-2xl border transition-all text-left group ${
                 selectedEmail?.id === email.id
                   ? "bg-accent-muted border-accent-primary/50 shadow-lg"
@@ -152,7 +118,7 @@ const MailHub: React.FC = () => {
               <div className="flex items-start justify-between mb-2">
                 <span
                   className={`text-[10px] px-2 py-0.5 rounded-full border font-bold uppercase tracking-wider ${
-                    labelColors[email.aiLabel]
+                    mailLabelColors[email.aiLabel]
                   }`}
                 >
                   {email.aiLabel}
@@ -242,9 +208,13 @@ const MailHub: React.FC = () => {
                     <div className="flex gap-2 text-secondary">
                       <button
                         title="Favoritar"
+                        onClick={() => toggleStar(selectedEmail.id)}
                         className="p-2 rounded-lg hover:bg-surface-tertiary transition-colors border border-border-primary/50"
                       >
-                        <Star size={18} />
+                        <Star
+                          size={18}
+                          className={selectedEmail.isStarred ? "text-status-warning fill-current" : undefined}
+                        />
                       </button>
                       <button
                         title="Etiquetar"
@@ -300,7 +270,7 @@ const MailHub: React.FC = () => {
               <div className="flex flex-col items-center justify-center h-full text-muted space-y-4">
                 <Inbox size={64} className="opacity-10" />
                 <p className="uppercase tracking-[0.4em] text-xs font-bold">
-                  Selecione uma mensagem
+                  {isLoading ? "Carregando mensagens" : "Selecione uma mensagem"}
                 </p>
               </div>
             )}

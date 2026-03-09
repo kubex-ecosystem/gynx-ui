@@ -6,7 +6,7 @@ import {
   type AIResponse,
   type GenerateContentParams,
   type MultiAIConfig,
-} from "../../../types/common";
+} from "@/types/common";
 
 
 import { GoogleGenAI } from "@google/genai";

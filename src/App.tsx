@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Database, Bot, Wand2, Loader2 } from 'lucide-react';
+import { Database, Bot, Wand2, Loader2, Settings } from 'lucide-react';
 import AgentsGenerator from './components/features/AgentsGenerator';
 import ChatInterface from './components/features/ChatInterface';
 import CodeGenerator from './components/features/CodeGenerator';
 import ContentSummarizer from './components/features/ContentSummarizer';
 import DataAnalyzer from './components/features/DataAnalyzer';
 import ImageGenerator from './components/features/ImageGenerator';
+import Playground from './components/features/Playground';
 import PromptCrafter from './components/features/PromptCrafter';
 import Welcome from './components/features/Welcome';
 import Footer from './components/layout/Footer';
@@ -14,7 +15,19 @@ import Layout from './components/layout/Layout';
 import Sidebar, { SidebarSection } from './components/layout/Sidebar';
 import { LanguageContext } from './context/LanguageContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import {
+  APP_SECTION_IDS,
+  buildSectionHash,
+  getSectionFromHash,
+  isStandaloneSection,
+  navigateToSection,
+  resolveGuardedSection,
+  type AppSectionId,
+} from './core/navigation/hashRoutes';
 import { translations } from './i18n/translations';
+import type { ChatResponsePayload, ChatMessagePayload } from './modules/chat/types';
+import { chatService } from './modules/chat/services/chatService';
+import { creativeService, type CodeGenerationSpec, type ImagePromptSpec } from './modules/creative/services/creativeService';
 import { configService } from './services/configService';
 import { Language, Theme } from './types';
 
@@ -26,52 +39,26 @@ import GatewayDashboard from './pages/GatewayDashboard';
 import MailHub from './pages/MailHub';
 import DataSync from './pages/DataSync';
 import ProvidersSettings from './pages/ProvidersSettings';
+import WorkspaceSettings from './pages/WorkspaceSettings';
 
 const SIDEBAR_COLLAPSED_KEY = 'grompt.sidebar.collapsed';
 const SIDEBAR_AUTO_EXPAND_SEEN_KEY = 'grompt.sidebar.autoExpandSeen';
-
-const SECTION_IDS = [
-  'landing', 
-  'auth', 
-  'accept-invite',
-  'welcome', 
-  'gateway-dashboard', 
-  'data-analyzer',
-  'mail-hub', 
-  'data-sync', 
-  'providers-settings',
-  'prompt', 
-  'agents', 
-  'chat', 
-  'summarizer', 
-  'code', 
-  'images'
-] as const;
-type SectionId = (typeof SECTION_IDS)[number];
 const ACTIVE_SECTION_KEY = 'grompt.activeSection';
 
-const getSectionFromHash = (hash: string): SectionId | null => {
-  if (hash.startsWith('#prompt=')) return 'prompt';
-  if (hash.startsWith('#section=')) {
-    const raw = hash.replace('#section=', '');
-    const candidate = decodeURIComponent(raw) as SectionId;
-    if (SECTION_IDS.includes(candidate)) return candidate;
-  }
-  const direct = hash.replace('#', '') as SectionId;
-  if (SECTION_IDS.includes(direct)) return direct;
-  return null;
-};
-
 const MainApp: React.FC = () => {
-  const { isAuthenticated, isLoading: authLoading, logout } = useAuth();
-  
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+
   // State management
   const [theme, setTheme] = useState<Theme>('dark');
   const [language, setLanguage] = useState<Language>('pt');
-  const [activeSection, setActiveSection] = useState<SectionId>(() => {
+  const [activeSection, setActiveSection] = useState<AppSectionId>(() => {
     if (typeof window === 'undefined') return 'landing';
     const fromHash = getSectionFromHash(window.location.hash);
     if (fromHash) return fromHash;
+    const saved = localStorage.getItem(ACTIVE_SECTION_KEY);
+    if (saved && APP_SECTION_IDS.includes(saved as AppSectionId)) {
+      return saved as AppSectionId;
+    }
     return 'landing';
   });
 
@@ -105,22 +92,38 @@ const MainApp: React.FC = () => {
   useEffect(() => {
     if (authLoading) return;
 
-    const publicSections: SectionId[] = ['landing', 'auth'];
-    
-    // Se não estiver logado e tentar acessar algo privado -> Landing
-    if (!isAuthenticated && !publicSections.includes(activeSection)) {
-      setActiveSection('landing');
-      window.location.hash = '#landing';
-    }
-    
-    // Se logado e tentar acessar landing/auth -> Welcome
-    if (isAuthenticated && publicSections.includes(activeSection)) {
-      setActiveSection('welcome');
-      window.location.hash = '#welcome';
+    const resolvedSection = resolveGuardedSection(activeSection, isAuthenticated);
+    if (resolvedSection !== activeSection) {
+      setActiveSection(resolvedSection);
+      navigateToSection(resolvedSection);
     }
   }, [isAuthenticated, authLoading, activeSection]);
 
   // Effects
+  useEffect(() => {
+    let mounted = true;
+
+    const loadRuntimeFlags = async () => {
+      try {
+        const isDemo = await configService.isDemoMode();
+        if (mounted) {
+          setDemoMode(isDemo);
+        }
+      } catch (error) {
+        console.error('Falha ao carregar runtime flags', error);
+        if (mounted) {
+          setDemoMode(true);
+        }
+      }
+    };
+
+    loadRuntimeFlags();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as Theme;
     if (savedTheme === 'light' || savedTheme === 'dark') {
@@ -137,22 +140,40 @@ const MainApp: React.FC = () => {
   useEffect(() => {
     const handleHashChange = () => {
       const nextSection = getSectionFromHash(window.location.hash);
-      if (nextSection && nextSection !== activeSectionRef.current) {
-        setActiveSection(nextSection);
+      if (!nextSection) {
+        return;
+      }
+
+      const resolvedSection = authLoading
+        ? nextSection
+        : resolveGuardedSection(nextSection, isAuthenticated);
+
+      if (resolvedSection !== activeSectionRef.current) {
+        setActiveSection(resolvedSection);
+      }
+
+      if (!authLoading && resolvedSection !== nextSection) {
+        navigateToSection(resolvedSection);
       }
     };
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
+  }, [authLoading, isAuthenticated]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (window.location.hash.startsWith('#prompt=')) return;
-    const nextHash = `#section=${encodeURIComponent(activeSection)}`;
-    if (window.location.hash !== nextHash && activeSection !== 'landing' && activeSection !== 'auth') {
-      window.history.replaceState(null, document.title, `${window.location.pathname}${window.location.search}${nextHash}`);
-    } else if (activeSection === 'landing' || activeSection === 'auth') {
-      window.history.replaceState(null, document.title, `${window.location.pathname}${window.location.search}#${activeSection}`);
+    if (activeSection === 'accept-invite' && getSectionFromHash(window.location.hash) === 'accept-invite') {
+      return;
+    }
+
+    const nextHash = buildSectionHash(activeSection);
+    if (window.location.hash !== nextHash) {
+      window.history.replaceState(
+        null,
+        document.title,
+        `${window.location.pathname}${window.location.search}${nextHash}`,
+      );
     }
   }, [activeSection]);
 
@@ -199,6 +220,7 @@ const MainApp: React.FC = () => {
       label: t('sectionGroupIntell'),
       icon: Bot,
       children: [
+        { id: 'playground', label: 'Playground SSE', description: 'Stream LLM Data' },
         { id: 'data-analyzer', label: t('sectionAnalyzerLabel'), description: t('sectionAnalyzerDescription') },
         { id: 'prompt', label: t('sectionPromptLabel'), description: t('sectionPromptDescription') },
         { id: 'agents', label: t('sectionAgentsLabel'), description: t('sectionAgentsDescription') },
@@ -216,9 +238,13 @@ const MainApp: React.FC = () => {
       ]
     },
     {
-      id: 'providers-settings',
-      label: t('sectionSettingsLabel'),
-      description: t('sectionSettingsDescription'),
+      id: 'group-settings',
+      label: 'Administração',
+      icon: Settings,
+      children: [
+        { id: 'workspace-settings', label: 'Workspace', description: 'Geral & Tenants' },
+        { id: 'providers-settings', label: t('sectionSettingsLabel'), description: t('sectionSettingsDescription') },
+      ]
     },
   ];
 
@@ -231,22 +257,57 @@ const MainApp: React.FC = () => {
       case 'data-analyzer': return <DataAnalyzer theme={theme} />;
       case 'mail-hub': return <MailHub />;
       case 'data-sync': return <DataSync />;
+      case 'workspace-settings': return <WorkspaceSettings />;
       case 'providers-settings': return <ProvidersSettings />;
-      case 'welcome': return <Welcome onGetStarted={() => setActiveSection('welcome')} />;
+      case 'playground': return <Playground />;
+      case 'welcome': return <Welcome onGetStarted={() => navigateToSection('gateway-dashboard')} />;
       case 'prompt': return <PromptCrafter theme={theme} isApiKeyMissing={demoMode} />;
       case 'agents': return <AgentsGenerator theme={theme} isApiKeyMissing={demoMode} />;
-      case 'chat': return <ChatInterface theme={theme} isApiKeyMissing={demoMode} />;
-      case 'summarizer': return <ContentSummarizer theme={theme} isApiKeyMissing={demoMode} />;
-      case 'code': return <CodeGenerator theme={theme} isApiKeyMissing={demoMode} />;
-      case 'images': return <ImageGenerator theme={theme} isApiKeyMissing={demoMode} />;
+      case 'chat': return <ChatInterface theme={theme} isApiKeyMissing={demoMode} onSend={handleChatSend} />;
+      case 'summarizer': return <ContentSummarizer theme={theme} isApiKeyMissing={demoMode} onSummarize={handleSummarize} />;
+      case 'code': return <CodeGenerator theme={theme} isApiKeyMissing={demoMode} onGenerate={handleCodeGenerate} />;
+      case 'images': return <ImageGenerator theme={theme} isApiKeyMissing={demoMode} onCraftPrompt={handleImagePrompt} />;
       default: return <Landing />;
     }
   };
 
   const handleSectionChange = (section: string) => {
-    if (SECTION_IDS.includes(section as SectionId)) {
-      setActiveSection(section as SectionId);
+    if (APP_SECTION_IDS.includes(section as AppSectionId)) {
+      const nextSection = resolveGuardedSection(section as AppSectionId, isAuthenticated);
+      setActiveSection(nextSection);
+      navigateToSection(nextSection);
     }
+  };
+
+  const handleChatSend = async (
+    messages: ChatMessagePayload[],
+    input: string,
+    apiKey?: string,
+  ): Promise<ChatResponsePayload | null> => {
+    return chatService.sendMessage(messages, input, apiKey);
+  };
+
+  const handleSummarize = async (
+    input: string,
+    tone: string,
+    maxWords: number,
+    apiKey?: string,
+  ): Promise<string> => {
+    return creativeService.summarize(input, tone, maxWords, apiKey);
+  };
+
+  const handleCodeGenerate = async (
+    spec: CodeGenerationSpec,
+    apiKey?: string,
+  ): Promise<string> => {
+    return creativeService.generateCode(spec, apiKey);
+  };
+
+  const handleImagePrompt = async (
+    payload: ImagePromptSpec,
+    apiKey?: string,
+  ): Promise<string> => {
+    return creativeService.craftImagePrompt(payload, apiKey);
   };
 
   if (authLoading) {
@@ -257,7 +318,7 @@ const MainApp: React.FC = () => {
     );
   }
 
-  const isStandalone = activeSection === 'landing' || activeSection === 'auth' || activeSection === 'accept-invite';
+  const isStandalone = isStandaloneSection(activeSection);
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage: handleSetLanguage, t }}>

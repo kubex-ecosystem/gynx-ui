@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
-import { Idea } from '@/types';
+import { Ideas } from '@/types';
 
 interface UseUrlSharingProps {
-    setIdeas: (ideas: Idea[]) => void;
+    setIdeas: (ideas: Ideas) => void;
     setPurpose: (purpose: string) => void;
     setGeneratedPrompt: (prompt: string) => void;
     setTokenUsage: (usage: null) => void;
@@ -17,7 +17,7 @@ export const useUrlSharing = ({ setIdeas, setPurpose, setGeneratedPrompt, setTok
                 if (hash.startsWith('#prompt=')) {
                     const encodedData = hash.substring('#prompt='.length);
                     const decodedJson = atob(encodedData);
-                    const data = JSON.parse(decodedJson) as { ideas: Idea[], purpose: string, prompt: string };
+                    const data = JSON.parse(decodedJson) as { ideas: Ideas, purpose: string, prompt: string };
 
                     if (data.ideas && data.purpose && data.prompt) {
                         setIdeas(data.ideas);

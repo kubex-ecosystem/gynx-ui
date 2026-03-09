@@ -1,6 +1,10 @@
 // Configuration service for Grompt frontend
 // Handles communication with backend /api/v1/config endpoint
 
+import { httpClient } from "@/core/http/client";
+import { httpEndpoints } from "@/core/http/endpoints";
+import { getFrontendRuntimeFlags, isDemoModeEnabled } from "@/core/runtime/mode";
+
 export type ProviderStatus = 'ready' | 'needs_api_key' | 'offline';
 export type ProviderMode = 'server' | 'byok' | 'demo' | 'offline';
 
@@ -136,18 +140,7 @@ class ConfigService {
     }
 
     try {
-      const response = await fetch('/api/v1/config', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Config fetch failed: ${response.statusText}`);
-      }
-
-      const config: ServerConfig = await response.json();
+      const config = await httpClient.get<ServerConfig>(httpEndpoints.config.root);
 
       // Cache the result
       this.cache.set(cacheKey, {
@@ -160,8 +153,9 @@ class ConfigService {
     } catch (error) {
       console.error('Failed to fetch config from backend:', error);
 
-      // Return demo configuration as fallback
-      return this.getDemoConfig();
+      const fallbackConfig = this.getFallbackConfig();
+      this.config = fallbackConfig;
+      return fallbackConfig;
     }
   }
 
@@ -196,7 +190,7 @@ class ConfigService {
    */
   async isDemoMode(): Promise<boolean> {
     const config = await this.getConfig();
-    return config.environment.demo_mode;
+    return isDemoModeEnabled(config.environment.demo_mode);
   }
 
   /**
@@ -204,22 +198,13 @@ class ConfigService {
    */
   async updateProviderConfig(provider: string, apiKey: string): Promise<boolean> {
     try {
-      const response = await fetch('/api/v1/config', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      await httpClient.post(httpEndpoints.config.root, {
           [`${provider}_api_key`]: apiKey,
-        }),
       });
 
-      if (response.ok) {
-        // Clear cache to force refresh
-        this.cache.clear();
-        return true;
-      }
-      return false;
+      // Clear cache to force refresh
+      this.cache.clear();
+      return true;
     } catch (error) {
       console.error('Failed to update provider config:', error);
       return false;
@@ -249,57 +234,36 @@ class ConfigService {
   /**
    * Fallback demo configuration
    */
-  private getDemoConfig(): ServerConfig {
+  private getFallbackConfig(): ServerConfig {
+    const runtimeFlags = getFrontendRuntimeFlags();
+    const demoMode = isDemoModeEnabled();
     const providers: Record<string, ProviderInfo> = {};
-    for (const provider of DEMO_PROVIDERS) {
-      providers[provider.name] = provider;
+
+    if (demoMode) {
+      for (const provider of DEMO_PROVIDERS) {
+        providers[provider.name] = provider;
+      }
     }
 
     return {
       server: {
-        name: 'Grompt Server (Demo)',
+        name: demoMode ? 'Grompt Server (Demo)' : 'Grompt Server (Unavailable)',
         version: '1.0.0',
         port: '8080',
-        status: 'demo',
+        status: demoMode ? 'demo' : 'unavailable',
       },
       providers,
       available_providers: Object.keys(providers),
       default_provider: 'openai',
       environment: {
-        demo_mode: function (config): boolean {
-          if (config) {
-            if (config.openai_available === false &&
-              config.deepseek_available === false &&
-              config.ollama_available === false &&
-              config.claude_available === false &&
-              config.gemini_available === false &&
-              config.chatgpt_available === false) {
-              return true;
-            } else {
-              return false;
-            }
-          } else {
-            if (typeof process !== 'undefined') {
-              if (process.env.DEMO_MODE === 'true') {
-                return true;
-              }
-            }
-            if (typeof window !== 'undefined') {
-              const urlParams = new URLSearchParams(window.location.search);
-              if (urlParams.get('demo_mode') === 'true') {
-                return true;
-              }
-            }
-            return false;
-          }
-        }(this.config),
+        demo_mode: demoMode,
       },
-      openai_available: false,
+      openai_available: demoMode && runtimeFlags.simulatedAuth,
       deepseek_available: false,
-      ollama_available: false,
-      claude_available: false,
-      gemini_available: false,
-      chatgpt_available: false,
+      ollama_available: demoMode,
+      claude_available: demoMode && runtimeFlags.simulatedAuth,
+      gemini_available: demoMode && runtimeFlags.simulatedAuth,
+      chatgpt_available: demoMode && runtimeFlags.simulatedAuth,
     };
   }
 }

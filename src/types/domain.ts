@@ -7,6 +7,8 @@ export interface Idea {
   timestamp?: Date;
 }
 
+export type Ideas = Idea[];
+
 export interface GNyxDataTable {
   id?: string;
   name: string;
@@ -60,7 +62,7 @@ export interface HistoryItem {
   id: string;
   prompt: string;
   purpose: string;
-  ideas: Idea[];
+  ideas: Ideas;
   timestamp: number;
   inputTokens?: number;
   outputTokens?: number;
@@ -68,6 +70,6 @@ export interface HistoryItem {
 }
 
 export interface Draft {
-  ideas: Idea[];
+  ideas: Ideas;
   purpose: string;
 }

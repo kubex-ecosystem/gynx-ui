@@ -1,4 +1,3 @@
-import OpenAI from "openai";
 import {
   AIModel,
   AIProvider,
@@ -7,7 +6,8 @@ import {
   GenerateContentParams,
   MultiAIConfig,
   OpenAIModels
-} from "../../../types/common";
+} from "@/types/common";
+import OpenAI from "openai";
 
 
 export class OpenAIProvider extends BaseProvider {
@@ -33,6 +33,7 @@ export class OpenAIProvider extends BaseProvider {
   }): Promise<AIResponse> {
     const model = (params.model as OpenAIModels) || (this.defaultModel as OpenAIModels);
 
+    const role: React.AriaRole = 'user';
     let messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[];
     if (params.systemInstruction) {
       messages = [

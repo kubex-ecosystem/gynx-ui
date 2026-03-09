@@ -15,8 +15,10 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useTranslations } from "../../i18n/useTranslations";
-import { pack } from "../../utils/lookatni";
+import { useTranslations } from "@/i18n/useTranslations";
+import { pack } from "@/utils/lookatni";
+import { httpClient } from "@/core/http/client";
+import { httpEndpoints } from "@/core/http/endpoints";
 
 /* ========= Types (mantidos / estendidos) ========= */
 
@@ -356,27 +358,27 @@ export default function ProjectExtractor(
           ? projectFile
           : `./${projectFile}`;
 
-      const response = await fetch("/api/v1/lookatni/extract", {
-        method: "POST",
-        signal: ctrl.signal,
-        headers: {
-          "Content-Type": "application/json",
-          "x-kubex-client": "grompt/pe",
-        },
-        body: JSON.stringify({
+      const raw = await httpClient.post<LookAtniExtractedProject, {
+        local_path: string;
+        fragment_by: string;
+        context_depth: number;
+        include_hidden: boolean;
+      }>(
+        httpEndpoints.lookatni.extract,
+        {
           local_path: localPath,
           fragment_by: "file",
           context_depth: 2,
           include_hidden: false,
-        }),
-      });
-
-      if (!response.ok) {
-        const message = await response.text();
-        throw new Error(message || "Falha na extração");
-      }
-
-      const raw: LookAtniExtractedProject = await response.json();
+        },
+        {
+          signal: ctrl.signal,
+          headers: {
+            "Content-Type": "application/json",
+            "x-kubex-client": "grompt/pe",
+          },
+        }
+      );
       setExtractedProject(raw);
 
       const normalized = normalizeExtractedProject(raw);
@@ -520,20 +522,16 @@ export default function ProjectExtractor(
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch("/api/v1/lookatni/archive", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-kubex-client": "grompt/pe",
-        },
-        body: JSON.stringify(extractedProject),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Falha no download (${response.status})`);
-      }
-
-      const result: LookAtniArchiveResponse = await response.json();
+      const result = await httpClient.post<LookAtniArchiveResponse, LookAtniExtractedProject>(
+        httpEndpoints.lookatni.archive,
+        extractedProject,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "x-kubex-client": "grompt/pe",
+          },
+        }
+      );
       const downloadUrl = result.download_url || result.archive_path;
 
       if (!downloadUrl) {
@@ -690,7 +688,7 @@ export default function ProjectExtractor(
               onChange={(e) => setExtFilter(e.target.value)}
               className="bg-surface-secondary/90 text-gray-900 rounded-md px-2 py-1 text-sm"
               title={t("filterByExtension")}
-              // title="Filtrar por extensão"
+            // title="Filtrar por extensão"
             >
               <option value="all">Todas</option>
               <option value="ts">.ts</option>
@@ -990,7 +988,7 @@ export default function ProjectExtractor(
           className={classNames(
             "p-8 text-center bg-[#f9fafb] dark:bg-[#050a12] transition-all",
             isDragging &&
-              "bg-[#ecfeff] dark:bg-[#0a1e2b] border-4 border-dashed border-accent-primary",
+            "bg-[#ecfeff] dark:bg-[#0a1e2b] border-4 border-dashed border-accent-primary",
           )}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -1085,7 +1083,7 @@ function TreeView({
                 className={classNames(
                   "w-full text-left px-3 py-2 border-b border-transparent border-border-secondary hover:bg-[#ecfeff] dark:hover:bg-[#1b2534] transition-all",
                   sel &&
-                    "bg-[#ecfeff] border-r-2 border-r-[#06b6d4] shadow-[inset_2px_0_0_0_#06b6d4] dark:bg-[#0a1e2b] dark:border-r-[#38cde4]",
+                  "bg-[#ecfeff] border-r-2 border-r-[#06b6d4] shadow-[inset_2px_0_0_0_#06b6d4] dark:bg-[#0a1e2b] dark:border-r-[#38cde4]",
                 )}
                 aria-current={sel ? "true" : undefined}
               >
@@ -1166,8 +1164,8 @@ function CodeViewer(
       )}
       style={{ fontSize }}
     >
- {/* se highlight disponível, injeta html; senão, texto puro */}
- <code dangerouslySetInnerHTML={{ __html: html }} />
+      {/* se highlight disponível, injeta html; senão, texto puro */}
+      <code dangerouslySetInnerHTML={{ __html: html }} />
     /* se highlight disponível, injeta html; senão, texto puro */
 
     /* se highlight disponível, injeta html; senão, texto puro */

@@ -4,6 +4,11 @@
  * Following backend endpoint structure from internal/gateway/transport/grompt_v1.go
  */
 
+import { httpClient } from '../core/http/client';
+import { buildApiV1Path, buildApiV1Url, httpEndpoints } from '../core/http/endpoints';
+import { APIError, toHttpError } from '../core/http/errors';
+import type { HttpMethod } from '../core/http/types';
+
 export interface GenerateRequest {
   provider: string;
   model?: string;
@@ -119,21 +124,6 @@ class RateLimiter {
 }
 
 /**
- * API Error class for structured error handling
- */
-export class APIError extends Error {
-  constructor(
-    public message: string,
-    public status?: number,
-    public code?: string,
-    public details?: any
-  ) {
-    super(message);
-    this.name = 'APIError';
-  }
-}
-
-/**
  * Main API service class
  */
 export class GromptAPI {
@@ -158,6 +148,14 @@ export class GromptAPI {
     };
   }
 
+  private resolveRequestTarget(endpoint: string): { target: string; useBaseURL: boolean } {
+    if (this.baseURL) {
+      return { target: buildApiV1Url(this.baseURL, endpoint), useBaseURL: false };
+    }
+
+    return { target: endpoint, useBaseURL: true };
+  }
+
   /**
    * Check rate limiting before making requests
    */
@@ -168,7 +166,10 @@ export class GromptAPI {
         `Rate limit exceeded. Try again in ${Math.ceil(resetTime / 1000)} seconds.`,
         429,
         'RATE_LIMIT_EXCEEDED',
-        { resetTimeMs: resetTime }
+        { resetTimeMs: resetTime },
+        {
+          statusText: 'RATE_LIMIT_EXCEEDED',
+        }
       );
     }
   }
@@ -182,59 +183,60 @@ export class GromptAPI {
   ): Promise<T> {
     this.checkRateLimit();
 
-    const url = `${this.baseURL}/v1${endpoint}`;
-    const config: RequestInit = {
-      ...options,
-      headers: {
-        ...this.defaultHeaders,
-        ...options.headers
-      }
-    };
+    const { target, useBaseURL } = this.resolveRequestTarget(endpoint);
+    const method = (options.method?.toUpperCase() || 'GET') as HttpMethod;
+    const mergedHeaders = new Headers(this.defaultHeaders);
+    if (options.headers) {
+      new Headers(options.headers).forEach((value, key) => mergedHeaders.set(key, value));
+    }
+
+    const {
+      method: _ignoredMethod,
+      headers: _ignoredHeaders,
+      signal: requestSignal,
+      ...requestOptions
+    } = options;
 
     try {
-      const response = await fetch(url, config);
-
-      if (!response.ok) {
-        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-        let errorCode = 'HTTP_ERROR';
-        let errorDetails: any = undefined;
-
-        try {
-          const errorData = await response.json();
-          if (errorData.error) {
-            errorMessage = errorData.message || errorData.error;
-            errorCode = errorData.error;
-            errorDetails = errorData.details;
-          }
-        } catch {
-          // Fallback to status text if JSON parsing fails
-        }
-
-        throw new APIError(errorMessage, response.status, errorCode, errorDetails);
-      }
-
-      return await response.json();
+      return await httpClient.request<T>(method, target, {
+        ...requestOptions,
+        headers: mergedHeaders,
+        signal: requestSignal ?? undefined,
+        useBaseURL
+      });
     } catch (error) {
-      if (error instanceof APIError) {
-        throw error;
-      }
+      const normalizedError = toHttpError(error, {
+        url: target,
+        method,
+        status: 0,
+        statusText: 'NETWORK_ERROR',
+      });
 
-      // Network or other errors
-      throw new APIError(
-        error instanceof Error ? error.message : 'Unknown error occurred',
-        0,
-        'NETWORK_ERROR',
-        error
-      );
+      const dataAsRecord = normalizedError.data && typeof normalizedError.data === 'object'
+          ? (normalizedError.data as Record<string, any>)
+          : undefined;
+      const errorMessage = typeof dataAsRecord?.message === 'string'
+        ? dataAsRecord.message
+        : normalizedError.message;
+      const errorCode = typeof dataAsRecord?.error === 'string'
+        ? dataAsRecord.error
+        : normalizedError.code || (normalizedError.status === 0 ? 'NETWORK_ERROR' : 'HTTP_ERROR');
+      const errorDetails = dataAsRecord?.details ?? normalizedError.data;
+
+      throw new APIError(errorMessage, normalizedError.status, errorCode, errorDetails, {
+        url: normalizedError.url,
+        method: normalizedError.method,
+        statusText: normalizedError.statusText,
+      });
     }
   }
 
   /**
    * Generate prompt synchronously
-   * POST /v1/generate
+ * POST /api/v1/generate
    */
   async generatePrompt(request: GenerateRequest): Promise<GenerateResponse> {
-    return this.request<GenerateResponse>('/generate', {
+    return this.request<GenerateResponse>(httpEndpoints.grompt.generate, {
       method: 'POST',
       body: JSON.stringify(request)
     });
@@ -242,7 +244,7 @@ export class GromptAPI {
 
   /**
    * Generate prompt with streaming
-   * GET /v1/generate/stream
+ * GET /api/v1/generate/stream
    *
    * Returns an EventSource for Server-Sent Events
    */
@@ -263,35 +265,38 @@ export class GromptAPI {
       params.append('ideas', idea);
     });
 
-    const url = `${this.baseURL}/v1/generate/stream?${params.toString()}`;
+    const baseStreamURL = this.baseURL
+      ? buildApiV1Url(this.baseURL, httpEndpoints.grompt.generateStream)
+      : buildApiV1Path(httpEndpoints.grompt.generateStream);
+    const url = `${baseStreamURL}?${params.toString()}`;
     return new EventSource(url);
   }
 
   /**
    * List available providers
-   * GET /v1/providers
+ * GET /api/v1/providers
    */
   async listProviders(): Promise<ProvidersListResponse> {
-    return this.request<ProvidersListResponse>('/providers');
+    return this.request<ProvidersListResponse>(httpEndpoints.grompt.providers);
   }
 
   /**
    * Health check
-   * GET /v1/health
+ * GET /api/v1/health
    */
   async healthCheck(): Promise<HealthResponse> {
-    return this.request<HealthResponse>('/healthz');
+    return this.request<HealthResponse>(httpEndpoints.grompt.healthz);
   }
 
   /**
    * Proxy request to GNyx
-   * POST /v1/proxy/*
+ * POST /api/v1/proxy/*
    */
   async proxyToGNyx<T>(
     path: string,
     options: RequestInit = {}
   ): Promise<T> {
-    return this.request<T>(`/proxy${path}`, options);
+    return this.request<T>(httpEndpoints.grompt.proxy(path), options);
   }
 
   /**
@@ -359,14 +364,18 @@ export function handleStreamingGeneration(
             case 'generation.error':
               callbacks.onError?.(data.error!);
               eventSource.close();
-              reject(new APIError(data.error!, 0, 'GENERATION_ERROR'));
+              reject(new APIError(data.error!, 0, 'GENERATION_ERROR', undefined, {
+                statusText: 'GENERATION_ERROR',
+              }));
               break;
           }
         } catch (parseError) {
           console.error('Failed to parse SSE event:', parseError);
           callbacks.onError?.('Failed to parse server response');
           eventSource.close();
-          reject(new APIError('Failed to parse server response', 0, 'PARSE_ERROR'));
+          reject(new APIError('Failed to parse server response', 0, 'PARSE_ERROR', undefined, {
+            statusText: 'PARSE_ERROR',
+          }));
         }
       };
 
@@ -374,14 +383,18 @@ export function handleStreamingGeneration(
         console.error('EventSource error:', error);
         callbacks.onError?.('Connection to server lost');
         eventSource.close();
-        reject(new APIError('Connection to server lost', 0, 'CONNECTION_ERROR'));
+        reject(new APIError('Connection to server lost', 0, 'CONNECTION_ERROR', undefined, {
+          statusText: 'CONNECTION_ERROR',
+        }));
       };
 
       // Cleanup on timeout
       setTimeout(() => {
         if (eventSource.readyState !== EventSource.CLOSED) {
           eventSource.close();
-          reject(new APIError('Request timeout', 408, 'TIMEOUT'));
+          reject(new APIError('Request timeout', 408, 'TIMEOUT', undefined, {
+            statusText: 'TIMEOUT',
+          }));
         }
       }, 300000); // 5 minutes timeout to match backend
 
@@ -394,6 +407,4 @@ export function handleStreamingGeneration(
 /**
  * Type guard for API errors
  */
-export function isAPIError(error: any): error is APIError {
-  return error instanceof APIError;
-}
+export { APIError, isAPIError, toAPIError } from '../core/http/errors';

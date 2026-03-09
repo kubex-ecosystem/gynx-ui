@@ -1,6 +1,6 @@
 import * as path from 'path';
 import { fileURLToPath } from 'url';
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig, loadEnv, AppType } from 'vite';
 
 const getEnvResilient = (mode: string, envDir: string) => {
   // Estratégia de fallback para diferentes locais de .env
@@ -28,11 +28,31 @@ const getEnvResilient = (mode: string, envDir: string) => {
 export default defineConfig(({ mode }) => {
   const env: Record<string, string> = getEnvResilient(mode, process.cwd());
   return {
+    appType: 'spa',
     root: '.',
-    base: '/',
+    base: './',
     publicDir: 'public',
     cacheDir: 'node_modules/.vite',
     mode: mode,
+    environments: {
+      demo: {
+        define: {
+          'process.env.DEMO_MODE': JSON.stringify(true),
+        },
+        plugins: ['vite-plugin-demo-mode'],
+      },
+      production: {
+        define: {
+          'process.env.DEMO_MODE': JSON.stringify(false),
+        },
+      },
+      development: {
+        define: {
+          'process.env.DEMO_MODE': JSON.stringify(false),
+        },
+      },
+    },
+    envDir: path.join(process.cwd(), '../config'),
     define: {
       'process.env.NODE_ENV': JSON.stringify(mode),
       'process.env.PORT': JSON.stringify(env.VITE_PORT || env.PORT || "8080"),
@@ -49,13 +69,16 @@ export default defineConfig(({ mode }) => {
     },
     resolve: {
       alias: {
-        '@': fileURLToPath(new URL('.', import.meta.url)),
-        '@components': fileURLToPath(new URL('./src/components', import.meta.url)),
-        '@services': fileURLToPath(new URL('./src/services', import.meta.url)),
-        '@utils': fileURLToPath(new URL('./src/utils', import.meta.url)),
-        '@hooks': fileURLToPath(new URL('./src/hooks', import.meta.url)),
-        '@types': fileURLToPath(new URL('./src/types', import.meta.url)),
-        '@config': fileURLToPath(new URL('./src/config', import.meta.url)),
+        '@': fileURLToPath(new URL(path.join(__dirname, 'src'), import.meta.url)),
+        '@src': fileURLToPath(new URL(path.join(__dirname, 'src'), import.meta.url)),
+        '@assets': fileURLToPath(new URL(path.join(__dirname, 'src/assets'), import.meta.url)),
+        '@i18n': fileURLToPath(new URL(path.join(__dirname, 'src/i18n'), import.meta.url)),
+        '@components': fileURLToPath(new URL(path.join(__dirname, 'src/components'), import.meta.url)),
+        '@services': fileURLToPath(new URL(path.join(__dirname, 'src/services'), import.meta.url)),
+        '@utils': fileURLToPath(new URL(path.join(__dirname, 'src/utils'), import.meta.url)),
+        '@hooks': fileURLToPath(new URL(path.join(__dirname, 'src/hooks'), import.meta.url)),
+        '@types': fileURLToPath(new URL(path.join(__dirname, 'src/types'), import.meta.url)),
+        '@config': fileURLToPath(new URL(path.join(__dirname, 'src/config'), import.meta.url)),
       }
     },
     build: {
@@ -69,10 +92,8 @@ export default defineConfig(({ mode }) => {
         },
         output: {
           manualChunks: {
-            vendor: [
-              'react',
-              'react-dom'
-            ],
+            react: ['react', 'react-dom'],
+            motion: ['framer-motion'],
           },
           plugins: [
             {
@@ -134,23 +155,42 @@ export default defineConfig(({ mode }) => {
           ]
 
         },
+        onwarn(warning, warn) {
+          if (warning.code === 'MODULE_LEVEL_DIRECTIVE') {
+            return;
+          }
+          warn(warning);
+        },
       },
       outDir: 'dist',
       sourcemap: (mode !== 'production' ? 'inline' : false),
-      chunkSizeWarningLimit: 2048,
+      chunkSizeWarningLimit: 3072, // 3MB
     },
     css: {
       preprocessorOptions: {
         scss: {
           additionalData: `@import "@/styles/variables.scss";`
+        },
+        less: {
+          additionalData: `@import "@/styles/variables.less";`
         }
-      }
+      },
     },
     optimizeDeps: {
-      include: ['react', 'react-dom', 'framer-motion'],
+      include: [
+        'react', 'react-dom', 'framer-motion', 'uuid', 'react-lottie'
+      ],
+      exclude: [
+        'lottie-web'
+      ]
     },
     esbuild: {
-      drop: ['console', 'debugger'],
+      target: 'esnext',
+      legalComments: 'none',
+      drop: [
+        'console',
+        'debugger',
+      ],
     },
   };
 });

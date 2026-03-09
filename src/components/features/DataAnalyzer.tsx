@@ -30,11 +30,11 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { useMultiProvider } from "../../hooks/useMultiProvider";
-import { useTranslations } from "../../i18n/useTranslations";
-import { AnalysisResult, GNyxDataTable, Theme } from "../../types";
-import { csvToGNyxTable } from "../../utils/csvParser";
-import Card from "../ui/Card";
+import { useMultiProvider } from "@/hooks/useMultiProvider";
+import { useTranslations } from "@/i18n/useTranslations";
+import { AnalysisResult, GNyxDataTable, Theme } from "@/types";
+import { csvToGNyxTable } from "@/utils/csvParser";
+import Card from "@/components/ui/Card";
 
 interface DataAnalyzerProps {
   initialData?: GNyxDataTable;
@@ -154,9 +154,9 @@ Write JavaScript code to perform this analysis on the full dataset.
 The dataset is available as an array of objects called 'rows', where each object has column names as keys.
 
 IMPORTANT: You must ALWAYS return data in this exact structure:
-const analysisResult = { 
+const analysisResult = {
   table: { headers: string[], rows: any[][] },
-  chart: { 
+  chart: {
     type: 'bar_chart' | 'line_chart' | 'pie_chart' | 'area_chart' | 'count' | null,
     data: {
       labels: string[],
@@ -349,9 +349,8 @@ Guidelines:
     <div className="flex h-[calc(100vh-120px)] bg-main rounded-3xl border border-border-primary overflow-hidden">
       {/* Sidebar - Saved Analyses */}
       <aside
-        className={`${
-          sidebarOpen ? "w-80" : "w-0"
-        } transition-all duration-300 border-r border-border-primary bg-surface-primary/30 flex flex-col overflow-hidden`}
+        className={`${sidebarOpen ? "w-80" : "w-0"
+          } transition-all duration-300 border-r border-border-primary bg-surface-primary/30 flex flex-col overflow-hidden`}
       >
         <div className="p-6 border-b border-border-primary">
           <h2 className="text-lg font-bold text-primary flex items-center gap-2">

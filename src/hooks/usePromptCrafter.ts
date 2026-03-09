@@ -1,9 +1,9 @@
 import { GenerateRequest } from '@/services/api';
 import { useCallback, useEffect, useState } from 'react';
-import { DemoMode, FeatureKey } from '../config/demoMode';
-import onboardingSteps from '../constants/onboardingSteps';
-import { Idea } from '@/types';
-import { useGromptAPI } from './useGromptAPI';
+import { DemoMode, FeatureKey } from '@/config/demoMode';
+import onboardingSteps from '@/constants/onboardingSteps';
+import { Idea, Ideas } from '@/types';
+import { useGromptAPI } from '@/hooks/useGromptAPI';
 
 
 const uuidv4 = (): string => {
@@ -32,8 +32,8 @@ export interface UsePromptCrafterProps {
 export interface UsePromptCrafterReturn {
   // State
   darkMode: boolean;
-  currentInput: { id: string; text: string; timestamp: Date };
-  ideas: Idea[];
+  currentInput: Ideas;
+  ideas: Ideas;
   editingId: string | null;
   editingText: string;
   purpose: Purpose;
@@ -52,11 +52,14 @@ export interface UsePromptCrafterReturn {
   showOnboarding: boolean;
   currentStep: number;
   showEducational: boolean;
+  isEducationOpen: boolean;
   educationalTopic: string | null;
+  isSidebarOpen: boolean;
+  setSidebarOpen: (value: boolean) => void;
 
   // Setters
   setDarkMode: (value: boolean) => void;
-  setCurrentInput: (value: { id: string; text: string; timestamp: Date }) => void;
+  setCurrentInput: (value: Ideas) => void;
   setEditingText: (value: string) => void;
   setPurpose: (value: Purpose) => void;
   setCustomPurpose: (value: string) => void;
@@ -69,6 +72,7 @@ export interface UsePromptCrafterReturn {
   setMcpServers: (value: string[] | ((prev: string[]) => string[])) => void;
   setCustomMcpServer: (value: string) => void;
   setShowEducational: (value: boolean) => void;
+  setIsEducationOpen: (value: boolean) => void;
 
   // Actions
   addIdea: () => void;
@@ -81,7 +85,7 @@ export interface UsePromptCrafterReturn {
   handleFeatureClick: (feature: string) => boolean;
   startOnboarding: () => void;
   nextOnboardingStep: () => void;
-  showEducation: (topic: string) => void;
+  showEducation: (topic: string) => boolean;
 }
 
 const usePromptCrafter = ({ apiGenerate }: UsePromptCrafterProps): UsePromptCrafterReturn => {
@@ -89,8 +93,8 @@ const usePromptCrafter = ({ apiGenerate }: UsePromptCrafterProps): UsePromptCraf
   const [darkMode, setDarkMode] = useState<boolean>(true);
 
   // Ideas State
-  const [currentInput, setCurrentInput] = useState<{ id: string; text: string; timestamp: Date }>({ id: '', text: '', timestamp: new Date() });
-  const [ideas, setIdeas] = useState<Idea[]>([]);
+  const [currentInput, setCurrentInput] = useState<Ideas>([]);
+  const [ideas, setIdeas] = useState<Ideas>(currentInput || []);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState<string>('');
 
@@ -99,6 +103,8 @@ const usePromptCrafter = ({ apiGenerate }: UsePromptCrafterProps): UsePromptCraf
   const [customPurpose, setCustomPurpose] = useState<string>('');
   const [maxLength, setMaxLength] = useState<number>(5000);
   const [outputType, setOutputType] = useState<OutputType>('prompt');
+
+  const [isSidebarOpen, setSidebarOpen] = useState<boolean>(false);
 
   // Agent Configuration
   const [agentFramework, setAgentFramework] = useState<AgentFramework>('crewai');
@@ -117,6 +123,8 @@ const usePromptCrafter = ({ apiGenerate }: UsePromptCrafterProps): UsePromptCraf
   const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [showEducational, setShowEducational] = useState<boolean>(false);
+  const [isEducationOpen, setIsEducationOpen] = useState<boolean>(false);
+
   const [educationalTopic, setEducationalTopic] = useState<string | null>(null);
 
   // Dark mode effect
@@ -126,14 +134,16 @@ const usePromptCrafter = ({ apiGenerate }: UsePromptCrafterProps): UsePromptCraf
 
   // Ideas Management
   const addIdea = useCallback((): void => {
-    if (currentInput.id.trim()) {
+    if (currentInput.length === 0) return;
+    const lastIdx = currentInput.length - 1;
+    if (currentInput[lastIdx].id.trim()) {
       const newIdea: Idea = {
         id: uuidv4().toString(),
-        text: currentInput.text.trim(),
-        timestamp: currentInput.timestamp
+        text: currentInput[lastIdx].text.trim(),
+        timestamp: currentInput[lastIdx].timestamp
       };
       setIdeas(prevIdeas => [...prevIdeas, newIdea]);
-      setCurrentInput({ id: '', text: '', timestamp: new Date() });
+      setCurrentInput([]);
     }
   }, [currentInput]);
 
@@ -270,9 +280,10 @@ const usePromptCrafter = ({ apiGenerate }: UsePromptCrafterProps): UsePromptCraf
   }, [currentStep]);
 
   // Educational modal management
-  const showEducation = useCallback((topic: string): void => {
+  const showEducation = useCallback((topic: string): boolean => {
     setEducationalTopic(topic);
     setShowEducational(true);
+    return isEducationOpen ? true : false
   }, []);
 
   return {
@@ -299,6 +310,8 @@ const usePromptCrafter = ({ apiGenerate }: UsePromptCrafterProps): UsePromptCraf
     currentStep,
     showEducational,
     educationalTopic,
+    isEducationOpen,
+    isSidebarOpen,
 
     // Setters
     setDarkMode,
@@ -315,6 +328,8 @@ const usePromptCrafter = ({ apiGenerate }: UsePromptCrafterProps): UsePromptCraf
     setMcpServers,
     setCustomMcpServer,
     setShowEducational,
+    setIsEducationOpen,
+    setSidebarOpen,
 
     // Actions
     addIdea,

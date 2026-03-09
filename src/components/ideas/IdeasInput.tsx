@@ -1,4 +1,5 @@
 import { Plus } from "lucide-react";
+import { Idea, Ideas } from "@/types";
 import * as React from "react";
 
 interface Theme {
@@ -6,11 +7,11 @@ interface Theme {
 }
 
 interface IdeasInputProps {
-  currentInput: { id: string; text: string; timestamp: Date };
+  currentInput: Ideas;
   setCurrentInput: (
-    value: { id: string; text: string; timestamp: Date },
+    value: Ideas,
   ) => void;
-  addIdea: (ideas: { id: string; text: string; timestamp: Date }) => void;
+  addIdea: (ideas: Ideas) => void;
   currentTheme: Theme;
 }
 
@@ -32,18 +33,19 @@ const IdeasInput: React.FC<IdeasInputProps> = ({
         Adicionar Ideias
       </h2>
       <div className="space-y-4">
-        <textarea
-          key={currentInput.id}
-          value={currentInput.text}
-          onChange={(e) =>
-            setCurrentInput({ ...currentInput, text: e.target.value })}
-          placeholder="Cole suas notas, ideias brutas ou pensamentos desorganizados aqui..."
-          className="w-full h-32 px-4 py-3 rounded-lg border border-gray-600 bg-gray-700/80 text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-none transition-colors"
-          onKeyDown={handleKeyDown}
-        />
+        {currentInput.map((idea) => (
+          <textarea
+            key={idea.id}
+            value={idea.text}
+            onChange={(e) => setCurrentInput([idea])}
+            placeholder="Cole suas notas, ideias brutas ou pensamentos desorganizados aqui..."
+            className="w-full h-32 px-4 py-3 rounded-lg border border-gray-600 bg-gray-700/80 text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-none transition-colors"
+            onKeyDown={handleKeyDown}
+          />
+        ))}
         <button
           onClick={() => addIdea(currentInput)}
-          disabled={!currentInput.text.trim()}
+          disabled={!currentInput.length}
           className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-blue-500 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 hover:from-purple-700 hover:to-blue-600"
         >
           <Plus size={20} />

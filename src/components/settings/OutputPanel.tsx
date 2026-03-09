@@ -1,8 +1,8 @@
 import { AlertCircle, Check, Copy, Download, Loader2 } from "lucide-react";
 import * as React from "react";
-import { DemoMode } from "../../config/demoMode";
-import { UseGeneratePromptState } from "../../hooks/useGromptAPI";
-import { AgentFramework, OutputType } from "../../hooks/usePromptCrafter";
+import { DemoMode } from "@/config/demoMode";
+import { UseGeneratePromptState } from "@/hooks/useGromptAPI";
+import { AgentFramework, OutputType } from "@/hooks/usePromptCrafter";
 
 interface Theme {
   [key: string]: string;
@@ -65,11 +65,10 @@ const OutputPanel: React.FC<OutputPanelProps> = ({
         {promptToShow && (
           <div className="flex items-center gap-2">
             <span
-              className={`text-xs px-2 py-1 rounded-full ${
-                outputType === "prompt"
+              className={`text-xs px-2 py-1 rounded-full ${outputType === "prompt"
                   ? "bg-purple-900/50 text-purple-200 border border-purple-700"
                   : "bg-green-900/50 text-green-200 border border-green-700"
-              }`}
+                }`}
             >
               {outputType === "prompt" ? "Prompt" : agentFramework}{" "}
               {DemoMode.isActive ? "🎪" : ""}

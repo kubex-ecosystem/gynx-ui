@@ -9,12 +9,12 @@ import {
   GenerateRequest,
   GenerateResponse,
   HealthResponse,
-  isAPIError,
+  toAPIError,
   Provider
-} from '../services/api'
-import { enhancedAPI } from '../services/enhancedAPI'
+} from '@/services/api'
+import { enhancedAPI } from '@/services/enhancedAPI'
 
-interface UseGeneratePromptState {
+export interface UseGeneratePromptState {
   generateStream: (request: GenerateRequest) => Promise<void>
   generateSync: (request: GenerateRequest) => Promise<GenerateResponse>
   cancel: () => void
@@ -29,14 +29,14 @@ interface UseGeneratePromptState {
   }
 }
 
-interface UseProvidersState {
+export interface UseProvidersState {
   providers: Provider[]
   loading: boolean
   error: APIError | null
   lastFetched: number | null
 }
 
-interface UseHealthState {
+export interface UseHealthState {
   isHealthy: boolean
   health: HealthResponse | null
   loading: boolean
@@ -89,11 +89,12 @@ function useGeneratePrompt() {
       }))
       return response
     } catch (error) {
-      const apiError = isAPIError(error) ? error : new APIError(
-        error instanceof Error ? error.message : 'Unknown error',
-        0,
-        'UNKNOWN_ERROR'
-      )
+      const apiError = toAPIError(error, {
+        url: 'unknown',
+        method: 'POST',
+        status: 0,
+        statusText: 'UNKNOWN_ERROR',
+      })
       setState(prev => ({
         ...prev,
         loading: false,
@@ -164,7 +165,9 @@ function useGeneratePrompt() {
           setState(prev => ({
             ...prev,
             loading: false,
-            error: new APIError(error, 0, 'STREAM_ERROR'),
+            error: new APIError(error, 0, 'STREAM_ERROR', undefined, {
+              statusText: 'STREAM_ERROR',
+            }),
             progress: {
               isStreaming: false,
               content: prev.progress.content,
@@ -174,11 +177,12 @@ function useGeneratePrompt() {
         }
       )
     } catch (error) {
-      const apiError = isAPIError(error) ? error : new APIError(
-        error instanceof Error ? error.message : 'Streaming error',
-        0,
-        'STREAM_ERROR'
-      )
+      const apiError = toAPIError(error, {
+        url: 'unknown',
+        method: 'GET',
+        status: 0,
+        statusText: 'STREAM_ERROR',
+      })
       setState(prev => ({
         ...prev,
         loading: false,
@@ -279,11 +283,12 @@ function useProviders(autoFetch: boolean = true) {
       }))
       return providers
     } catch (error) {
-      const apiError = isAPIError(error) ? error : new APIError(
-        error instanceof Error ? error.message : 'Failed to fetch providers',
-        0,
-        'FETCH_PROVIDERS_ERROR'
-      )
+      const apiError = toAPIError(error, {
+        url: 'unknown',
+        method: 'GET',
+        status: 0,
+        statusText: 'FETCH_PROVIDERS_ERROR',
+      })
       setState(prev => ({
         ...prev,
         loading: false,
@@ -348,11 +353,12 @@ function useHealth(autoCheck: boolean = false, intervalMs: number = 60000) {
       }))
       return health
     } catch (error) {
-      const apiError = isAPIError(error) ? error : new APIError(
-        error instanceof Error ? error.message : 'Health check failed',
-        0,
-        'HEALTH_CHECK_ERROR'
-      )
+      const apiError = toAPIError(error, {
+        url: 'unknown',
+        method: 'GET',
+        status: 0,
+        statusText: 'HEALTH_CHECK_ERROR',
+      })
       setState(prev => ({
         ...prev,
         loading: false,
@@ -426,6 +432,10 @@ function useRateLimit() {
   return {
     ...rateLimitStatus,
     updateStatus
+  } as {
+    updateStatus: () => void;
+    canMakeRequest: boolean;
+    timeUntilReset: number;
   }
 }
 

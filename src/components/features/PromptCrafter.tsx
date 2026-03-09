@@ -23,6 +23,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { Ideas } from "@/types";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { LanguageContext } from "../../context/LanguageContext";
@@ -35,7 +36,7 @@ const STORE_NAME = "drafts";
 const DB_VERSION = 1;
 
 interface Draft {
-  ideas: Idea[];
+  ideas: Ideas;
   purpose: string;
 }
 
@@ -335,7 +336,7 @@ const IdeaInput: React.FC<IdeaInputProps> = React.memo(
 );
 
 interface IdeasListProps {
-  ideas: Idea[];
+  ideas: Ideas;
   onRemoveIdea: (id: string) => void;
 }
 const IdeasList: React.FC<IdeasListProps> = React.memo(
@@ -387,11 +388,10 @@ const PurposeSelector: React.FC<PurposeSelectorProps> = React.memo(
             <button
               key={p}
               onClick={() => setPurpose(p)}
-              className={`p-2 rounded-md text-sm font-medium transition-all duration-200 border ${
-                purpose === p
-                  ? "bg-accent-muted border-accent-primary text-white scale-105 shadow-md"
-                  : "bg-surface-primary/50 border-transparent text-secondary hover:border-border-accent"
-              }`}
+              className={`p-2 rounded-md text-sm font-medium transition-all duration-200 border ${purpose === p
+                ? "bg-accent-muted border-accent-primary text-white scale-105 shadow-md"
+                : "bg-surface-primary/50 border-transparent text-secondary hover:border-border-accent"
+                }`}
             >
               {t(purposeKeys[p])}
             </button>
@@ -506,7 +506,7 @@ const PromptCrafter: React.FC<PromptCrafterProps> = (
 ) => {
   const { t } = useTranslations();
   const isLight = theme === "light";
-  const [ideas, setIdeas] = useState<Idea[]>([]);
+  const [ideas, setIdeas] = useState<Ideas>([]);
   const [currentIdea, setCurrentIdea] = useState("");
   const [purpose, setPurpose] = useState("Code Generation");
   const [isLoading, setIsLoading] = useState(false);
@@ -609,7 +609,7 @@ const PromptCrafter: React.FC<PromptCrafterProps> = (
           const encodedData = hash.substring("#prompt=".length);
           const decodedJson = atob(encodedData);
           const data = JSON.parse(decodedJson) as {
-            ideas: Idea[];
+            ideas: Ideas;
             purpose: string;
             prompt: string;
           };
@@ -793,7 +793,7 @@ const PromptCrafter: React.FC<PromptCrafterProps> = (
     const randomIndex = Math.floor(Math.random() * examples.length);
     const example = examples[randomIndex];
     setPurpose(example.purpose);
-    const exampleIdeas: Idea[] = example.ideas.map((text, index) => ({
+    const exampleIdeas: Ideas = example.ideas.map((text, index) => ({
       id: `example-${Date.now()}-${index}`,
       text,
     }));
@@ -982,39 +982,35 @@ const PromptCrafter: React.FC<PromptCrafterProps> = (
           {/* Mode Indicator Section */}
           {!isConfigLoading && (
             <div
-              className={`mt-4 p-3 rounded-lg border ${
-                currentMode === "demo"
-                  ? "bg-status-warning/10 border-status-warning/50"
-                  : currentMode === "byok"
+              className={`mt-4 p-3 rounded-lg border ${currentMode === "demo"
+                ? "bg-status-warning/10 border-status-warning/50"
+                : currentMode === "byok"
                   ? "bg-status-info/10 border-status-info/50"
                   : "bg-status-success/10 border-status-success/50"
-              }`}
+                }`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div
-                    className={`w-2 h-2 rounded-full ${
-                      currentMode === "demo"
-                        ? "bg-status-warning"
-                        : currentMode === "byok"
+                    className={`w-2 h-2 rounded-full ${currentMode === "demo"
+                      ? "bg-status-warning"
+                      : currentMode === "byok"
                         ? "bg-status-info"
                         : "bg-status-success"
-                    }`}
+                      }`}
                   />
                   <span
-                    className={`text-sm font-medium ${
-                      currentMode === "demo"
-                        ? "text-status-warning"
-                        : currentMode === "byok"
+                    className={`text-sm font-medium ${currentMode === "demo"
+                      ? "text-status-warning"
+                      : currentMode === "byok"
                         ? "text-status-info"
                         : "text-status-success"
-                    }`}
+                      }`}
                   >
                     {currentMode === "demo" && "🎭 Demo Mode"}
                     {currentMode === "byok" && "🔑 Using Your API Key (BYOK)"}
                     {currentMode === "server" &&
-                      `🔧 Using Server Config${
-                        selectedProvider ? ` (${selectedProvider})` : ""
+                      `🔧 Using Server Config${selectedProvider ? ` (${selectedProvider})` : ""
                       }`}
                   </span>
                 </div>

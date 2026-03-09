@@ -14,8 +14,10 @@ import {
   User,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import Card from "../components/ui/Card";
-import { AcceptInviteReq, InviteDTO } from "../types";
+import Card from "@/components/ui/Card";
+import { getHashQueryParams, navigateToSection } from "@/core/navigation/hashRoutes";
+import { AcceptInviteReq, InviteDTO } from "@/types";
+import { validateInviteToken, acceptInvite } from "@/services/inviteService";
 
 const AcceptInvite: React.FC = () => {
   const [token, setToken] = useState<string | null>(null);
@@ -34,10 +36,7 @@ const AcceptInvite: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
-    // Simular extração de token da URL (ex: #accept-invite?token=xyz)
-    const hash = window.location.hash;
-    const urlParams = new URLSearchParams(hash.split("?")[1]);
-    const tokenParam = urlParams.get("token");
+    const tokenParam = getHashQueryParams(window.location.hash).get("token");
     setToken(tokenParam);
 
     if (tokenParam) {
@@ -51,29 +50,9 @@ const AcceptInvite: React.FC = () => {
   const validateToken = async (t: string) => {
     setIsValidating(true);
     try {
-      // Simular validação no BE
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-
-      if (t === "invalid") {
-        throw new Error("Este convite é inválido ou já foi utilizado.");
-      }
-
-      if (t === "expired") {
-        throw new Error("Este convite expirou. Solicite um novo acesso.");
-      }
-
-      // Mock de resposta bem sucedida
-      setInvite({
-        id: "inv_123",
-        email: "rafael@kubex.world",
-        name: "Rafael",
-        role: "Administrator",
-        tenant_id: "tenant_bellube_01",
-        status: "pending",
-        expires_at: new Date(Date.now() + 86400000).toISOString(),
-        type: "internal",
-      });
-      setFormData((prev) => ({ ...prev, name: "Rafael" }));
+      const inviteData = await validateInviteToken(t);
+      setInvite(inviteData);
+      setFormData((prev) => ({ ...prev, name: inviteData.name || "" }));
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -84,12 +63,14 @@ const AcceptInvite: React.FC = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError(null);
     try {
-      // Simular Aceite no BE
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      if (!token) throw new Error("Chave de convite ausente.");
+
+      await acceptInvite(token, formData);
       setSuccess(true);
     } catch (err: any) {
-      setError("Erro ao processar seu cadastro. Tente novamente.");
+      setError(err.message || "Erro ao processar seu cadastro. Tente novamente.");
     } finally {
       setIsSubmitting(false);
     }
@@ -120,7 +101,7 @@ const AcceptInvite: React.FC = () => {
             <p className="text-secondary text-sm">{error}</p>
           </div>
           <button
-            onClick={() => window.location.hash = "#landing"}
+            onClick={() => navigateToSection("landing")}
             className="w-full py-3 rounded-xl bg-surface-tertiary text-primary font-bold hover:bg-surface-tertiary/80 transition-all"
           >
             Voltar para o Início
@@ -163,7 +144,7 @@ const AcceptInvite: React.FC = () => {
               </div>
             </div>
             <button
-              onClick={() => window.location.hash = "#auth"}
+              onClick={() => navigateToSection("auth")}
               className="w-full py-4 rounded-xl bg-accent-primary text-white font-bold text-lg shadow-lg shadow-accent-primary/20 hover:scale-[1.02] transition-transform flex items-center justify-center gap-2"
             >
               Ir para o Login <ArrowRight size={20} />

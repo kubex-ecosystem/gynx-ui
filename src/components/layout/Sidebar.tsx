@@ -1,12 +1,12 @@
-import { 
-  Activity, BarChart3, Bot, Database, Key, LayoutDashboard, 
-  LucideIcon, Mail, MessageCircle, NotebookPen, Sparkles, 
-  Wand2, Workflow, ChevronDown, LogOut 
+import {
+  Activity, BarChart3, Bot, Database, Key, LayoutDashboard,
+  LucideIcon, Mail, MessageCircle, NotebookPen, Sparkles,
+  Wand2, Workflow, ChevronDown, LogOut, ShieldCheck, Play, Settings
 } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTranslations } from '../../i18n/useTranslations';
-import { useAuth } from '../../context/AuthContext';
+import { useTranslations } from '@/i18n/useTranslations';
+import { useAuth } from '@/context/AuthContext';
 
 export type SidebarSection = {
   id: string;
@@ -30,6 +30,7 @@ const defaultIcons: Record<string, LucideIcon> = {
   'mail-hub': Mail,
   'data-sync': Database,
   'providers-settings': Key,
+  'workspace-settings': ShieldCheck,
   welcome: LayoutDashboard,
   prompt: Sparkles,
   agents: Bot,
@@ -37,6 +38,8 @@ const defaultIcons: Record<string, LucideIcon> = {
   summarizer: NotebookPen,
   code: Workflow,
   images: Wand2,
+  playground: Play,
+  'group-settings': Settings,
 };
 
 const NavItem: React.FC<{
@@ -50,7 +53,7 @@ const NavItem: React.FC<{
   const isDirectActive = activeSection === section.id;
   const isChildActive = section.children?.some(child => child.id === activeSection);
   const isActive = isDirectActive || isChildActive;
-  
+
   const [isOpen, setIsOpen] = useState(false);
   const hasChildren = section.children && section.children.length > 0;
 
@@ -74,20 +77,18 @@ const NavItem: React.FC<{
       <button
         type="button"
         onClick={handleAction}
-        className={`w-full rounded-xl border px-4 py-3 text-left transition-all duration-200 flex items-center justify-between ${
-          isDirectActive
+        className={`w-full rounded-xl border px-4 py-3 text-left transition-all duration-200 flex items-center justify-between ${isDirectActive
             ? 'border-accent-primary/70 bg-accent-muted text-primary shadow-md'
-            : isChild 
+            : isChild
               ? 'border-transparent bg-transparent text-secondary hover:text-primary hover:bg-surface-tertiary/30'
               : 'border-transparent bg-surface-primary/75 text-secondary hover:border-border-accent hover:bg-surface-tertiary'
-        }`}
+          }`}
       >
         <div className="flex items-center gap-3">
-          <span className={`flex h-10 w-10 items-center justify-center rounded-lg border ${
-            isDirectActive
+          <span className={`flex h-10 w-10 items-center justify-center rounded-lg border ${isDirectActive
               ? 'border-transparent bg-surface-primary text-accent-primary'
               : 'border-border-primary bg-surface-primary text-secondary'
-          }`}>
+            }`}>
             <Icon size={20} />
           </span>
           <div className="flex-1 overflow-hidden">
@@ -172,12 +173,12 @@ const Sidebar: React.FC<SidebarProps> = ({ sections, activeSection, onSectionCha
       <nav className={`flex-1 overflow-y-auto custom-scrollbar px-4 pb-6 ${collapsed ? 'lg:hidden' : 'lg:px-6'}`}>
         <div className="space-y-2">
           {sections.map((section) => (
-            <NavItem 
-              key={section.id} 
-              section={section} 
-              activeSection={activeSection} 
-              onSectionChange={onSectionChange} 
-              onClose={onClose} 
+            <NavItem
+              key={section.id}
+              section={section}
+              activeSection={activeSection}
+              onSectionChange={onSectionChange}
+              onClose={onClose}
             />
           ))}
         </div>
@@ -201,6 +202,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sections, activeSection, onSectionCha
         <ul className="flex w-full flex-col items-center gap-3">
           {sections.map((section) => {
             const Icon = section.icon || defaultIcons[section.id] || LayoutDashboard;
+            const targetSection = section.children?.[0]?.id ?? section.id;
             const isActive = activeSection === section.id || section.children?.some(c => c.id === activeSection);
             return (
               <li key={section.id} className="w-full">
@@ -208,10 +210,10 @@ const Sidebar: React.FC<SidebarProps> = ({ sections, activeSection, onSectionCha
                   type="button"
                   title={section.label}
                   aria-label={section.label}
-                  onClick={() => onSectionChange(section.id)}
+                  onClick={() => onSectionChange(targetSection)}
                   className={`mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border text-secondary transition-all duration-200 ${isActive
-                      ? 'border-accent-primary bg-accent-muted text-accent-primary shadow-md'
-                      : 'border-transparent bg-surface-primary/80 hover:border-border-accent hover:bg-surface-tertiary'
+                    ? 'border-accent-primary bg-accent-muted text-accent-primary shadow-md'
+                    : 'border-transparent bg-surface-primary/80 hover:border-border-accent hover:bg-surface-tertiary'
                     }`}
                 >
                   <Icon size={20} />
@@ -219,7 +221,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sections, activeSection, onSectionCha
               </li>
             );
           })}
-          
+
           <li className="w-full mt-4 pt-4 border-t border-border-secondary">
             <button
               onClick={logout}

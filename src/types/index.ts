@@ -1,4 +1,4 @@
-export * from './agents';
-export * from './common';
-export * from './domain';
+export * from '@/types/agents';
+export * from '@/types/common';
+export * from '@/types/domain';
 

@@ -14,8 +14,9 @@ import {
   Server,
 } from "lucide-react";
 import React, { useState } from "react";
-import Card from "../components/ui/Card";
-import { useAuth } from "../context/AuthContext";
+import Card from "@/components/ui/Card";
+import { useAuth } from "@/context/AuthContext";
+import { buildApiV1Path, httpEndpoints } from "@/core/http/endpoints";
 
 const providers = [
   { id: "openai", name: "OpenAI", icon: Bot },
@@ -76,7 +77,7 @@ const Auth: React.FC = () => {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = "/api/v1/auth/google/start?next=/";
+    window.location.href = `${buildApiV1Path(httpEndpoints.auth.oauthGoogleStart)}?next=/`;
   };
 
   return (
@@ -169,11 +170,10 @@ const Auth: React.FC = () => {
                 className="flex items-center gap-2 text-xs font-bold text-muted hover:text-primary transition-colors uppercase tracking-widest"
               >
                 <div
-                  className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
-                    rememberMe
+                  className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${rememberMe
                       ? "bg-accent-primary border-accent-primary"
                       : "border-border-primary"
-                  }`}
+                    }`}
                 >
                   {rememberMe && (
                     <CheckCircle2 size={12} className="text-white" />
@@ -199,11 +199,10 @@ const Auth: React.FC = () => {
                 className="flex items-center gap-2 text-xs font-bold text-muted hover:text-primary transition-colors uppercase tracking-widest"
               >
                 <div
-                  className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
-                    useByok
+                  className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${useByok
                       ? "bg-accent-primary border-accent-primary"
                       : "border-border-primary"
-                  }`}
+                    }`}
                 >
                   {useByok && <CheckCircle2 size={12} className="text-white" />}
                 </div>
@@ -231,11 +230,10 @@ const Auth: React.FC = () => {
                             key={p.id}
                             type="button"
                             onClick={() => setByokProvider(p.id)}
-                            className={`flex items-center gap-2 p-2 rounded-lg border text-[10px] font-bold transition-all ${
-                              byokProvider === p.id
+                            className={`flex items-center gap-2 p-2 rounded-lg border text-[10px] font-bold transition-all ${byokProvider === p.id
                                 ? "border-accent-primary bg-accent-muted text-accent-secondary"
                                 : "border-border-primary bg-surface-primary text-secondary hover:border-border-accent"
-                            }`}
+                              }`}
                           >
                             <p.icon size={14} />
                             {p.name}
