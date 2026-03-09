@@ -1,384 +1,446 @@
-# Grompt Frontend - React 19 + MultiProvider Architecture
+# GNyx-UI
 
-Modern React frontend for the Grompt prompt engineering tool, featuring MultiProvider AI integration, PWA capabilities, and comprehensive offline support.
+Portuguese (Brazil) version: [docs/README.pt-BR.md](./docs/README.pt-BR.md)
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Current Product Scope](#current-product-scope)
+- [Technology Stack](#technology-stack)
+- [Architecture Overview](#architecture-overview)
+- [Repository Layout](#repository-layout)
+- [Feature Domains](#feature-domains)
+- [Runtime Modes](#runtime-modes)
+- [Environment Variables](#environment-variables)
+- [Getting Started](#getting-started)
+- [Available Commands](#available-commands)
+- [Development Workflow](#development-workflow)
+- [HTTP and Service Layers](#http-and-service-layers)
+- [State Management](#state-management)
+- [Mock and Demo Strategy](#mock-and-demo-strategy)
+- [Current Limitations](#current-limitations)
+- [Contribution Notes](#contribution-notes)
+- [Documentation Map](#documentation-map)
 
 ## Overview
 
-The Grompt frontend is a cutting-edge React 19 application built with TypeScript, Vite, and TailwindCSS. It provides a seamless interface for prompt generation with support for multiple AI providers through both local SDK integration and backend gateway fallback.
+`GNyx-UI` is the frontend application for the GNyx workspace. It is a React 19 + TypeScript + Vite application that combines:
 
-### Key Features
+- authentication and onboarding flows
+- AI-assisted tools
+- operational dashboards
+- provider configuration and BYOK flows
+- offline-aware service layers
+- domain-oriented frontend modules
 
-- **🤖 MultiProvider AI Integration**: OpenAI, Anthropic, and Gemini support
-- **📱 Progressive Web App**: Installable with offline capabilities
-- **⚡ React 19**: Latest React features with concurrent rendering
-- **🎨 Modern UI**: TailwindCSS with responsive design
-- **🔄 Real-time Streaming**: SSE-based prompt generation with coalescing
-- **💾 Offline-First**: IndexedDB caching and service worker support
-- **🔐 Secure Configuration**: Local API key management with encryption
+The application is currently organized around a hash-based shell instead of React Router, and it mixes modernized layers (`core/http`, `core/navigation`, `modules/*`, `mocks/*`) with a few still-legacy service areas that are being gradually normalized.
 
-## Architecture
+## Current Product Scope
 
-### Technology Stack
+At the time of this README rewrite, the frontend includes the following user-facing areas:
 
-- **Framework**: React 19 + Vite + TypeScript
-- **Styling**: TailwindCSS + PostCSS
-- **State Management**: React hooks + Context API
-- **HTTP Client**: Enhanced Fetch API with offline support
-- **Database**: IndexedDB via `idb` library
-- **PWA**: Service Worker + Web App Manifest
+- `Landing`: public entry page
+- `Auth`: sign-in screen
+- `Accept Invite`: public onboarding completion flow
+- `Welcome`: post-login landing workspace
+- `Gateway Dashboard`: operational metrics and logs
+- `Mail Hub`: smart inbox UI, currently mock-backed
+- `Data Sync`: integrations and sync jobs
+- `Workspace Settings`: tenant/workspace settings, currently mock-backed
+- `Providers Settings`: AI provider and routing administration
+- `Prompt Crafter`: structured prompt generation workflow
+- `Agents`: AI agent generation and storage workflow
+- `Chat`: conversational assistant
+- `Summarizer`: content summarization
+- `Code`: code generation assistant
+- `Images`: image prompt crafting
+- `Playground`: streaming-oriented testing area
+- `Data Analyzer`: analysis-oriented area that still needs future backend hardening
 
-### Core Components
+## Technology Stack
 
+Core stack:
+
+- React 19
+- TypeScript
+- Vite 7
+- TailwindCSS
+- Framer Motion
+- Zustand
+- IndexedDB via `idb`
+- `js-cookie`
+- `lucide-react`
+
+Provider and AI-related dependencies currently present in the frontend:
+
+- OpenAI SDK
+- Anthropic SDK
+- Google GenAI SDK
+
+## Architecture Overview
+
+The frontend is evolving toward a more explicit layered architecture.
+
+### Core layers
+
+- `src/core/http/*`
+  - unified HTTP client
+  - endpoint catalog
+  - auth header helpers
+  - normalized error types
+- `src/core/navigation/*`
+  - hash routing helpers
+  - route parsing and guarded navigation rules
+- `src/core/runtime/*`
+  - frontend runtime mode resolution
+  - demo/simulated behavior flags
+- `src/core/llm/*`
+  - local provider wrapper abstractions
+
+### Domain modules
+
+The project is progressively moving business logic out of pages/components and into `src/modules/*`.
+
+Current modules already in place:
+
+- `src/modules/chat`
+- `src/modules/creative`
+- `src/modules/mail`
+- `src/modules/providers`
+- `src/modules/workspace`
+
+### Service layers
+
+The frontend still uses more than one service style, because the codebase is in migration:
+
+- `core/http` for the current network foundation
+- `services/api.ts` as a compatibility-oriented API layer
+- `services/enhancedAPI.ts` for offline/cache/queue behavior
+- domain services such as `unifiedAIService`, `gatewayService`, `syncService`, `inviteService`, `agentsService`, and others
+
+## Repository Layout
+
+```text
+frontend/
+├── docs/                     # Frontend-specific documentation
+├── public/                   # Static assets
+├── src/
+│   ├── assets/               # Images, lotties, UI assets
+│   ├── components/           # Shared UI and feature components
+│   ├── config/               # Frontend configuration helpers
+│   ├── constants/            # Constants and static definitions
+│   ├── context/              # React contexts (auth, language)
+│   ├── core/                 # HTTP, runtime, navigation, LLM foundation
+│   ├── hooks/                # Reusable hooks
+│   ├── i18n/                 # Translation support
+│   ├── lib/                  # Local utilities and adapters
+│   ├── mocks/                # Centralized mock scenarios and domain data
+│   ├── modules/              # Domain-oriented frontend modules
+│   ├── pages/                # Route-level pages and shells
+│   ├── screens/              # Older screen-oriented structures
+│   ├── services/             # API integrations and orchestration
+│   ├── store/                # Zustand stores
+│   ├── tests/                # Frontend tests and fixtures
+│   ├── types/                # Shared TypeScript contracts
+│   └── utils/                # Generic helpers
+├── package.json
+└── README.md
 ```
-frontend/src/
-├── components/          # Reusable UI components
-│   ├── layout/         # Header, navigation, layout components
-│   ├── providers/      # MultiProvider configuration UI
-│   ├── pwa/           # PWA-specific components
-│   └── settings/      # Configuration panels
-├── core/              # Core business logic
-│   └── llm/           # LLM provider implementations
-│       ├── providers/ # Individual provider classes
-│       └── wrapper/   # MultiAIWrapper abstraction
-├── hooks/             # Custom React hooks
-├── screens/           # Main application screens
-├── services/          # API and service integrations
-├── types/            # TypeScript type definitions
-└── utils/            # Utility functions
+
+## Feature Domains
+
+### Access and onboarding
+
+Main files:
+
+- `src/context/AuthContext.tsx`
+- `src/pages/Landing.tsx`
+- `src/pages/Auth.tsx`
+- `src/pages/AcceptInvite.tsx`
+- `src/services/inviteService.ts`
+
+Notes:
+
+- session validation uses the unified HTTP client
+- invite acceptance is a special public flow
+- simulated auth can still be enabled for frontend-only usage
+
+### AI and creation tools
+
+Main files:
+
+- `src/modules/chat/*`
+- `src/modules/creative/*`
+- `src/services/unifiedAIService.ts`
+- `src/components/features/*`
+
+Notes:
+
+- `Chat`, `Summarizer`, `Code`, and `Images` are already wired into backend-oriented flows
+- provider availability is resolved through configuration and BYOK support
+
+### Operations and administration
+
+Main files:
+
+- `src/pages/GatewayDashboard.tsx`
+- `src/pages/DataSync.tsx`
+- `src/pages/MailHub.tsx`
+- `src/pages/WorkspaceSettings.tsx`
+- `src/pages/ProvidersSettings.tsx`
+- `src/modules/mail/*`
+- `src/modules/workspace/*`
+- `src/modules/providers/*`
+
+Notes:
+
+- `Mail Hub` and `Workspace Settings` are now modularized but still mock-backed
+- `Providers Settings` is now modularized around a dedicated frontend module
+- gateway and sync flows remain hybrid real/mock depending on runtime mode
+
+## Runtime Modes
+
+The frontend currently supports three practical execution modes.
+
+### 1. Real backend mode
+
+Used when frontend talks to the backend normally.
+
+Characteristics:
+
+- real HTTP calls
+- real auth/session validation
+- real provider/config resolution
+
+### 2. Demo mode
+
+Resolved through runtime flags and service fallbacks.
+
+Characteristics:
+
+- configuration falls back to demo-friendly values
+- BYOK-oriented UX stays available
+- parts of the UI can still behave as connected demos
+
+### 3. Simulated auth / mock-assisted mode
+
+Used to keep frontend-only work moving without backend dependency.
+
+Characteristics:
+
+- auth/session becomes simulated
+- invite/gateway/sync mock branches can be used
+- useful for isolated UI and interaction work
+
+## Environment Variables
+
+Current variables used by the frontend include:
+
+```env
+VITE_API_URL=http://localhost:8080
+VITE_DEMO_MODE=false
+VITE_SIMULATE_AUTH=false
 ```
 
-## MultiProvider System
+Behavior summary:
 
-### Provider Support
+- `VITE_API_URL`
+  - backend base URL when needed by the frontend runtime
+- `VITE_DEMO_MODE`
+  - enables demo-oriented frontend behavior
+- `VITE_SIMULATE_AUTH`
+  - enables simulated auth/mock-assisted flows for frontend-only work
 
-The frontend supports multiple AI providers with seamless switching:
+The current scripts rely on POSIX-style shell sourcing of `.env.local` and `.env.production` when available.
 
-**OpenAI**:
-- Models: GPT-4 Turbo, GPT-3.5 Turbo
-- Features: Function calling, JSON mode, streaming
-- SDK: Official OpenAI JavaScript SDK
-
-**Anthropic**:
-- Models: Claude 3.5 Sonnet, Claude 3 Haiku
-- Features: Large context, system messages, streaming
-- SDK: Official Anthropic SDK
-
-**Gemini**:
-- Models: Gemini 1.5 Pro, Gemini 1.5 Flash
-- Features: Multimodal, safety settings, structured output
-- SDK: Google Generative AI SDK
-
-### Configuration Management
-
-```typescript
-// Provider configuration interface
-interface MultiProviderConfig {
-  providers: {
-    [AIProvider.OPENAI]?: {
-      apiKey: string
-      defaultModel: string
-      baseURL?: string
-    }
-    // ... other providers
-  }
-  fallbackToBackend?: boolean
-  cacheResponses?: boolean
-}
-```
-
-## PWA Features
-
-### Offline Capabilities
-
-- **Service Worker**: Caches static assets and API responses
-- **IndexedDB**: Stores prompt history and provider configurations
-- **Background Sync**: Queues requests when offline
-- **Push Notifications**: Updates and alerts (when enabled)
-
-### Installation
-
-The app can be installed on desktop and mobile devices:
-
-```javascript
-// Installation prompt handling
-const installPWA = async () => {
-  if (deferredPrompt) {
-    deferredPrompt.prompt()
-    const { outcome } = await deferredPrompt.userChoice
-    console.log(`User ${outcome} the install prompt`)
-  }
-}
-```
-
-## Development Setup
+## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+ (recommended: 20+)
-- npm or yarn package manager
-- Modern browser supporting ES2022
+Recommended:
 
-### Installation
+- Node.js 20+
+- pnpm 10+
+- a POSIX-compatible shell for the provided scripts
 
-```bash
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Type checking
-npm run typecheck
-
-# Linting
-npm run lint
-```
-
-### Environment Configuration
-
-Create `.env.local` for development:
-
-```env
-# Development settings
-VITE_APP_TITLE="Grompt Dev"
-VITE_API_BASE_URL="http://localhost:3000"
-
-# Optional: Default API keys for testing
-VITE_OPENAI_API_KEY="sk-your-development-key"
-VITE_ANTHROPIC_API_KEY="sk-ant-your-development-key"
-VITE_GEMINI_API_KEY="your-gemini-development-key"
-```
-
-## Key Components Documentation
-
-### MultiProviderConfig Component
-
-```typescript
-// Component for managing provider configurations
-<MultiProviderConfig
-  isOpen={showConfig}
-  onClose={() => setShowConfig(false)}
-  onConfigUpdate={(config) => {
-    // Handle configuration updates
-    console.log('Provider config updated:', config)
-  }}
-/>
-```
-
-### Enhanced API Service
-
-```typescript
-// Offline-first API with automatic fallback
-const enhancedAPI = new EnhancedAPI({
-  baseURL: 'http://localhost:3000',
-  cacheEnabled: true,
-  offlineMode: 'graceful'
-})
-
-// Generate prompt with automatic provider selection
-const response = await enhancedAPI.generatePrompt({
-  provider: 'openai',
-  ideas: ['React', 'TypeScript', 'PWA'],
-  purpose: 'code'
-})
-```
-
-### Streaming Integration
-
-```typescript
-// Real-time streaming with SSE
-await enhancedAPI.generatePromptStream(
-  request,
-  (chunk) => {
-    // Handle streaming chunks
-    setContent(prev => prev + chunk)
-  },
-  (usage) => {
-    // Handle completion
-    console.log('Tokens used:', usage.tokens)
-  },
-  (error) => {
-    // Handle errors
-    console.error('Stream error:', error)
-  }
-)
-```
-
-## Testing
-
-### Unit Testing
+### Install dependencies
 
 ```bash
-# Run unit tests
-npm test
-
-# Run tests with coverage
-npm run test:coverage
-
-# Run tests in watch mode
-npm run test:watch
+cd frontend
+pnpm install
 ```
 
-### Integration Testing
+### Start development server
 
 ```bash
-# Test provider integrations
-npm run test:providers
-
-# Test PWA functionality
-npm run test:pwa
-
-# Test offline scenarios
-npm run test:offline
+pnpm dev
 ```
 
-### E2E Testing
+### Run a production-like preview
 
 ```bash
-# Run end-to-end tests
-npm run test:e2e
-
-# Test in multiple browsers
-npm run test:cross-browser
+pnpm preview
 ```
 
-## Build and Deployment
-
-### Production Build
+### Run type checking
 
 ```bash
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
-
-# Analyze bundle size
-npm run analyze
+pnpm exec tsc --noEmit
 ```
 
-### Build Outputs
+## Available Commands
 
-```
-dist/
-├── assets/           # Compiled CSS, JS, and static assets
-├── icons/           # PWA icons and favicons
-├── manifest.json    # Web app manifest
-├── sw.js           # Service worker
-└── index.html      # Main HTML file
-```
+Commands currently defined in `package.json`:
 
-### Integration with Go Backend
-
-The frontend is automatically embedded in the Go binary during build:
-
-```go
-//go:embed frontend/dist
-var frontendAssets embed.FS
-
-func serveFrontend() {
-    // Serve embedded frontend assets
-    handler := http.FileServer(http.FS(frontendAssets))
-    http.Handle("/", handler)
-}
-```
-
-## Performance Optimizations
-
-### Bundle Optimization
-
-- **Code Splitting**: Automatic route-based splitting
-- **Tree Shaking**: Dead code elimination
-- **Asset Optimization**: Image compression and optimization
-- **Gzip Compression**: Build-time compression
-
-### Runtime Performance
-
-- **Virtual Scrolling**: For large lists (prompt history)
-- **Memoization**: React.memo and useMemo for expensive operations
-- **Debouncing**: Input debouncing for API calls
-- **Lazy Loading**: Component and route lazy loading
-
-### Caching Strategy
-
-```typescript
-// Multi-level caching
-const cacheStrategy = {
-  memory: new Map(),        // In-memory cache
-  localStorage: window.localStorage,  // Browser storage
-  indexedDB: await openDB('grompt'), // Persistent storage
-  serviceWorker: await caches.open('api-cache') // HTTP cache
-}
-```
-
-## Troubleshooting
-
-### Common Issues
-
-**Build Errors**:
 ```bash
-# Clear node_modules and reinstall
-rm -rf node_modules package-lock.json
-npm install
-
-# Clear Vite cache
-npm run dev -- --force
+pnpm dev
+pnpm dev:full
+pnpm dev:preview
+pnpm build
+pnpm build:prod
+pnpm preview
+pnpm prod
+pnpm prod:full
 ```
 
-**TypeScript Errors**:
-```bash
-# Restart TypeScript server
-npm run typecheck
-```
+What they do:
 
-**Provider Connection Issues**:
-- Check API keys in browser localStorage
-- Verify network connectivity
-- Check provider status endpoints
+- `pnpm dev`
+  - starts the Vite dev server on port `3000`
+- `pnpm dev:full`
+  - builds first, then starts the dev server
+- `pnpm dev:preview`
+  - previews the current build on port `3000`
+- `pnpm build`
+  - builds using `.env.local` when present
+- `pnpm build:prod`
+  - builds with production mode and `.env.production` when present
+- `pnpm preview`
+  - previews the current build on port `3000`
+- `pnpm prod`
+  - previews the app with `NODE_ENV=production`
+- `pnpm prod:full`
+  - production build followed by preview
 
-### Debug Mode
+## Development Workflow
 
-```typescript
-// Enable debug mode
-localStorage.setItem('debug', 'grompt:*')
+Recommended workflow for current contributors:
 
-// Check provider health
-console.log(await multiProviderService.getProviderHealth())
+1. start from `pnpm dev`
+2. use `pnpm exec tsc --noEmit` frequently
+3. keep feature logic inside `src/modules/*` whenever possible
+4. use `src/core/http/*` instead of introducing new direct `fetch` calls
+5. keep mock decisions centralized instead of scattering environment checks
+6. prefer adapting legacy consumers rather than growing parallel patterns
 
-// Inspect cache state
-console.log(await enhancedAPI.getCacheStats())
-```
+## HTTP and Service Layers
 
-## Contributing
+### HTTP foundation
 
-### Code Style
+Main files:
 
-- **Prettier**: Automatic code formatting
-- **ESLint**: Code quality and consistency
-- **TypeScript**: Strict type checking
-- **Conventional Commits**: Standardized commit messages
+- `src/core/http/client.ts`
+- `src/core/http/endpoints.ts`
+- `src/core/http/auth.ts`
+- `src/core/http/errors.ts`
+- `src/core/http/types.ts`
 
-### Development Workflow
+This is the preferred network foundation.
 
-1. **Feature Branch**: Create from `main`
-2. **Development**: Make changes with tests
-3. **Testing**: Run full test suite
-4. **PR Review**: Submit for code review
-5. **Integration**: Merge after approval
+### Error normalization
 
-### File Naming Conventions
+The project now treats error normalization as a cross-cutting concern.
 
-- **Components**: PascalCase (`MultiProviderConfig.tsx`)
-- **Hooks**: camelCase with `use` prefix (`useMultiProvider.ts`)
-- **Services**: camelCase (`multiProviderService.ts`)
-- **Types**: PascalCase (`types.ts` with exported interfaces)
+Relevant files:
 
-## Related Documentation
+- `src/core/http/errors.ts`
+- `src/services/api.ts`
+- `src/hooks/useGromptAPI.ts`
 
-- [MultiProvider Architecture](../docs/MULTIPROVIDER_ARCHITECTURE.md)
-- [Grompt V1 API Documentation](../GROMPT_V1_API.md)
-- [PWA Integration Summary](PWA_INTEGRATION_SUMMARY.md)
-- [Quick Start Guide](../QUICKSTART_V1.md)
+Current direction:
+
+- `HttpError` is the base normalized error
+- `APIError` remains available as a compatibility adapter over the same normalized shape
+- unknown errors should be normalized instead of invented ad hoc in consumers
+
+### Older service surfaces still present
+
+Relevant files:
+
+- `src/services/api.ts`
+- `src/services/enhancedAPI.ts`
+- `src/services/multiProviderService.ts`
+
+These still exist because the frontend is mid-migration. They are functional, but they should be treated as compatibility layers rather than the long-term ideal shape.
+
+## State Management
+
+The frontend uses a combination of:
+
+- local React state for screen-level interaction
+- React Context for cross-cutting concerns
+- Zustand for persisted or shared application state
+- IndexedDB/localStorage/cookies where appropriate
+
+Main state holders:
+
+- `AuthContext`
+- `LanguageContext`
+- `useProvidersStore`
+- `useAuthStore`
+
+## Mock and Demo Strategy
+
+Mock and demo behavior is now more explicit than before.
+
+Main files:
+
+- `src/core/runtime/mode.ts`
+- `src/mocks/scenarios.ts`
+- `src/mocks/domains/*`
+
+Current rule of thumb:
+
+- runtime mode decides whether the app should behave as real/demo/simulated
+- mock datasets should live under `src/mocks/*`
+- pages should not become the source of truth for simulation logic
+
+Examples of domains already using centralized mock data:
+
+- gateway
+- sync
+- invite
+- mail
+- workspace
+
+## Current Limitations
+
+This README reflects the project honestly, including current gaps.
+
+Known limitations at this stage:
+
+- routing is still hash-based instead of router-based
+- `Mail Hub` and `Workspace Settings` are still mock-backed from a backend perspective
+- some legacy service layers still coexist with the newer foundation
+- `Data Analyzer` still requires a future backend-oriented hardening pass
+- the codebase still contains legacy structures such as `screens/` alongside the newer page/module architecture
+
+## Contribution Notes
+
+If you are adding or refactoring code in this frontend, prefer the following direction:
+
+- add new network calls through `core/http`
+- extract domain logic into `src/modules/<domain>`
+- centralize mock behavior instead of branching from pages
+- keep runtime mode decisions in `src/core/runtime`
+- keep navigation behavior in `src/core/navigation`
+- update this README if architectural expectations change materially
+
+## Documentation Map
+
+Frontend-local documentation:
+
+- English: [README.md](./README.md)
+- Portuguese (Brazil): [docs/README.pt-BR.md](./docs/README.pt-BR.md)
+
+If the architecture changes materially again, update both files together.
