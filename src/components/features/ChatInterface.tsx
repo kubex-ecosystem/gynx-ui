@@ -2,24 +2,15 @@ import { Theme } from '@/types';
 import { Loader2, Send, Sparkles, User } from 'lucide-react';
 import React, { FormEvent, useMemo, useState } from 'react';
 import Card from '@/components/ui/Card';
-
-type ChatRole = 'user' | 'assistant' | 'system';
-
-interface ChatMessage {
-    id: string;
-    role: ChatRole;
-    content: string;
-    createdAt: number;
-    usedProvider?: string;
-}
+import type { ChatMessagePayload, ChatResponsePayload } from '@/modules/chat/types';
 
 interface ChatInterfaceProps {
-    onSend?: (messages: ChatMessage[], input: string, apiKey?: string) => Promise<{ content: string; provider?: string; } | null>;
+    onSend?: (messages: ChatMessagePayload[], input: string, apiKey?: string) => Promise<ChatResponsePayload | null>;
     theme: Theme;
     isApiKeyMissing: boolean;
 }
 
-const ChatBubble: React.FC<{ message: ChatMessage; }> = ({ message }) => {
+const ChatBubble: React.FC<{ message: ChatMessagePayload; }> = ({ message }) => {
     const isUser = message.role === 'user';
     return (
         <div
@@ -48,7 +39,7 @@ const ChatBubble: React.FC<{ message: ChatMessage; }> = ({ message }) => {
 };
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSend, theme, isApiKeyMissing }) => {
-    const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [messages, setMessages] = useState<ChatMessagePayload[]>([]);
     const [input, setInput] = useState('');
     const [isSending, setIsSending] = useState(false);
     // BYOK Support
@@ -67,7 +58,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSend, theme, isApiKeyMi
         const trimmed = input.trim();
         if (!trimmed) return;
 
-        const nextMessage: ChatMessage = {
+        const nextMessage: ChatMessagePayload = {
             id: `msg-${Date.now()}`,
             role: 'user',
             content: trimmed,
@@ -84,7 +75,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSend, theme, isApiKeyMi
             const apiKey = externalApiKey.trim() || undefined;
             const response = await onSend([...messages, nextMessage], trimmed, apiKey);
             if (response) {
-                const assistantMessage: ChatMessage = {
+                const assistantMessage: ChatMessagePayload = {
                     id: `assistant-${Date.now()}`,
                     role: 'assistant',
                     content: response.content,
@@ -94,7 +85,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSend, theme, isApiKeyMi
                 setMessages((prev) => [...prev, assistantMessage]);
             }
         } catch (error) {
-            const assistantMessage: ChatMessage = {
+            const assistantMessage: ChatMessagePayload = {
                 id: `assistant-${Date.now()}`,
                 role: 'assistant',
                 content:
@@ -185,5 +176,5 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSend, theme, isApiKeyMi
     );
 };
 
-export type { ChatMessage };
+export type { ChatMessagePayload as ChatMessage };
 export default ChatInterface;

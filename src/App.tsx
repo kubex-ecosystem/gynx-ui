@@ -16,6 +16,9 @@ import Sidebar, { SidebarSection } from './components/layout/Sidebar';
 import { LanguageContext } from './context/LanguageContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { translations } from './i18n/translations';
+import type { ChatResponsePayload, ChatMessagePayload } from './modules/chat/types';
+import { chatService } from './modules/chat/services/chatService';
+import { creativeService, type CodeGenerationSpec, type ImagePromptSpec } from './modules/creative/services/creativeService';
 import { configService } from './services/configService';
 import { Language, Theme } from './types';
 
@@ -109,7 +112,7 @@ const MainApp: React.FC = () => {
   useEffect(() => {
     if (authLoading) return;
 
-    const publicSections: SectionId[] = ['landing', 'auth'];
+    const publicSections: SectionId[] = ['landing', 'auth', 'accept-invite'];
 
     // Se não estiver logado e tentar acessar algo privado -> Landing
     if (!isAuthenticated && !publicSections.includes(activeSection)) {
@@ -125,6 +128,30 @@ const MainApp: React.FC = () => {
   }, [isAuthenticated, authLoading, activeSection]);
 
   // Effects
+  useEffect(() => {
+    let mounted = true;
+
+    const loadRuntimeFlags = async () => {
+      try {
+        const isDemo = await configService.isDemoMode();
+        if (mounted) {
+          setDemoMode(isDemo);
+        }
+      } catch (error) {
+        console.error('Falha ao carregar runtime flags', error);
+        if (mounted) {
+          setDemoMode(true);
+        }
+      }
+    };
+
+    loadRuntimeFlags();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as Theme;
     if (savedTheme === 'light' || savedTheme === 'dark') {
@@ -246,10 +273,10 @@ const MainApp: React.FC = () => {
       case 'welcome': return <Welcome onGetStarted={() => window.location.hash = '#gateway-dashboard'} />;
       case 'prompt': return <PromptCrafter theme={theme} isApiKeyMissing={demoMode} />;
       case 'agents': return <AgentsGenerator theme={theme} isApiKeyMissing={demoMode} />;
-      case 'chat': return <ChatInterface theme={theme} isApiKeyMissing={demoMode} />;
-      case 'summarizer': return <ContentSummarizer theme={theme} isApiKeyMissing={demoMode} />;
-      case 'code': return <CodeGenerator theme={theme} isApiKeyMissing={demoMode} />;
-      case 'images': return <ImageGenerator theme={theme} isApiKeyMissing={demoMode} />;
+      case 'chat': return <ChatInterface theme={theme} isApiKeyMissing={demoMode} onSend={handleChatSend} />;
+      case 'summarizer': return <ContentSummarizer theme={theme} isApiKeyMissing={demoMode} onSummarize={handleSummarize} />;
+      case 'code': return <CodeGenerator theme={theme} isApiKeyMissing={demoMode} onGenerate={handleCodeGenerate} />;
+      case 'images': return <ImageGenerator theme={theme} isApiKeyMissing={demoMode} onCraftPrompt={handleImagePrompt} />;
       default: return <Landing />;
     }
   };
@@ -258,6 +285,37 @@ const MainApp: React.FC = () => {
     if (SECTION_IDS.includes(section as SectionId)) {
       setActiveSection(section as SectionId);
     }
+  };
+
+  const handleChatSend = async (
+    messages: ChatMessagePayload[],
+    input: string,
+    apiKey?: string,
+  ): Promise<ChatResponsePayload | null> => {
+    return chatService.sendMessage(messages, input, apiKey);
+  };
+
+  const handleSummarize = async (
+    input: string,
+    tone: string,
+    maxWords: number,
+    apiKey?: string,
+  ): Promise<string> => {
+    return creativeService.summarize(input, tone, maxWords, apiKey);
+  };
+
+  const handleCodeGenerate = async (
+    spec: CodeGenerationSpec,
+    apiKey?: string,
+  ): Promise<string> => {
+    return creativeService.generateCode(spec, apiKey);
+  };
+
+  const handleImagePrompt = async (
+    payload: ImagePromptSpec,
+    apiKey?: string,
+  ): Promise<string> => {
+    return creativeService.craftImagePrompt(payload, apiKey);
   };
 
   if (authLoading) {
