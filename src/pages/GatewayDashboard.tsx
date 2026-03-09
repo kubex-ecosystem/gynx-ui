@@ -33,10 +33,14 @@ const GatewayDashboard: React.FC = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const [metricsData, logsData] = await Promise.all([
+      let [metricsData, logsData] = await Promise.all([
         getGatewayMetrics(),
         getGatewayLogs(14)
       ]);
+      if (typeof logsData === 'string') {
+        console.error("Erro ao carregar dados do Dashboard", logsData);
+        logsData = [];
+      }
       setMetrics(metricsData);
       setLogs(logsData);
     } catch (error) {
@@ -69,14 +73,14 @@ const GatewayDashboard: React.FC = () => {
     },
     {
       label: "Serviços Conectados",
-      value: metrics?.connectedServices.toString() || "...",
+      value: (metrics?.connectedServices || 0).toString() || "...",
       icon: Server,
       color: "text-status-info",
       bg: "bg-status-info/10",
     },
     {
       label: "Latência Média",
-      value: metrics ? formatLatency(metrics.averageLatencyMs) : "...",
+      value: metrics ? formatLatency((metrics.averageLatencyMs || 0)) : "...",
       icon: Zap,
       color: "text-status-warning",
       bg: "bg-status-warning/10",
@@ -99,7 +103,7 @@ const GatewayDashboard: React.FC = () => {
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {metricCards.map((metric) => (
+        {(metricCards || []).map((metric) => (
           <Card
             key={metric.label}
             className="p-6 border-border-secondary bg-surface-primary/40 backdrop-blur-sm group hover:border-border-accent transition-all duration-300"
@@ -139,7 +143,7 @@ const GatewayDashboard: React.FC = () => {
           </div>
         </header>
         <div className="p-6 font-mono text-sm leading-relaxed space-y-2 h-[400px] overflow-y-auto bg-surface-primary/40 scrollbar-thin scrollbar-thumb-surface-tertiary">
-          {logs.map((log, i) => (
+          {(logs || []).map((log, i) => (
             <div key={i} className="flex gap-4 group">
               <span className="text-muted text-[10px] w-4 opacity-50 group-hover:opacity-100 transition-opacity">
                 {i + 1}

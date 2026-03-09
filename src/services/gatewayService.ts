@@ -40,7 +40,7 @@ export const getGatewayMetrics = async (): Promise<GatewayMetrics> => {
         return mockMetrics;
     }
 
-    return httpClient.get<GatewayMetrics>(httpEndpoints.gateway.metrics, {
+    return await httpClient.get<GatewayMetrics>(httpEndpoints.gateway.metrics, {
         credentials: HTTP_CREDENTIALS.session,
     });
 };
@@ -51,7 +51,7 @@ export const getGatewayLogs = async (limit: number = 20): Promise<GatewayLog[]> 
         return mockLogs.slice(-limit);
     }
 
-    return httpClient.get<GatewayLog[]>(httpEndpoints.gateway.logs, {
+    return await httpClient.get<GatewayLog[]>(httpEndpoints.gateway.logs, {
         credentials: HTTP_CREDENTIALS.session,
         query: { limit },
     });
