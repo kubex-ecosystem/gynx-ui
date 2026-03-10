@@ -1,49 +1,59 @@
 export const APP_SECTION_IDS = [
-  'landing',
-  'auth',
-  'accept-invite',
-  'welcome',
-  'gateway-dashboard',
-  'data-analyzer',
-  'mail-hub',
-  'data-sync',
-  'workspace-settings',
-  'providers-settings',
-  'playground',
-  'prompt',
-  'agents',
-  'chat',
-  'summarizer',
-  'code',
-  'images',
+  "landing",
+  "auth",
+  "accept-invite",
+  "welcome",
+  "gateway-dashboard",
+  "data-analyzer",
+  "mail-hub",
+  "data-sync",
+  "workspace-settings",
+  "providers-settings",
+  "playground",
+  "prompt",
+  "agents",
+  "chat",
+  "summarizer",
+  "code",
+  "images",
 ] as const;
 
 export type AppSectionId = (typeof APP_SECTION_IDS)[number];
 
-export const PUBLIC_SECTION_IDS: AppSectionId[] = ['landing', 'auth', 'accept-invite'];
-export const AUTH_REDIRECT_SECTION_IDS: AppSectionId[] = ['landing', 'auth'];
-export const STANDALONE_SECTION_IDS: AppSectionId[] = ['landing', 'auth', 'accept-invite'];
+export const PUBLIC_SECTION_IDS: AppSectionId[] = [
+  "landing",
+  "auth",
+  "accept-invite",
+];
+export const AUTH_REDIRECT_SECTION_IDS: AppSectionId[] = ["landing", "auth"];
+export const STANDALONE_SECTION_IDS: AppSectionId[] = [
+  "landing",
+  "auth",
+  "accept-invite",
+];
 
 const normalizeSectionId = (raw: string): AppSectionId | null => {
-  const candidate = decodeURIComponent(raw).split('?')[0] as AppSectionId;
+  const candidate = decodeURIComponent(raw).split("?")[0] as AppSectionId;
   return APP_SECTION_IDS.includes(candidate) ? candidate : null;
 };
 
 export const getSectionFromHash = (hash: string): AppSectionId | null => {
-  if (hash.startsWith('#prompt=')) {
-    return 'prompt';
+  if (hash.startsWith("#prompt=")) {
+    return "prompt";
   }
 
-  if (hash.startsWith('#section=')) {
-    return normalizeSectionId(hash.slice('#section='.length));
+  if (hash.startsWith("#section=")) {
+    return normalizeSectionId(hash.slice("#section=".length));
   }
 
-  return normalizeSectionId(hash.replace(/^#/, ''));
+  return normalizeSectionId(hash.replace(/^#/, ""));
 };
 
 export const getHashQueryParams = (hash: string): URLSearchParams => {
-  const separatorIndex = hash.indexOf('?');
-  return new URLSearchParams(separatorIndex >= 0 ? hash.slice(separatorIndex + 1) : '');
+  const separatorIndex = hash.indexOf("?");
+  return new URLSearchParams(
+    separatorIndex >= 0 ? hash.slice(separatorIndex + 1) : "",
+  );
 };
 
 export const buildSectionHash = (
@@ -60,7 +70,7 @@ export const buildSectionHash = (
     });
   }
 
-  const suffix = query.toString() ? `?${query.toString()}` : '';
+  const suffix = query.toString() ? `?${query.toString()}` : "";
 
   if (STANDALONE_SECTION_IDS.includes(section)) {
     return `#${section}${suffix}`;
@@ -75,13 +85,23 @@ export const isStandaloneSection = (section: AppSectionId): boolean =>
 export const resolveGuardedSection = (
   section: AppSectionId,
   isAuthenticated: boolean,
+  hasAccess = true,
 ): AppSectionId => {
   if (!isAuthenticated && !PUBLIC_SECTION_IDS.includes(section)) {
-    return 'landing';
+    return "landing";
   }
 
   if (isAuthenticated && AUTH_REDIRECT_SECTION_IDS.includes(section)) {
-    return 'welcome';
+    return "welcome";
+  }
+
+  if (
+    isAuthenticated &&
+    !hasAccess &&
+    !PUBLIC_SECTION_IDS.includes(section) &&
+    section !== "welcome"
+  ) {
+    return "welcome";
   }
 
   return section;
@@ -91,7 +111,7 @@ export const navigateToSection = (
   section: AppSectionId,
   params?: Record<string, string | undefined>,
 ): void => {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return;
   }
 
