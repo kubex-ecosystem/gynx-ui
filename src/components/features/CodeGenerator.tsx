@@ -2,6 +2,8 @@ import { Theme } from '@/types';
 import { Braces, ClipboardCheck, ClipboardCopy, Loader2, Sparkles } from 'lucide-react';
 import React, { useState } from 'react';
 import Card from '@/components/ui/Card';
+import ToolProviderSelector from '@/components/providers/ToolProviderSelector';
+import { useToolProvider } from '@/modules/providers/hooks/useToolProvider';
 
 interface CodeGeneratorProps {
     onGenerate?: (spec: {
@@ -9,7 +11,7 @@ interface CodeGeneratorProps {
         goal: string;
         constraints: string[];
         extras: string;
-    }, apiKey?: string) => Promise<string>;
+    }, provider?: string, apiKey?: string) => Promise<string>;
     theme: Theme;
     isApiKeyMissing: boolean;
 }
@@ -24,9 +26,9 @@ const CodeGenerator: React.FC<CodeGeneratorProps> = ({ onGenerate, theme, isApiK
     const [isGenerating, setIsGenerating] = useState(false);
     const [result, setResult] = useState<string>('');
     const [copied, setCopied] = useState(false);
-    // BYOK Support
     const [externalApiKey, setExternalApiKey] = useState<string>('');
     const [showApiKeyInput, setShowApiKeyInput] = useState(false);
+    const { availableProviders, selectedProvider, isLoading: isProvidersLoading, setSelectedProvider } = useToolProvider('code');
 
     const toggleConstraint = (value: string) => {
         setConstraints((prev) =>
@@ -39,14 +41,13 @@ const CodeGenerator: React.FC<CodeGeneratorProps> = ({ onGenerate, theme, isApiK
         setIsGenerating(true);
         setResult('');
         try {
-            // BYOK Support: Pass external API key if provided
             const apiKey = externalApiKey.trim() || undefined;
             const code = await onGenerate({
                 stack,
                 goal: goal.trim(),
                 constraints,
                 extras: extraNotes.trim(),
-            }, apiKey);
+            }, selectedProvider || undefined, apiKey);
             setResult(code);
         } catch (error) {
             setResult(error instanceof Error ? error.message : 'Não foi possível gerar o código.');
@@ -69,6 +70,12 @@ const CodeGenerator: React.FC<CodeGeneratorProps> = ({ onGenerate, theme, isApiK
             <Card title="Code Generator" description="Gere scaffolds de código com constraints Kubex-ready.">
                 <div className="grid gap-6 lg:grid-cols-2">
                     <div className="space-y-4">
+                        <ToolProviderSelector
+                            availableProviders={availableProviders}
+                            isLoading={isProvidersLoading}
+                            selectedProvider={selectedProvider}
+                            onChange={setSelectedProvider}
+                        />
                         <label className="block text-xs font-semibold uppercase tracking-[0.3em] text-muted">
                             Stack alvo
                         </label>
@@ -111,7 +118,7 @@ const CodeGenerator: React.FC<CodeGeneratorProps> = ({ onGenerate, theme, isApiK
                                         type="checkbox"
                                         checked={constraints.includes(constraint)}
                                         onChange={() => toggleConstraint(constraint)}
-                                        className="h-4 w-4 rounded border-border-primary text-accent-primary focus:ring-accent-primary/30 bg-surface-primary"
+                                        className="h-4 w-4 rounded border-border-primary bg-surface-primary text-accent-primary focus:ring-accent-primary/30"
                                     />
                                     {constraint}
                                 </label>
@@ -131,12 +138,11 @@ const CodeGenerator: React.FC<CodeGeneratorProps> = ({ onGenerate, theme, isApiK
                             />
                         </div>
 
-                        {/* BYOK Support: Optional API Key Input */}
                         <div>
                             <button
                                 type="button"
                                 onClick={() => setShowApiKeyInput(!showApiKeyInput)}
-                                className="text-xs text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 flex items-center gap-1"
+                                className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400 dark:hover:text-gray-200 hover:text-gray-900"
                             >
                                 {showApiKeyInput ? '🔒 Ocultar API Key' : '🔑 Usar Sua Própria API Key (BYOK)'}
                             </button>
@@ -148,10 +154,10 @@ const CodeGenerator: React.FC<CodeGeneratorProps> = ({ onGenerate, theme, isApiK
                                         placeholder="sk-... ou AIza... (opcional)"
                                         value={externalApiKey}
                                         onChange={(e) => setExternalApiKey(e.target.value)}
-                                        className="w-full p-2 rounded-lg border text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-400"
+                                        className="w-full rounded-lg border p-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-400"
                                     />
-                                    <p className="text-xs mt-1 text-gray-500 dark:text-gray-400">
-                                        💡 Sua key é usada apenas nesta requisição e nunca armazenada
+                                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                        Sua key é usada apenas nesta requisição e nunca armazenada.
                                     </p>
                                 </div>
                             )}

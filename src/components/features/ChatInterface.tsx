@@ -1,11 +1,15 @@
 import { Theme } from '@/types';
-import { Loader2, Send, Sparkles, User } from 'lucide-react';
-import React, { FormEvent, useMemo, useState } from 'react';
+import { Loader2, Send, Sparkles, Trash2, User } from 'lucide-react';
+import React, { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import Card from '@/components/ui/Card';
+import ToolProviderSelector from '@/components/providers/ToolProviderSelector';
+import { useToolProvider } from '@/modules/providers/hooks/useToolProvider';
 import type { ChatMessagePayload, ChatResponsePayload } from '@/modules/chat/types';
 
+const CHAT_HISTORY_KEY = 'gnyx.chat.history';
+
 interface ChatInterfaceProps {
-    onSend?: (messages: ChatMessagePayload[], input: string, apiKey?: string) => Promise<ChatResponsePayload | null>;
+    onSend?: (messages: ChatMessagePayload[], input: string, provider?: string, apiKey?: string) => Promise<ChatResponsePayload | null>;
     theme: Theme;
     isApiKeyMissing: boolean;
 }
@@ -42,10 +46,38 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSend, theme, isApiKeyMi
     const [messages, setMessages] = useState<ChatMessagePayload[]>([]);
     const [input, setInput] = useState('');
     const [isSending, setIsSending] = useState(false);
-    // BYOK Support
     const [externalApiKey, setExternalApiKey] = useState<string>('');
     const [showApiKeyInput, setShowApiKeyInput] = useState(false);
+    const { availableProviders, selectedProvider, isLoading: isProvidersLoading, setSelectedProvider } = useToolProvider('chat');
     const disabled = input.trim().length === 0 || isSending;
+    const hasHydratedHistory = useRef(false);
+
+    useEffect(() => {
+        try {
+            const stored = localStorage.getItem(CHAT_HISTORY_KEY);
+            if (stored) {
+                const parsed = JSON.parse(stored) as ChatMessagePayload[];
+                if (Array.isArray(parsed)) {
+                    setMessages(parsed);
+                }
+            }
+        } catch (error) {
+            console.error('Falha ao carregar histórico do chat', error);
+        } finally {
+            hasHydratedHistory.current = true;
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!hasHydratedHistory.current) {
+            return;
+        }
+        try {
+            localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(messages));
+        } catch (error) {
+            console.error('Falha ao persistir histórico do chat', error);
+        }
+    }, [messages]);
 
     const placeholder = useMemo(
         () =>
@@ -63,17 +95,18 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSend, theme, isApiKeyMi
             role: 'user',
             content: trimmed,
             createdAt: Date.now(),
+            usedProvider: selectedProvider || undefined,
         };
-        setMessages((prev) => [...prev, nextMessage]);
+        const nextConversation = [...messages, nextMessage];
+        setMessages(nextConversation);
         setInput('');
 
         if (!onSend) return;
 
         setIsSending(true);
         try {
-            // BYOK Support: Pass external API key if provided
             const apiKey = externalApiKey.trim() || undefined;
-            const response = await onSend([...messages, nextMessage], trimmed, apiKey);
+            const response = await onSend(nextConversation, trimmed, selectedProvider || undefined, apiKey);
             if (response) {
                 const assistantMessage: ChatMessagePayload = {
                     id: `assistant-${Date.now()}`,
@@ -93,6 +126,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSend, theme, isApiKeyMi
                         ? `Não foi possível obter uma resposta: ${error.message}`
                         : 'Não foi possível obter uma resposta da IA.',
                 createdAt: Date.now(),
+                usedProvider: selectedProvider || undefined,
             };
             setMessages((prev) => [...prev, assistantMessage]);
         } finally {
@@ -100,10 +134,21 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSend, theme, isApiKeyMi
         }
     };
 
+    const handleClearHistory = () => {
+        setMessages([]);
+        localStorage.removeItem(CHAT_HISTORY_KEY);
+    };
+
     return (
         <div className="space-y-6">
             <Card title="Chat assistido" description="Converse com seu provedor principal usando contexto governado">
                 <div className="flex flex-col gap-4">
+                    <ToolProviderSelector
+                        availableProviders={availableProviders}
+                        isLoading={isProvidersLoading}
+                        selectedProvider={selectedProvider}
+                        onChange={setSelectedProvider}
+                    />
                     <div className="space-y-3">
                         {messages.length === 0 ? (
                             <p className="rounded-2xl border border-dashed border-border-primary/80 bg-surface-primary/60 p-6 text-sm text-secondary">
@@ -130,12 +175,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSend, theme, isApiKeyMi
                             className="w-full resize-none rounded-xl border border-border-primary bg-surface-primary px-4 py-3 text-sm text-primary shadow-sm transition focus:border-accent-primary focus:outline-none focus:ring-2 focus:ring-accent-primary/20"
                         />
 
-                        {/* BYOK Support: Optional API Key Input */}
                         <div className="mt-3">
                             <button
                                 type="button"
                                 onClick={() => setShowApiKeyInput(!showApiKeyInput)}
-                                className="text-xs text-muted hover:text-primary flex items-center gap-1 transition-colors"
+                                className="flex items-center gap-1 text-xs text-muted transition-colors hover:text-primary"
                             >
                                 {showApiKeyInput ? '🔒 Ocultar API Key' : '🔑 Usar Sua Própria API Key (BYOK)'}
                             </button>
@@ -147,19 +191,30 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSend, theme, isApiKeyMi
                                         placeholder="sk-... ou AIza... (opcional)"
                                         value={externalApiKey}
                                         onChange={(e) => setExternalApiKey(e.target.value)}
-                                        className="w-full p-2 rounded-lg border border-border-primary bg-surface-primary text-sm text-primary focus:border-accent-primary focus:outline-none focus:ring-2 focus:ring-accent-primary/50"
+                                        className="w-full rounded-lg border border-border-primary bg-surface-primary p-2 text-sm text-primary focus:border-accent-primary focus:outline-none focus:ring-2 focus:ring-accent-primary/50"
                                     />
-                                    <p className="text-xs mt-1 text-muted">
-                                        💡 Sua key é usada apenas nesta requisição e nunca armazenada
+                                    <p className="mt-1 text-xs text-muted">
+                                        Sua key é usada apenas nesta requisição e nunca armazenada.
                                     </p>
                                 </div>
                             )}
                         </div>
 
-                        <div className="mt-3 flex items-center justify-between">
-                            <p className="text-[11px] uppercase tracking-[0.3em] text-muted">
-                                Histórico salvo localmente
-                            </p>
+                        <div className="mt-3 flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                                <p className="text-[11px] uppercase tracking-[0.3em] text-muted">
+                                    Histórico salvo localmente
+                                </p>
+                                <button
+                                    type="button"
+                                    onClick={handleClearHistory}
+                                    disabled={messages.length === 0}
+                                    className="inline-flex items-center gap-1 rounded-full border border-border-primary bg-surface-primary px-3 py-1 text-[11px] font-semibold text-secondary transition hover:border-border-accent hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    <Trash2 className="h-3 w-3" />
+                                    Limpar
+                                </button>
+                            </div>
                             <button
                                 type="submit"
                                 disabled={disabled}

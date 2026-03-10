@@ -3,9 +3,11 @@ import { Image as ImageIcon, Loader2, Sparkles } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslations } from '@/i18n/useTranslations';
 import Card from '@/components/ui/Card';
+import ToolProviderSelector from '@/components/providers/ToolProviderSelector';
+import { useToolProvider } from '@/modules/providers/hooks/useToolProvider';
 
 interface ImageGeneratorProps {
-    onCraftPrompt?: (payload: { subject: string; mood: string; style: string; details: string; }, apiKey?: string) => Promise<string>;
+    onCraftPrompt?: (payload: { subject: string; mood: string; style: string; details: string; }, provider?: string, apiKey?: string) => Promise<string>;
     theme: Theme;
     isApiKeyMissing: boolean;
 }
@@ -21,9 +23,9 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onCraftPrompt, theme, i
     const [details, setDetails] = useState('');
     const [prompt, setPrompt] = useState<string>('');
     const [isLoading, setIsLoading] = useState(false);
-    // BYOK Support
     const [externalApiKey, setExternalApiKey] = useState<string>('');
     const [showApiKeyInput, setShowApiKeyInput] = useState(false);
+    const { availableProviders, selectedProvider, isLoading: isProvidersLoading, setSelectedProvider } = useToolProvider('images');
 
     const disabled = !subject.trim() || isLoading;
 
@@ -32,14 +34,13 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onCraftPrompt, theme, i
         setIsLoading(true);
         setPrompt('');
         try {
-            // BYOK Support: Pass external API key if provided
             const apiKey = externalApiKey.trim() || undefined;
             const crafted = await onCraftPrompt({
                 subject: subject.trim(),
                 mood,
                 style,
                 details: details.trim(),
-            }, apiKey);
+            }, selectedProvider || undefined, apiKey);
             setPrompt(crafted);
         } catch (error) {
             setPrompt(error instanceof Error ? error.message : 'Não foi possível criar o prompt.');
@@ -53,6 +54,12 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onCraftPrompt, theme, i
             <Card title="Prompt para imagens" description="Defina briefing visual e gere instruções padronizadas para modelos de imagem.">
                 <div className="grid gap-6 lg:grid-cols-[1.25fr,1fr]">
                     <div className="space-y-4">
+                        <ToolProviderSelector
+                            availableProviders={availableProviders}
+                            isLoading={isProvidersLoading}
+                            selectedProvider={selectedProvider}
+                            onChange={setSelectedProvider}
+                        />
                         <div>
                             <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-muted dark:text-secondary">
                                 Tema principal
@@ -113,12 +120,11 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onCraftPrompt, theme, i
                             />
                         </div>
 
-                        {/* BYOK Support: Optional API Key Input */}
                         <div>
                             <button
                                 type="button"
                                 onClick={() => setShowApiKeyInput(!showApiKeyInput)}
-                                className="text-xs text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 flex items-center gap-1"
+                                className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400 dark:hover:text-gray-200 hover:text-gray-900"
                             >
                                 {showApiKeyInput ? '🔒 Ocultar API Key' : '🔑 Usar Sua Própria API Key (BYOK)'}
                             </button>
@@ -130,10 +136,10 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onCraftPrompt, theme, i
                                         placeholder="sk-... ou AIza... (opcional)"
                                         value={externalApiKey}
                                         onChange={(e) => setExternalApiKey(e.target.value)}
-                                        className="w-full p-2 rounded-lg border text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-400"
+                                        className="w-full rounded-lg border p-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-400"
                                     />
-                                    <p className="text-xs mt-1 text-gray-500 dark:text-gray-400">
-                                        💡 Sua key é usada apenas nesta requisição e nunca armazenada
+                                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                        Sua key é usada apenas nesta requisição e nunca armazenada.
                                     </p>
                                 </div>
                             )}

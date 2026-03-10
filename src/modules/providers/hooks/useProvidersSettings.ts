@@ -3,6 +3,7 @@ import { PROVIDERS_META } from "../constants";
 import { providersSettingsService } from "../services/providersSettingsService";
 import type { ProviderCardState } from "../types";
 import { useProvidersStore } from "@/store/useProvidersStore";
+import { configService, type ProviderInfo } from "@/services/configService";
 
 const buildLocalKeysSnapshot = (
   getDecryptedKey: (providerId: string) => string,
@@ -28,10 +29,38 @@ export const useProvidersSettings = () => {
 
   const [localKeys, setLocalKeys] = useState<Record<string, string>>({});
   const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
+  const [runtimeProviders, setRuntimeProviders] = useState<Record<string, ProviderInfo>>({});
+  const [testMessages, setTestMessages] = useState<Record<string, string>>({});
 
   useEffect(() => {
     setLocalKeys(buildLocalKeysSnapshot(getDecryptedKey));
   }, [getDecryptedKey]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadRuntimeProviders = async () => {
+      try {
+        const config = await configService.getConfig(true);
+        if (!mounted) return;
+
+        setRuntimeProviders(config.providers);
+
+        const current = config.providers[globalDefault];
+        if (!current?.available && config.default_provider && config.providers[config.default_provider]) {
+          setGlobalDefault(config.default_provider);
+        }
+      } catch (error) {
+        console.error("Failed to load runtime provider configuration", error);
+      }
+    };
+
+    void loadRuntimeProviders();
+
+    return () => {
+      mounted = false;
+    };
+  }, [globalDefault, setGlobalDefault]);
 
   const handleKeyChange = useCallback((providerId: string, value: string) => {
     setLocalKeys((current) => ({
@@ -49,19 +78,33 @@ export const useProvidersSettings = () => {
 
   const handleTestConnection = useCallback(async (providerId: string) => {
     const key = localKeys[providerId];
-    if (!key && providerId !== "ollama") {
+    const runtimeInfo = runtimeProviders[providerId];
+    const canUseServerConfig = Boolean(runtimeInfo?.configured);
+    if (!key && providerId !== "ollama" && !canUseServerConfig) {
+      setTestMessages((current) => ({
+        ...current,
+        [providerId]: "Missing API key in local settings.",
+      }));
       return;
     }
 
     setStatus(providerId, "TESTING");
 
     try {
-      const isAvailable = await providersSettingsService.testProvider(providerId);
-      setStatus(providerId, isAvailable ? "READY" : "ERROR");
-    } catch {
+      const result = await providersSettingsService.testProvider(providerId);
+      setStatus(providerId, result.available ? "READY" : "ERROR");
+      setTestMessages((current) => ({
+        ...current,
+        [providerId]: result.message,
+      }));
+    } catch (error) {
       setStatus(providerId, "ERROR");
+      setTestMessages((current) => ({
+        ...current,
+        [providerId]: error instanceof Error ? error.message : "Provider test failed.",
+      }));
     }
-  }, [localKeys, setStatus]);
+  }, [localKeys, runtimeProviders, setStatus]);
 
   const handleSaveProvider = useCallback(async (providerId: string) => {
     setKey(providerId, localKeys[providerId] || "");
@@ -75,6 +118,10 @@ export const useProvidersSettings = () => {
       [providerId]: "",
     }));
     setStatus(providerId, "IDLE");
+    setTestMessages((current) => ({
+      ...current,
+      [providerId]: "",
+    }));
   }, [removeKey, setStatus]);
 
   const handleTestAllProviders = useCallback(async () => {
@@ -90,8 +137,10 @@ export const useProvidersSettings = () => {
       showKey: Boolean(showKeys[provider.id]),
       status: status[provider.id] || "IDLE",
       isGlobalDefault: globalDefault === provider.id,
+      runtimeInfo: runtimeProviders[provider.id],
+      testMessage: testMessages[provider.id],
     }))
-  ), [globalDefault, localKeys, showKeys, status]);
+  ), [globalDefault, localKeys, runtimeProviders, showKeys, status, testMessages]);
 
   return {
     providerCards,

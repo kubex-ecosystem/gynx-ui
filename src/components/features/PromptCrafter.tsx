@@ -26,8 +26,10 @@ import React, {
 import { Ideas } from "@/types";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import ToolProviderSelector from "@/components/providers/ToolProviderSelector";
+import { useToolProvider } from "@/modules/providers/hooks/useToolProvider";
 import { LanguageContext } from "../../context/LanguageContext";
-import { configService, type ProviderInfo } from "../../services/configService";
+import { configService } from "../../services/configService";
 import { generateStructuredPrompt } from "../../services/unifiedAIService";
 
 // --- IndexedDB Helpers for Autosave ---
@@ -521,12 +523,14 @@ const PromptCrafter: React.FC<PromptCrafterProps> = (
   >(null);
 
   // Dynamic configuration from backend
-  const [availableProviders, setAvailableProviders] = useState<ProviderInfo[]>(
-    [],
-  );
-  const [selectedProvider, setSelectedProvider] = useState<string>("");
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [isConfigLoading, setIsConfigLoading] = useState(true);
+  const {
+    availableProviders,
+    selectedProvider,
+    isLoading: isProvidersLoading,
+    setSelectedProvider,
+  } = useToolProvider("prompt");
 
   // Mode tracking (byok, server, or demo)
   const [currentMode, setCurrentMode] = useState<"byok" | "server" | "demo">(
@@ -551,9 +555,7 @@ const PromptCrafter: React.FC<PromptCrafterProps> = (
           configService.getDefaultProvider(),
         ]);
 
-        setAvailableProviders(providers);
         setIsDemoMode(demoMode);
-        setSelectedProvider(defaultProvider);
 
         console.log("💡 Configuration loaded:", {
           providers: providers.length,
@@ -563,7 +565,6 @@ const PromptCrafter: React.FC<PromptCrafterProps> = (
       } catch (error) {
         console.error("Failed to load configuration:", error);
         setIsDemoMode(true);
-        setAvailableProviders([]);
       } finally {
         setIsConfigLoading(false);
       }
@@ -728,8 +729,15 @@ const PromptCrafter: React.FC<PromptCrafterProps> = (
         apiKey,
       );
       setGeneratedPrompt(result.prompt);
-      const inputTokens = result.usageMetadata?.promptTokenCount ?? 0;
-      const outputTokens = result.usageMetadata?.candidatesTokenCount ?? 0;
+      const totalTokens = result.usageMetadata?.totalTokenCount ?? 0;
+      const inputTokens = result.usageMetadata?.promptTokenCount ??
+        (totalTokens > 0 && result.usageMetadata?.candidatesTokenCount
+          ? Math.max(totalTokens - result.usageMetadata.candidatesTokenCount, 0)
+          : 0);
+      const outputTokens = result.usageMetadata?.candidatesTokenCount ??
+        (totalTokens > 0 && result.usageMetadata?.promptTokenCount
+          ? Math.max(totalTokens - result.usageMetadata.promptTokenCount, 0)
+          : 0);
       setTokenUsage({ input: inputTokens, output: outputTokens });
 
       // Update current mode based on response
@@ -805,7 +813,8 @@ const PromptCrafter: React.FC<PromptCrafterProps> = (
     setPurpose(item.purpose);
     setGeneratedPrompt(item.prompt);
     setTokenUsage(
-      item.inputTokens && item.outputTokens
+      typeof item.inputTokens === "number" &&
+        typeof item.outputTokens === "number"
         ? { input: item.inputTokens, output: item.outputTokens }
         : null,
     );
@@ -850,6 +859,14 @@ const PromptCrafter: React.FC<PromptCrafterProps> = (
           setPurpose={setPurpose}
           isLight={isLight}
         />
+        <div className="mt-6">
+          <ToolProviderSelector
+            availableProviders={availableProviders}
+            isLoading={isProvidersLoading}
+            selectedProvider={selectedProvider}
+            onChange={setSelectedProvider}
+          />
+        </div>
       </div>
 
       {/* Output Section */}

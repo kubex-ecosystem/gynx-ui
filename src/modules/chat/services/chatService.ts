@@ -26,9 +26,10 @@ export const chatService = {
   async sendMessage(
     messages: ChatMessagePayload[],
     input: string,
+    providerOverride?: string,
     apiKey?: string,
   ): Promise<ChatResponsePayload> {
-    const provider = useProvidersStore.getState().globalDefault;
+    const provider = providerOverride || useProvidersStore.getState().globalDefault;
     const transcript = formatConversation(messages);
     const prompt = [
       SYSTEM_INSTRUCTION,

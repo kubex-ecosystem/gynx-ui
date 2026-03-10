@@ -15,16 +15,17 @@ export interface ImagePromptSpec {
   details: string;
 }
 
-const resolveProvider = (): string => useProvidersStore.getState().globalDefault;
+const resolveProvider = (providerOverride?: string): string => providerOverride || useProvidersStore.getState().globalDefault;
 
 export const creativeService = {
   async summarize(
     input: string,
     tone: string,
     maxWords: number,
+    providerOverride?: string,
     apiKey?: string,
   ): Promise<string> {
-    const provider = resolveProvider();
+    const provider = resolveProvider(providerOverride);
     const prompt = [
       'Voce e um especialista em sintese executiva.',
       'Responda em portugues do Brasil.',
@@ -48,8 +49,8 @@ export const creativeService = {
     return result.response.trim();
   },
 
-  async generateCode(spec: CodeGenerationSpec, apiKey?: string): Promise<string> {
-    const provider = resolveProvider();
+  async generateCode(spec: CodeGenerationSpec, providerOverride?: string, apiKey?: string): Promise<string> {
+    const provider = resolveProvider(providerOverride);
     const prompt = [
       'Voce e um engenheiro de software senior.',
       'Responda em portugues do Brasil.',
@@ -76,8 +77,8 @@ export const creativeService = {
     return result.response.trim();
   },
 
-  async craftImagePrompt(spec: ImagePromptSpec, apiKey?: string): Promise<string> {
-    const provider = resolveProvider();
+  async craftImagePrompt(spec: ImagePromptSpec, providerOverride?: string, apiKey?: string): Promise<string> {
+    const provider = resolveProvider(providerOverride);
     const prompt = [
       'Voce e um diretor criativo especializado em prompts para modelos de imagem.',
       'Responda em portugues do Brasil.',
