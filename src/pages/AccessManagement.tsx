@@ -3,6 +3,7 @@ import {
   LoaderCircle,
   MailPlus,
   RefreshCcw,
+  Save,
   Shield,
   Users,
 } from "lucide-react";
@@ -25,17 +26,21 @@ const AccessManagement: React.FC = () => {
     invites,
     currentPermissions,
     currentRoleCode,
+    currentUserId,
     isLoading,
     isCreatingInvite,
+    isUpdatingRoleFor,
     error,
     statusMessage,
     reload,
     createInvite,
+    updateMemberRole,
   } = useAccessManagement(activeTenant?.id);
 
   const [inviteName, setInviteName] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("");
+  const [roleDrafts, setRoleDrafts] = useState<Record<string, string>>({});
 
   const inviteRoleOptions = useMemo(
     () =>
@@ -71,6 +76,28 @@ const AccessManagement: React.FC = () => {
     setInviteName("");
     setInviteEmail("");
     setInviteRole("");
+  };
+
+  const handleRoleSave = async (userId: string, currentRoleCode?: string) => {
+    if (!activeTenant?.id) {
+      return;
+    }
+
+    const nextRoleCode = roleDrafts[userId] || currentRoleCode;
+    if (!nextRoleCode || nextRoleCode === currentRoleCode) {
+      return;
+    }
+
+    await updateMemberRole(userId, {
+      tenant_id: activeTenant.id,
+      role_code: nextRoleCode,
+    });
+
+    setRoleDrafts((current) => {
+      const next = { ...current };
+      delete next[userId];
+      return next;
+    });
   };
 
   if (!canReadAccess) {
@@ -193,6 +220,47 @@ const AccessManagement: React.FC = () => {
                     </div>
 
                     <div className="max-w-xl">
+                      {canManageRoles && member.id !== currentUserId && (
+                        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+                          <select
+                            value={
+                              roleDrafts[member.id] || member.role_code || ""
+                            }
+                            onChange={(e) =>
+                              setRoleDrafts((current) => ({
+                                ...current,
+                                [member.id]: e.target.value,
+                              }))
+                            }
+                            className="min-w-[220px] rounded-xl border border-border-primary bg-surface-secondary px-3 py-2 text-xs text-primary"
+                          >
+                            {roles.map((role) => (
+                              <option key={role.id} value={role.code}>
+                                {role.display_name} ({role.code})
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              void handleRoleSave(member.id, member.role_code)
+                            }
+                            disabled={
+                              isUpdatingRoleFor === member.id ||
+                              (roleDrafts[member.id] ||
+                                member.role_code ||
+                                "") === (member.role_code || "")
+                            }
+                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent-primary px-3 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            <Save size={14} />
+                            {isUpdatingRoleFor === member.id
+                              ? "Updating..."
+                              : "Update role"}
+                          </button>
+                        </div>
+                      )}
+
                       <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted">
                         Effective permissions
                       </p>

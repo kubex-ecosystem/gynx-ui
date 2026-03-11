@@ -31,6 +31,16 @@ export interface AccessMembersResponse {
   roles: AccessRole[];
 }
 
+export interface UpdateAccessMemberRoleInput {
+  tenant_id: string;
+  role_code: string;
+}
+
+export interface UpdateAccessMemberRoleResponse {
+  message: string;
+  member: AccessMember;
+}
+
 export interface AccessInvite {
   id: string;
   name?: string;

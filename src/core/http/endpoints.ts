@@ -45,6 +45,7 @@ export const httpEndpoints = {
   },
   access: {
     members: "/access/members",
+    memberRole: (userId: string) => `/access/members/${userId}/role`,
   },
   unified: {
     root: "/unified",

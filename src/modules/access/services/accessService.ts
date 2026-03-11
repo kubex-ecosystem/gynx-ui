@@ -5,6 +5,8 @@ import type {
   AccessInviteListResponse,
   AccessMembersResponse,
   CreateAccessInviteInput,
+  UpdateAccessMemberRoleInput,
+  UpdateAccessMemberRoleResponse,
 } from "../types";
 
 export const accessService = {
@@ -35,5 +37,18 @@ export const accessService = {
         headers: { "Content-Type": "application/json" },
       },
     );
+  },
+
+  async updateMemberRole(
+    userId: string,
+    input: UpdateAccessMemberRoleInput,
+  ): Promise<UpdateAccessMemberRoleResponse> {
+    return httpClient.patch<
+      UpdateAccessMemberRoleResponse,
+      UpdateAccessMemberRoleInput
+    >(httpEndpoints.access.memberRole(userId), input, {
+      credentials: HTTP_CREDENTIALS.session,
+      headers: { "Content-Type": "application/json" },
+    });
   },
 };

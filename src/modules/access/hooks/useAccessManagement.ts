@@ -6,6 +6,7 @@ import type {
   AccessMember,
   AccessRole,
   CreateAccessInviteInput,
+  UpdateAccessMemberRoleInput,
 } from "../types";
 
 const getErrorMessage = (error: unknown, fallback: string): string => {
@@ -26,8 +27,12 @@ export const useAccessManagement = (tenantId?: string | null) => {
   const [invites, setInvites] = useState<AccessInvite[]>([]);
   const [currentPermissions, setCurrentPermissions] = useState<string[]>([]);
   const [currentRoleCode, setCurrentRoleCode] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isCreatingInvite, setIsCreatingInvite] = useState(false);
+  const [isUpdatingRoleFor, setIsUpdatingRoleFor] = useState<string | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
@@ -38,6 +43,7 @@ export const useAccessManagement = (tenantId?: string | null) => {
       setInvites([]);
       setCurrentPermissions([]);
       setCurrentRoleCode(null);
+      setCurrentUserId(null);
       setIsLoading(false);
       return;
     }
@@ -56,6 +62,7 @@ export const useAccessManagement = (tenantId?: string | null) => {
       setInvites(invitesResponse.data);
       setCurrentPermissions(membersResponse.current_permissions);
       setCurrentRoleCode(membersResponse.current_role_code || null);
+      setCurrentUserId(membersResponse.current_user_id || null);
     } catch (error) {
       setError(
         getErrorMessage(
@@ -96,17 +103,41 @@ export const useAccessManagement = (tenantId?: string | null) => {
     [load],
   );
 
+  const updateMemberRole = useCallback(
+    async (userId: string, input: UpdateAccessMemberRoleInput) => {
+      setIsUpdatingRoleFor(userId);
+      setStatusMessage(null);
+      setError(null);
+
+      try {
+        const response = await accessService.updateMemberRole(userId, input);
+        setStatusMessage(response.message);
+        await load();
+      } catch (error) {
+        setError(
+          getErrorMessage(error, "Failed to update tenant member role."),
+        );
+      } finally {
+        setIsUpdatingRoleFor(null);
+      }
+    },
+    [load],
+  );
+
   return {
     members,
     roles,
     invites,
     currentPermissions,
     currentRoleCode,
+    currentUserId,
     isLoading,
     isCreatingInvite,
+    isUpdatingRoleFor,
     error,
     statusMessage,
     reload: load,
     createInvite,
+    updateMemberRole,
   };
 };
