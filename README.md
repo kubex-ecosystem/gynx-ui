@@ -10,52 +10,64 @@ Portuguese (Brazil) version: [docs/README.pt-BR.md](./docs/README.pt-BR.md)
 - [Architecture Overview](#architecture-overview)
 - [Repository Layout](#repository-layout)
 - [Feature Domains](#feature-domains)
+- [Authentication and Access Model](#authentication-and-access-model)
+- [AI Runtime and Provider Selection](#ai-runtime-and-provider-selection)
+- [BI Studio](#bi-studio)
 - [Runtime Modes](#runtime-modes)
 - [Environment Variables](#environment-variables)
 - [Getting Started](#getting-started)
 - [Available Commands](#available-commands)
-- [Development Workflow](#development-workflow)
 - [HTTP and Service Layers](#http-and-service-layers)
 - [State Management](#state-management)
 - [Mock and Demo Strategy](#mock-and-demo-strategy)
 - [Current Limitations](#current-limitations)
-- [Contribution Notes](#contribution-notes)
 - [Documentation Map](#documentation-map)
+- [Screenshots](#screenshots)
 
 ## Overview
 
-`GNyx-UI` is the frontend application for the GNyx workspace. It is a React 19 + TypeScript + Vite application that combines:
+`GNyx-UI` is the embedded frontend for the `GNyx` product.
 
-- authentication and onboarding flows
-- AI-assisted tools
-- operational dashboards
-- provider configuration and BYOK flows
-- offline-aware service layers
-- domain-oriented frontend modules
+It is a React 19 + TypeScript + Vite application that now combines:
 
-The application is currently organized around a hash-based shell instead of React Router, and it mixes modernized layers (`core/http`, `core/navigation`, `modules/*`, `mocks/*`) with a few still-legacy service areas that are being gradually normalized.
+- real authentication bootstrap
+- tenant-aware navigation and access handling
+- provider-backed AI features
+- administrative and operational surfaces
+- access management MVP
+- a first metadata-driven BI demonstration flow
+
+The application still uses a hash-based shell rather than React Router, but the runtime model is significantly more grounded than it was earlier in the project.
 
 ## Current Product Scope
 
-At the time of this README rewrite, the frontend includes the following user-facing areas:
+Major user-facing areas currently available:
 
-- `Landing`: public entry page
-- `Auth`: sign-in screen
-- `Accept Invite`: public onboarding completion flow
-- `Welcome`: post-login landing workspace
-- `Gateway Dashboard`: operational metrics and logs
-- `Mail Hub`: smart inbox UI, currently mock-backed
-- `Data Sync`: integrations and sync jobs
-- `Workspace Settings`: tenant/workspace settings, currently mock-backed
-- `Providers Settings`: AI provider and routing administration
-- `Prompt Crafter`: structured prompt generation workflow
-- `Agents`: AI agent generation and storage workflow
-- `Chat`: conversational assistant
-- `Summarizer`: content summarization
-- `Code`: code generation assistant
-- `Images`: image prompt crafting
-- `Playground`: streaming-oriented testing area
-- `Data Analyzer`: analysis-oriented area that still needs future backend hardening
+- `Landing`
+- `Auth`
+- `Accept Invite`
+- `Welcome`
+- `Gateway Dashboard`
+- `Mail Hub`
+- `Data Sync`
+- `Workspace Settings`
+- `Providers Settings`
+- `Access Management`
+- `Prompt Crafter`
+- `Agents`
+- `Chat`
+- `Summarizer`
+- `Code`
+- `Images`
+- `Playground`
+- `BI Studio`
+- `Data Analyzer`
+
+Current maturity is uneven by design:
+
+- some areas already consume real backend state and real providers
+- some areas are hybrid
+- some remain mock-backed until broader backend/domain work catches up
 
 ## Technology Stack
 
@@ -71,341 +83,202 @@ Core stack:
 - `js-cookie`
 - `lucide-react`
 
-Provider and AI-related dependencies currently present in the frontend:
+Additional runtime-facing packages include:
 
 - OpenAI SDK
 - Anthropic SDK
 - Google GenAI SDK
+- `jszip`
 
 ## Architecture Overview
 
-The frontend is evolving toward a more explicit layered architecture.
+The frontend is being consolidated around clearer layers:
 
-### Core layers
+- `src/core/http`: HTTP client, endpoints, error handling
+- `src/core/navigation`: hash routing and guarded-section resolution
+- `src/core/runtime`: runtime-mode decisions
+- `src/modules/*`: domain-oriented service and hook slices
+- `src/mocks/*`: centralized mock data and scenarios
+- `src/context/AuthContext.tsx`: authenticated runtime state and access materialization
+- `src/pages/*`: page composition and user-facing flows
 
-- `src/core/http/*`
-  - unified HTTP client
-  - endpoint catalog
-  - auth header helpers
-  - normalized error types
-- `src/core/navigation/*`
-  - hash routing helpers
-  - route parsing and guarded navigation rules
-- `src/core/runtime/*`
-  - frontend runtime mode resolution
-  - demo/simulated behavior flags
-- `src/core/llm/*`
-  - local provider wrapper abstractions
-
-### Domain modules
-
-The project is progressively moving business logic out of pages/components and into `src/modules/*`.
-
-Current modules already in place:
-
-- `src/modules/chat`
-- `src/modules/creative`
-- `src/modules/mail`
-- `src/modules/providers`
-- `src/modules/workspace`
-
-### Service layers
-
-The frontend still uses more than one service style, because the codebase is in migration:
-
-- `core/http` for the current network foundation
-- `services/api.ts` as a compatibility-oriented API layer
-- `services/enhancedAPI.ts` for offline/cache/queue behavior
-- domain services such as `unifiedAIService`, `gatewayService`, `syncService`, `inviteService`, `agentsService`, and others
+The direction is to keep prompt construction, API normalization, and domain logic out of raw page components whenever feasible.
 
 ## Repository Layout
 
 ```text
-frontend/
-├── docs/                     # Frontend-specific documentation
-├── public/                   # Static assets
-├── src/
-│   ├── assets/               # Images, lotties, UI assets
-│   ├── components/           # Shared UI and feature components
-│   ├── config/               # Frontend configuration helpers
-│   ├── constants/            # Constants and static definitions
-│   ├── context/              # React contexts (auth, language)
-│   ├── core/                 # HTTP, runtime, navigation, LLM foundation
-│   ├── hooks/                # Reusable hooks
-│   ├── i18n/                 # Translation support
-│   ├── lib/                  # Local utilities and adapters
-│   ├── mocks/                # Centralized mock scenarios and domain data
-│   ├── modules/              # Domain-oriented frontend modules
-│   ├── pages/                # Route-level pages and shells
-│   ├── screens/              # Older screen-oriented structures
-│   ├── services/             # API integrations and orchestration
-│   ├── store/                # Zustand stores
-│   ├── tests/                # Frontend tests and fixtures
-│   ├── types/                # Shared TypeScript contracts
-│   └── utils/                # Generic helpers
-├── package.json
-└── README.md
+src/App.tsx                    central shell and guarded navigation
+src/components/                reusable UI and feature components
+src/context/                   auth/runtime context
+src/core/http/                 HTTP foundation
+src/core/navigation/           hash route model
+src/core/access/               access helpers and RBAC MVP mapping
+src/modules/                   domain modules for chat, creative, mail, workspace, providers, access, bi
+src/mocks/                     centralized mock domains and scenarios
+src/pages/                     routed product pages
 ```
 
 ## Feature Domains
 
-### Access and onboarding
+Current domain modules include:
 
-Main files:
+- `chat`
+- `creative`
+- `mail`
+- `workspace`
+- `providers`
+- `access`
+- `bi`
 
-- `src/context/AuthContext.tsx`
-- `src/pages/Landing.tsx`
-- `src/pages/Auth.tsx`
-- `src/pages/AcceptInvite.tsx`
-- `src/services/inviteService.ts`
+These modules now cover a meaningful portion of the runtime-facing product behavior.
 
-Notes:
+## Authentication and Access Model
 
-- session validation uses the unified HTTP client
-- invite acceptance is a special public flow
-- simulated auth can still be enabled for frontend-only usage
+The frontend no longer treats authentication as identity only.
 
-### AI and creation tools
+Current authenticated bootstrap behavior:
 
-Main files:
+- `/me` and `/auth/me` are consumed as the canonical access bootstrap
+- `access_scope` is materialized into real runtime state
+- `activeTenant`, `activeMembership`, `activeRoleCode`, and effective permissions are derived and persisted
+- authenticated users without effective access are held in `Welcome` instead of navigating blindly into the workspace
+- RBAC helpers now read the real `AuthContext`, not the old mock auth store
 
-- `src/modules/chat/*`
-- `src/modules/creative/*`
-- `src/services/unifiedAIService.ts`
-- `src/components/features/*`
+Current access UX includes:
 
-Notes:
+- tenant-aware shell header
+- optional tenant switching when multiple memberships exist
+- route guarding by authenticated access state
+- `Access Management` page for members, roles, invites, and effective permissions
 
-- `Chat`, `Summarizer`, `Code`, and `Images` are already wired into backend-oriented flows
-- provider availability is resolved through configuration and BYOK support
+## AI Runtime and Provider Selection
 
-### Operations and administration
+AI-assisted product areas now use the real backend runtime instead of UI-only behavior.
 
-Main files:
+Operationally relevant points:
 
-- `src/pages/GatewayDashboard.tsx`
-- `src/pages/DataSync.tsx`
-- `src/pages/MailHub.tsx`
-- `src/pages/WorkspaceSettings.tsx`
-- `src/pages/ProvidersSettings.tsx`
-- `src/modules/mail/*`
-- `src/modules/workspace/*`
-- `src/modules/providers/*`
+- chat, summarization, code generation, prompt crafting, and image-prompt flows are wired through backend routes
+- provider choice can be set per tool in the UI
+- provider state is read from backend runtime status
+- `Providers Settings` reflects runtime provider availability, default model, and model lists
+- current practical provider posture is:
+  - `Groq`: strongest happy path for BI demo generation
+  - `Gemini`: supported, but slower and more likely to fall back for BI contract fidelity
 
-Notes:
+## BI Studio
 
-- `Mail Hub` and `Workspace Settings` are now modularized but still mock-backed
-- `Providers Settings` is now modularized around a dedicated frontend module
-- gateway and sync flows remain hybrid real/mock depending on runtime mode
+`BI Studio` is the first visible proof-of-concept page for metadata-driven board generation.
+
+Its behavior is intentionally honest:
+
+- if the Sankhya metadata catalog is available in the backend, the page exposes generation and export
+- if the catalog is not available, the page pivots into a prerequisite screen instead of pretending the feature is ready
+
+Current BI Studio capabilities:
+
+- select provider
+- generate a grounded board from the backend
+- inspect provider, model, generation mode, and usage
+- inspect generated widgets and SQL
+- copy `dashboard_schema`
+- download a ZIP bundle containing portable artifacts
+
+This makes the feature demonstrable without depending on a live Sankhya runtime.
 
 ## Runtime Modes
 
-The frontend currently supports three practical execution modes.
+The frontend currently operates with a mix of:
 
-### 1. Real backend mode
+- real backend mode
+- demo-aware behavior
+- centralized mocks for selected domains
+- offline-friendly local persistence in some areas
 
-Used when frontend talks to the backend normally.
-
-Characteristics:
-
-- real HTTP calls
-- real auth/session validation
-- real provider/config resolution
-
-### 2. Demo mode
-
-Resolved through runtime flags and service fallbacks.
-
-Characteristics:
-
-- configuration falls back to demo-friendly values
-- BYOK-oriented UX stays available
-- parts of the UI can still behave as connected demos
-
-### 3. Simulated auth / mock-assisted mode
-
-Used to keep frontend-only work moving without backend dependency.
-
-Characteristics:
-
-- auth/session becomes simulated
-- invite/gateway/sync mock branches can be used
-- useful for isolated UI and interaction work
+The runtime-mode policy is now more centralized than before, which reduced contradictory feature behavior across services.
 
 ## Environment Variables
 
-Current variables used by the frontend include:
+The exact env surface can evolve, but the frontend relies primarily on the Vite runtime and backend reachability.
 
-```env
-VITE_API_URL=http://localhost:8080
-VITE_DEMO_MODE=false
-VITE_SIMULATE_AUTH=false
-```
+Relevant examples include:
 
-Behavior summary:
-
-- `VITE_API_URL`
-  - backend base URL when needed by the frontend runtime
-- `VITE_DEMO_MODE`
-  - enables demo-oriented frontend behavior
 - `VITE_SIMULATE_AUTH`
-  - enables simulated auth/mock-assisted flows for frontend-only work
+- API base configuration consumed by the HTTP layer
 
-The current scripts rely on POSIX-style shell sourcing of `.env.local` and `.env.production` when available.
+The backend runtime remains the main source of truth for provider and access state.
 
 ## Getting Started
 
-### Prerequisites
-
-Recommended:
-
-- Node.js 20+
-- pnpm 10+
-- a POSIX-compatible shell for the provided scripts
-
-### Install dependencies
+Install dependencies:
 
 ```bash
-cd frontend
 pnpm install
 ```
 
-### Start development server
+Run the development server:
 
 ```bash
 pnpm dev
 ```
 
-### Run a production-like preview
-
-```bash
-pnpm preview
-```
-
-### Run type checking
+Type-check:
 
 ```bash
 pnpm exec tsc --noEmit
 ```
 
-## Available Commands
+Build:
 
-Commands currently defined in `package.json`:
+```bash
+pnpm exec vite build
+```
+
+## Available Commands
 
 ```bash
 pnpm dev
-pnpm dev:full
-pnpm dev:preview
-pnpm build
-pnpm build:prod
+pnpm exec tsc --noEmit
+pnpm exec vite build
 pnpm preview
-pnpm prod
-pnpm prod:full
 ```
-
-What they do:
-
-- `pnpm dev`
-  - starts the Vite dev server on port `3000`
-- `pnpm dev:full`
-  - builds first, then starts the dev server
-- `pnpm dev:preview`
-  - previews the current build on port `3000`
-- `pnpm build`
-  - builds using `.env.local` when present
-- `pnpm build:prod`
-  - builds with production mode and `.env.production` when present
-- `pnpm preview`
-  - previews the current build on port `3000`
-- `pnpm prod`
-  - previews the app with `NODE_ENV=production`
-- `pnpm prod:full`
-  - production build followed by preview
-
-## Development Workflow
-
-Recommended workflow for current contributors:
-
-1. start from `pnpm dev`
-2. use `pnpm exec tsc --noEmit` frequently
-3. keep feature logic inside `src/modules/*` whenever possible
-4. use `src/core/http/*` instead of introducing new direct `fetch` calls
-5. keep mock decisions centralized instead of scattering environment checks
-6. prefer adapting legacy consumers rather than growing parallel patterns
 
 ## HTTP and Service Layers
 
-### HTTP foundation
+The current HTTP foundation is centered on `src/core/http`.
 
-Main files:
+Important traits:
 
-- `src/core/http/client.ts`
-- `src/core/http/endpoints.ts`
-- `src/core/http/auth.ts`
-- `src/core/http/errors.ts`
-- `src/core/http/types.ts`
-
-This is the preferred network foundation.
-
-### Error normalization
-
-The project now treats error normalization as a cross-cutting concern.
-
-Relevant files:
-
-- `src/core/http/errors.ts`
-- `src/services/api.ts`
-- `src/hooks/useGromptAPI.ts`
-
-Current direction:
-
-- `HttpError` is the base normalized error
-- `APIError` remains available as a compatibility adapter over the same normalized shape
-- unknown errors should be normalized instead of invented ad hoc in consumers
-
-### Older service surfaces still present
-
-Relevant files:
-
-- `src/services/api.ts`
-- `src/services/enhancedAPI.ts`
-- `src/services/multiProviderService.ts`
-
-These still exist because the frontend is mid-migration. They are functional, but they should be treated as compatibility layers rather than the long-term ideal shape.
+- endpoint catalog is centralized
+- request/response error handling is normalized
+- service layers compose feature logic above the shared client
+- the codebase has already been refactored away from scattered direct `fetch` usage, except for the HTTP core itself
 
 ## State Management
 
-The frontend uses a combination of:
+State is handled through a combination of:
 
-- local React state for screen-level interaction
-- React Context for cross-cutting concerns
-- Zustand for persisted or shared application state
-- IndexedDB/localStorage/cookies where appropriate
+- React local state for page interaction
+- `AuthContext` for authenticated runtime state
+- selected Zustand stores where they still make sense
+- `localStorage` and IndexedDB for persistence in specific flows
 
-Main state holders:
+Recent examples:
 
-- `AuthContext`
-- `LanguageContext`
-- `useProvidersStore`
-- `useAuthStore`
+- chat history persistence across navigation
+- per-tool provider preference persistence
+- active tenant persistence
 
 ## Mock and Demo Strategy
 
-Mock and demo behavior is now more explicit than before.
+Mocks are now more centralized and domain-oriented than before.
 
-Main files:
+Current strategy:
 
-- `src/core/runtime/mode.ts`
-- `src/mocks/scenarios.ts`
-- `src/mocks/domains/*`
+- keep mock datasets under `src/mocks/*`
+- allow demo mode without scattering fake data across pages
+- progressively replace or narrow mocks as real backend slices mature
 
-Current rule of thumb:
-
-- runtime mode decides whether the app should behave as real/demo/simulated
-- mock datasets should live under `src/mocks/*`
-- pages should not become the source of truth for simulation logic
-
-Examples of domains already using centralized mock data:
+This has already reduced migration cost for domains such as:
 
 - gateway
 - sync
@@ -415,32 +288,29 @@ Examples of domains already using centralized mock data:
 
 ## Current Limitations
 
-This README reflects the project honestly, including current gaps.
+Current known limitations include:
 
-Known limitations at this stage:
-
-- routing is still hash-based instead of router-based
-- `Mail Hub` and `Workspace Settings` are still mock-backed from a backend perspective
-- some legacy service layers still coexist with the newer foundation
-- `Data Analyzer` still requires a future backend-oriented hardening pass
-- the codebase still contains legacy structures such as `screens/` alongside the newer page/module architecture
-
-## Contribution Notes
-
-If you are adding or refactoring code in this frontend, prefer the following direction:
-
-- add new network calls through `core/http`
-- extract domain logic into `src/modules/<domain>`
-- centralize mock behavior instead of branching from pages
-- keep runtime mode decisions in `src/core/runtime`
-- keep navigation behavior in `src/core/navigation`
-- update this README if architectural expectations change materially
+- not every page is fully backend-backed yet
+- permission enforcement is still an MVP layer, not a final IAM system
+- plan and entitlement gating are not fully operational
+- `Data Analyzer` still needs deeper backend hardening
+- `Gemini` is slower and less stable than `Groq` for the current BI generation slice
+- the build still emits an existing `lottie-web` warning related to `eval`
 
 ## Documentation Map
 
-Frontend-local documentation:
+Useful docs:
 
-- English: [README.md](./README.md)
-- Portuguese (Brazil): [docs/README.pt-BR.md](./docs/README.pt-BR.md)
+- [`../README.md`](../README.md)
+- [`docs/README.pt-BR.md`](./docs/README.pt-BR.md)
+- [`../.notes/analyzis/global-execution-plan/`](../.notes/analyzis/global-execution-plan)
+- [`../.notes/analyzis/gnyx-skw-dynamic-ui/`](../.notes/analyzis/gnyx-skw-dynamic-ui)
 
-If the architecture changes materially again, update both files together.
+## Screenshots
+
+Placeholder suggestions:
+
+- `[Screenshot Placeholder: Welcome with active tenant]`
+- `[Screenshot Placeholder: Providers Settings]`
+- `[Screenshot Placeholder: Access Management]`
+- `[Screenshot Placeholder: BI Studio]`
