@@ -1,4 +1,4 @@
-import { Menu, Moon, Sun } from "lucide-react";
+import { Building2, Menu, Moon, Sun } from "lucide-react";
 import React from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Theme } from "@/types";
@@ -27,8 +27,22 @@ const Header: React.FC<HeaderProps> = ({
   isSidebarOpen = false,
 }) => {
   const { t } = useTranslations();
-  const { activeTenant, activeRoleName, hasPendingAccess, hasAccess } =
-    useAuth();
+  const {
+    user,
+    activeTenant,
+    activeRoleName,
+    hasPendingAccess,
+    hasAccess,
+    switchActiveTenant,
+  } = useAuth();
+  const tenantOptions =
+    user?.memberships.filter(
+      (membership, index, memberships) =>
+        index ===
+        memberships.findIndex(
+          (candidate) => candidate.tenant_id === membership.tenant_id,
+        ),
+    ) || [];
 
   return (
     <div className="flex items-center justify-between px-4 py-4">
@@ -64,6 +78,29 @@ const Header: React.FC<HeaderProps> = ({
                 {activeRoleName}
               </span>
             )}
+          </div>
+        )}
+        {!collapsed && hasAccess && tenantOptions.length > 1 && (
+          <div className="hidden xl:flex items-center gap-2 rounded-full border border-border-primary bg-surface-primary/70 px-3 py-1.5">
+            <Building2 size={14} className="text-muted" />
+            <select
+              value={activeTenant?.id || ""}
+              onChange={(event) => switchActiveTenant(event.target.value)}
+              className="bg-transparent text-xs font-semibold text-primary focus:outline-none"
+              aria-label="Switch active tenant"
+            >
+              {tenantOptions.map((membership) => (
+                <option
+                  key={membership.tenant_id}
+                  value={membership.tenant_id}
+                  className="bg-surface-primary text-primary"
+                >
+                  {membership.tenant_name ||
+                    membership.tenant_slug ||
+                    membership.tenant_id}
+                </option>
+              ))}
+            </select>
           </div>
         )}
       </div>

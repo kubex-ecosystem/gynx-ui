@@ -78,16 +78,16 @@ const NavItem: React.FC<{
         type="button"
         onClick={handleAction}
         className={`w-full rounded-xl border px-4 py-3 text-left transition-all duration-200 flex items-center justify-between ${isDirectActive
-            ? 'border-accent-primary/70 bg-accent-muted text-primary shadow-md'
-            : isChild
-              ? 'border-transparent bg-transparent text-secondary hover:text-primary hover:bg-surface-tertiary/30'
-              : 'border-transparent bg-surface-primary/75 text-secondary hover:border-border-accent hover:bg-surface-tertiary'
+          ? 'border-accent-primary/70 bg-accent-muted text-primary shadow-md'
+          : isChild
+            ? 'border-transparent bg-transparent text-secondary hover:text-primary hover:bg-surface-tertiary/30'
+            : 'border-transparent bg-surface-primary/75 text-secondary hover:border-border-accent hover:bg-surface-tertiary'
           }`}
       >
         <div className="flex items-center gap-3">
           <span className={`flex h-10 w-10 items-center justify-center rounded-lg border ${isDirectActive
-              ? 'border-transparent bg-surface-primary text-accent-primary'
-              : 'border-border-primary bg-surface-primary text-secondary'
+            ? 'border-transparent bg-surface-primary text-accent-primary'
+            : 'border-border-primary bg-surface-primary text-secondary'
             }`}>
             <Icon size={20} />
           </span>
@@ -166,7 +166,9 @@ const Sidebar: React.FC<SidebarProps> = ({ sections, activeSection, onSectionCha
 
       <div className={`hidden items-center justify-center gap-3 px-3 pt-6 pb-4 ${collapsed ? 'lg:flex' : 'lg:hidden'}`}>
         <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border-primary bg-surface-secondary text-accent-primary shadow-sm">
-          <span className="text-base font-semibold">G</span>
+          <span className="text-base font-semibold">
+            <a href="/">Gx</a>
+          </span>
         </div>
       </div>
 
