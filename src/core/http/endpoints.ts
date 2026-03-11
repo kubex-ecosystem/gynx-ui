@@ -52,6 +52,11 @@ export const httpEndpoints = {
     stream: "/unified/stream",
     providerTest: "/test",
   },
+  bi: {
+    catalogStatus: "/bi/catalog/status",
+    generateBoard: "/bi/boards/generate",
+    exportBoard: "/bi/boards/export",
+  },
   agents: {
     root: "/agents",
     generate: "/agents/generate",

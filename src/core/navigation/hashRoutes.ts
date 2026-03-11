@@ -6,6 +6,7 @@ export const APP_SECTION_IDS = [
   "gateway-dashboard",
   "data-analyzer",
   "mail-hub",
+  "bi-studio",
   "data-sync",
   "workspace-settings",
   "providers-settings",

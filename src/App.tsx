@@ -1,5 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Database, Bot, Wand2, Loader2, Settings, Users } from "lucide-react";
+import {
+  Database,
+  Bot,
+  Wand2,
+  Loader2,
+  Settings,
+  Users,
+  PanelTop,
+} from "lucide-react";
 import AgentsGenerator from "./components/features/AgentsGenerator";
 import ChatInterface from "./components/features/ChatInterface";
 import CodeGenerator from "./components/features/CodeGenerator";
@@ -50,6 +58,7 @@ import DataSync from "./pages/DataSync";
 import ProvidersSettings from "./pages/ProvidersSettings";
 import WorkspaceSettings from "./pages/WorkspaceSettings";
 import AccessManagement from "./pages/AccessManagement";
+import BIStudio from "./pages/BIStudio";
 
 const SIDEBAR_COLLAPSED_KEY = "grompt.sidebar.collapsed";
 const SIDEBAR_AUTO_EXPAND_SEEN_KEY = "grompt.sidebar.autoExpandSeen";
@@ -270,6 +279,12 @@ const MainApp: React.FC = () => {
           description: "Stream LLM Data",
         },
         {
+          id: "bi-studio",
+          label: "BI Studio",
+          description: "Metadata-driven board demos",
+          icon: PanelTop,
+        },
+        {
           id: "data-analyzer",
           label: t("sectionAnalyzerLabel"),
           description: t("sectionAnalyzerDescription"),
@@ -376,6 +391,8 @@ const MainApp: React.FC = () => {
         return <GatewayDashboard />;
       case "data-analyzer":
         return <DataAnalyzer theme={theme} />;
+      case "bi-studio":
+        return <BIStudio />;
       case "mail-hub":
         return <MailHub />;
       case "data-sync":
