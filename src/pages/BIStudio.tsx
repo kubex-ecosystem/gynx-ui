@@ -35,6 +35,25 @@ const downloadBlob = (blob: Blob, filename: string) => {
   URL.revokeObjectURL(url);
 };
 
+const resolveBIStudioError = (error: unknown): string => {
+  const message = error instanceof Error ? error.message : String(error);
+  const normalized = message.toLowerCase();
+
+  if (
+    normalized.includes("signal is aborted") ||
+    normalized.includes("aborted") ||
+    normalized.includes("aborterror")
+  ) {
+    return "The request was aborted by the frontend timeout before the provider finished. This usually means the selected provider is responding too slowly for this BI generation flow.";
+  }
+
+  if (normalized.includes("context canceled")) {
+    return "The backend request context was canceled before completion. In practice this usually means the client timeout closed the request while the provider was still generating.";
+  }
+
+  return message;
+};
+
 const BIStudio: React.FC = () => {
   const { hasAccess, activeTenant, activeRoleName } = useAuth();
   const {
@@ -116,9 +135,7 @@ const BIStudio: React.FC = () => {
         `Board generated in ${response.generation_mode} mode with ${response.provider}/${response.model}.`,
       );
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to generate BI board.";
-      setGenerateError(message);
+      setGenerateError(resolveBIStudioError(error));
     } finally {
       setIsGenerating(false);
     }
@@ -147,11 +164,7 @@ const BIStudio: React.FC = () => {
         .replace(/^-+|-+$/g, "");
       downloadBlob(blob, `${safeName || "generated-board"}.zip`);
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Failed to export board bundle.";
-      setGenerateError(message);
+      setGenerateError(resolveBIStudioError(error));
     } finally {
       setIsExporting(false);
     }
@@ -390,6 +403,22 @@ const BIStudio: React.FC = () => {
                         ).toLocaleString()}
                       </p>
                     )}
+                  </div>
+                  <div className="rounded-2xl border border-border-primary bg-surface-primary/70 p-4 text-xs text-secondary">
+                    <p className="font-semibold uppercase tracking-[0.3em] text-muted">
+                      Runtime note
+                    </p>
+                    <p className="mt-2">
+                      <span className="font-semibold text-primary">groq</span>{" "}
+                      is currently the fastest happy-path provider for this BI
+                      slice.
+                      <span className="font-semibold text-primary">
+                        {" "}
+                        gemini
+                      </span>{" "}
+                      can take materially longer and may still fall back if it
+                      returns truncated JSON.
+                    </p>
                   </div>
                 </div>
               </div>

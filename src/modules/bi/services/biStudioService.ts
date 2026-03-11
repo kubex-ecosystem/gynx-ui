@@ -23,6 +23,7 @@ export const biStudioService = {
       payload,
       {
         credentials: HTTP_CREDENTIALS.session,
+        timeoutMs: 60000,
       },
     );
   },
@@ -34,6 +35,7 @@ export const biStudioService = {
       {
         credentials: HTTP_CREDENTIALS.session,
         parseAs: "blob",
+        timeoutMs: 30000,
       },
     );
   },
