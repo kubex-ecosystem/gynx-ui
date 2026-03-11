@@ -9,6 +9,12 @@ import type {
   UpdateAccessMemberRoleResponse,
 } from "../types";
 
+interface APIEnvelope<T> {
+  status: string;
+  message?: string;
+  data: T;
+}
+
 export const accessService = {
   async getMembers(tenantId: string): Promise<AccessMembersResponse> {
     return httpClient.get<AccessMembersResponse>(httpEndpoints.access.members, {
@@ -18,13 +24,13 @@ export const accessService = {
   },
 
   async listInvites(tenantId: string): Promise<AccessInviteListResponse> {
-    return httpClient.get<AccessInviteListResponse>(
-      httpEndpoints.invites.root,
-      {
-        credentials: HTTP_CREDENTIALS.session,
-        query: { tenant_id: tenantId, page: 1, limit: 25 },
-      },
-    );
+    const response = await httpClient.get<
+      APIEnvelope<AccessInviteListResponse>
+    >(httpEndpoints.invites.root, {
+      credentials: HTTP_CREDENTIALS.session,
+      query: { tenant_id: tenantId, page: 1, limit: 25, type: "internal" },
+    });
+    return response.data;
   },
 
   async createInvite(input: CreateAccessInviteInput): Promise<void> {

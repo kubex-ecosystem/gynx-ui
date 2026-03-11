@@ -59,7 +59,9 @@ export const useAccessManagement = (tenantId?: string | null) => {
 
       setMembers(membersResponse.members);
       setRoles(membersResponse.roles);
-      setInvites(invitesResponse.data);
+      setInvites(
+        Array.isArray(invitesResponse.data) ? invitesResponse.data : [],
+      );
       setCurrentPermissions(membersResponse.current_permissions);
       setCurrentRoleCode(membersResponse.current_role_code || null);
       setCurrentUserId(membersResponse.current_user_id || null);
