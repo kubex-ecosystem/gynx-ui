@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import React from "react";
 import Card from "@/components/ui/Card";
+import AccessNotice from "@/components/security/AccessNotice";
+import { useRBAC } from "@/hooks/useRBAC";
 import { useTranslations } from "@/i18n/useTranslations";
 import { ProviderStatus } from "@/store/useProvidersStore";
 import { PROVIDERS_META, PROVIDER_TOOLS } from "@/modules/providers/constants";
@@ -23,6 +25,10 @@ import { useProvidersSettings } from "@/modules/providers/hooks/useProvidersSett
 
 const ProvidersSettings: React.FC = () => {
   const { t } = useTranslations();
+  const { hasAppCapability } = useRBAC();
+  const canReadProviders = hasAppCapability("providers.read");
+  const canUpdateProviders = hasAppCapability("providers.update");
+  const canTestProviders = hasAppCapability("providers.test");
   const {
     providerCards,
     globalDefault,
@@ -38,6 +44,17 @@ const ProvidersSettings: React.FC = () => {
     handleTestConnection,
     handleTestAllProviders,
   } = useProvidersSettings();
+
+  if (!canReadProviders) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <AccessNotice
+          title="Access restricted"
+          description="This area requires the `settings.read` permission in the active tenant scope."
+        />
+      </div>
+    );
+  }
 
   const getStatusBadge = (s: ProviderStatus = "IDLE") => {
     switch (s) {
@@ -84,8 +101,9 @@ const ProvidersSettings: React.FC = () => {
 
         <div className="flex items-center gap-4">
           <button
+            disabled={!canTestProviders}
             onClick={() => void handleTestAllProviders()}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border-primary bg-surface-primary hover:bg-surface-tertiary transition-all text-sm font-bold"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border-primary bg-surface-primary hover:bg-surface-tertiary transition-all text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50"
           >
             <RefreshCw size={16} /> Test All
           </button>
@@ -102,11 +120,13 @@ const ProvidersSettings: React.FC = () => {
             </label>
             <button
               title={t("expertMode")}
+              disabled={!canUpdateProviders}
               onClick={() => setExpertMode(!expertMode)}
-              className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${expertMode
-                ? "bg-accent-primary shadow-[0_0_15px_rgba(106,13,173,0.5)]"
-                : "bg-surface-tertiary"
-                }`}
+              className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${
+                expertMode
+                  ? "bg-accent-primary shadow-[0_0_15px_rgba(106,13,173,0.5)]"
+                  : "bg-surface-tertiary"
+              } disabled:cursor-not-allowed disabled:opacity-50`}
             >
               <motion.div
                 animate={{ x: expertMode ? 26 : 2 }}
@@ -119,138 +139,168 @@ const ProvidersSettings: React.FC = () => {
 
       {/* Providers Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {providerCards.map(({ provider, apiKey, showKey, status, isGlobalDefault, runtimeInfo, testMessage }) => (
-          <Card
-            key={provider.id}
-            className={`p-6 bg-surface-primary/50 backdrop-blur-sm border-border-primary transition-all hover:border-accent-primary/30 group ${isGlobalDefault
-              ? "ring-1 ring-accent-primary/50"
-              : ""
+        {providerCards.map(
+          ({
+            provider,
+            apiKey,
+            showKey,
+            status,
+            isGlobalDefault,
+            runtimeInfo,
+            testMessage,
+          }) => (
+            <Card
+              key={provider.id}
+              className={`p-6 bg-surface-primary/50 backdrop-blur-sm border-border-primary transition-all hover:border-accent-primary/30 group ${
+                isGlobalDefault ? "ring-1 ring-accent-primary/50" : ""
               }`}
-          >
-            <div className="flex items-start justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div
-                  className={`w-12 h-12 rounded-2xl bg-main flex items-center justify-center border border-border-primary shadow-inner ${provider.color}`}
-                >
-                  <provider.icon size={24} />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-primary">{provider.name}</h3>
-                    <span
-                      className={`text-[8px] font-black px-1.5 py-0.5 rounded border ${provider.type === "CLOUD"
-                        ? "text-cyan-400 border-cyan-400/30 bg-cyan-400/5"
-                        : "text-purple-400 border-purple-400/30 bg-purple-400/5"
-                        }`}
-                    >
-                      {provider.type}
-                    </span>
+            >
+              <div className="flex items-start justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-12 h-12 rounded-2xl bg-main flex items-center justify-center border border-border-primary shadow-inner ${provider.color}`}
+                  >
+                    <provider.icon size={24} />
                   </div>
-                  {getStatusBadge(status)}
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-bold text-primary">
+                        {provider.name}
+                      </h3>
+                      <span
+                        className={`text-[8px] font-black px-1.5 py-0.5 rounded border ${
+                          provider.type === "CLOUD"
+                            ? "text-cyan-400 border-cyan-400/30 bg-cyan-400/5"
+                            : "text-purple-400 border-purple-400/30 bg-purple-400/5"
+                        }`}
+                      >
+                        {provider.type}
+                      </span>
+                    </div>
+                    {getStatusBadge(status)}
+                  </div>
                 </div>
+
+                <button
+                  disabled={!canUpdateProviders}
+                  onClick={() => setGlobalDefault(provider.id)}
+                  className={`p-2 rounded-lg transition-all ${
+                    isGlobalDefault
+                      ? "text-accent-primary bg-accent-muted shadow-sm"
+                      : "text-muted hover:text-primary hover:bg-surface-tertiary"
+                  } disabled:cursor-not-allowed disabled:opacity-50`}
+                  title="Definir como padrão global"
+                >
+                  <Star
+                    size={18}
+                    fill={isGlobalDefault ? "currentColor" : "none"}
+                  />
+                </button>
               </div>
 
-              <button
-                onClick={() => setGlobalDefault(provider.id)}
-                className={`p-2 rounded-lg transition-all ${isGlobalDefault
-                  ? "text-accent-primary bg-accent-muted shadow-sm"
-                  : "text-muted hover:text-primary hover:bg-surface-tertiary"
-                  }`}
-                title="Definir como padrão global"
-              >
-                <Star
-                  size={18}
-                  fill={isGlobalDefault ? "currentColor" : "none"}
-                />
-              </button>
-            </div>
+              <p className="text-[11px] text-secondary mb-6 leading-relaxed h-8 line-clamp-2">
+                {provider.description}
+              </p>
 
-            <p className="text-[11px] text-secondary mb-6 leading-relaxed h-8 line-clamp-2">
-              {provider.description}
-            </p>
-
-            {runtimeInfo && (
-              <div className="mb-4 rounded-xl border border-border-primary bg-main/40 px-3 py-2 text-[11px] text-secondary space-y-1">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="uppercase tracking-widest text-[9px] text-muted font-bold">Runtime</span>
-                  <span className={`font-bold ${runtimeInfo.available ? "text-status-success" : "text-status-error"}`}>
-                    {runtimeInfo.status}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-muted">Default model:</span>{" "}
-                  <span className="text-primary font-mono">{runtimeInfo.default_model || "n/a"}</span>
-                </div>
-                {runtimeInfo.models.length > 0 && (
+              {runtimeInfo && (
+                <div className="mb-4 rounded-xl border border-border-primary bg-main/40 px-3 py-2 text-[11px] text-secondary space-y-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="uppercase tracking-widest text-[9px] text-muted font-bold">
+                      Runtime
+                    </span>
+                    <span
+                      className={`font-bold ${runtimeInfo.available ? "text-status-success" : "text-status-error"}`}
+                    >
+                      {runtimeInfo.status}
+                    </span>
+                  </div>
                   <div>
-                    <span className="text-muted">Models:</span>{" "}
-                    <span className="text-primary">{runtimeInfo.models.join(", ")}</span>
+                    <span className="text-muted">Default model:</span>{" "}
+                    <span className="text-primary font-mono">
+                      {runtimeInfo.default_model || "n/a"}
+                    </span>
+                  </div>
+                  {runtimeInfo.models.length > 0 && (
+                    <div>
+                      <span className="text-muted">Models:</span>{" "}
+                      <span className="text-primary">
+                        {runtimeInfo.models.join(", ")}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-muted uppercase tracking-widest flex items-center gap-2">
+                    <Lock size={12} /> API Key
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showKey ? "text" : "password"}
+                      value={apiKey}
+                      onChange={(e) =>
+                        handleKeyChange(provider.id, e.target.value)
+                      }
+                      disabled={!canUpdateProviders}
+                      className="w-full bg-main border border-border-primary rounded-xl pl-4 pr-10 py-2.5 text-xs text-primary focus:outline-none focus:border-accent-primary transition-all font-mono disabled:cursor-not-allowed disabled:opacity-60"
+                      placeholder="sk-..."
+                      autoComplete="off"
+                      data-1p-ignore
+                    />
+                    <button
+                      type="button"
+                      disabled={!canUpdateProviders}
+                      onClick={() => toggleShowKey(provider.id)}
+                      className="absolute right-3 top-2.5 text-muted hover:text-primary transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {showKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 pt-2">
+                  <button
+                    disabled={!canUpdateProviders}
+                    onClick={() => void handleSaveProvider(provider.id)}
+                    className="flex-grow flex items-center justify-center gap-2 py-2.5 rounded-xl bg-accent-primary/10 border border-accent-primary/20 text-accent-secondary text-xs font-bold hover:bg-accent-primary hover:text-white transition-all shadow-sm disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-accent-primary/10 disabled:hover:text-inherit"
+                  >
+                    <Save size={14} /> Salvar
+                  </button>
+                  <button
+                    disabled={!canTestProviders}
+                    onClick={() => void handleTestConnection(provider.id)}
+                    className="p-2.5 rounded-xl bg-surface-tertiary border border-border-primary text-secondary hover:text-primary transition-all disabled:cursor-not-allowed disabled:opacity-40"
+                    title="Testar Conexão"
+                  >
+                    <RefreshCw size={14} />
+                  </button>
+                  <button
+                    disabled={!canUpdateProviders}
+                    onClick={() => handleRemoveProviderKey(provider.id)}
+                    className="p-2.5 rounded-xl bg-status-error/5 border border-status-error/10 text-status-error/60 hover:text-status-error hover:bg-status-error/10 transition-all disabled:cursor-not-allowed disabled:opacity-40"
+                    title="Remover Chave"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+
+                {testMessage && (
+                  <div
+                    className={`rounded-xl border px-3 py-2 text-[11px] leading-relaxed ${
+                      status === "ERROR"
+                        ? "border-status-error/20 bg-status-error/5 text-status-error"
+                        : "border-status-success/20 bg-status-success/5 text-status-success"
+                    }`}
+                  >
+                    {testMessage}
                   </div>
                 )}
               </div>
-            )}
-
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-muted uppercase tracking-widest flex items-center gap-2">
-                  <Lock size={12} /> API Key
-                </label>
-                <div className="relative">
-                  <input
-                    type={showKey ? "text" : "password"}
-                    value={apiKey}
-                    onChange={(e) => handleKeyChange(provider.id, e.target.value)}
-                    className="w-full bg-main border border-border-primary rounded-xl pl-4 pr-10 py-2.5 text-xs text-primary focus:outline-none focus:border-accent-primary transition-all font-mono"
-                    placeholder="sk-..."
-                    autoComplete="off"
-                    data-1p-ignore
-                  />
-                  <button
-                    type="button"
-                    onClick={() => toggleShowKey(provider.id)}
-                    className="absolute right-3 top-2.5 text-muted hover:text-primary transition-colors"
-                  >
-                    {showKey
-                      ? <EyeOff size={16} />
-                      : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 pt-2">
-                <button
-                  onClick={() => void handleSaveProvider(provider.id)}
-                  className="flex-grow flex items-center justify-center gap-2 py-2.5 rounded-xl bg-accent-primary/10 border border-accent-primary/20 text-accent-secondary text-xs font-bold hover:bg-accent-primary hover:text-white transition-all shadow-sm"
-                >
-                  <Save size={14} /> Salvar
-                </button>
-                <button
-                  onClick={() => void handleTestConnection(provider.id)}
-                  className="p-2.5 rounded-xl bg-surface-tertiary border border-border-primary text-secondary hover:text-primary transition-all"
-                  title="Testar Conexão"
-                >
-                  <RefreshCw size={14} />
-                </button>
-                <button
-                  onClick={() => handleRemoveProviderKey(provider.id)}
-                  className="p-2.5 rounded-xl bg-status-error/5 border border-status-error/10 text-status-error/60 hover:text-status-error hover:bg-status-error/10 transition-all"
-                  title="Remover Chave"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-
-              {testMessage && (
-                <div className={`rounded-xl border px-3 py-2 text-[11px] leading-relaxed ${status === "ERROR"
-                  ? "border-status-error/20 bg-status-error/5 text-status-error"
-                  : "border-status-success/20 bg-status-success/5 text-status-success"
-                  }`}>
-                  {testMessage}
-                </div>
-              )}
-            </div>
-          </Card>
-        ))}
+            </Card>
+          ),
+        )}
       </div>
 
       {/* Expert Mode: Semantic Routing */}
@@ -307,12 +357,19 @@ const ProvidersSettings: React.FC = () => {
                             title={t("globalDefault")}
                             value={toolPreferences[tool.id] || globalDefault}
                             onChange={(e) =>
-                              setToolPreference(tool.id, e.target.value)}
-                            className="w-full bg-main border border-border-primary rounded-lg px-3 py-2 text-xs text-primary focus:outline-none focus:border-accent-primary appearance-none cursor-pointer pr-8"
+                              setToolPreference(tool.id, e.target.value)
+                            }
+                            disabled={!canUpdateProviders}
+                            className="w-full bg-main border border-border-primary rounded-lg px-3 py-2 text-xs text-primary focus:outline-none focus:border-accent-primary appearance-none cursor-pointer pr-8 disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {PROVIDERS_META.map((p) => (
                               <option key={p.id} value={p.id}>
-                                {p.name} {providerCards.find((card) => card.provider.id === p.id)?.status === "READY" ? "✓" : ""}
+                                {p.name}{" "}
+                                {providerCards.find(
+                                  (card) => card.provider.id === p.id,
+                                )?.status === "READY"
+                                  ? "✓"
+                                  : ""}
                               </option>
                             ))}
                           </select>
@@ -344,8 +401,7 @@ const ProvidersSettings: React.FC = () => {
                 <p className="text-[11px] text-secondary leading-relaxed">
                   O roteamento semântico permite que você atribua provedores
                   específicos para tarefas onde eles performam melhor. Por
-                  exemplo, use <strong>Anthropic</strong> para código complexo e
-                  {" "}
+                  exemplo, use <strong>Anthropic</strong> para código complexo e{" "}
                   <strong>Groq</strong> para análises de dados ultrarrápidas.
                 </p>
               </div>

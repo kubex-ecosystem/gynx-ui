@@ -14,14 +14,19 @@ import {
   HardDrive,
 } from "lucide-react";
 import Card from "@/components/ui/Card";
+import AccessNotice from "@/components/security/AccessNotice";
 import lottieAnimation from "@assets/lotties/banner_sm-01.json";
 import { useAuth } from "@/context/AuthContext";
 import { navigateToSection } from "@/core/navigation/hashRoutes";
+import { useRBAC } from "@/hooks/useRBAC";
 import LottieControl from "@/components/ui/Lottie";
 import { useWorkspaceSettings } from "@/modules/workspace/hooks/useWorkspaceSettings";
 
 export default function WorkspaceSettings() {
   const { isSimulated, activeTenant, activeRoleName } = useAuth();
+  const { hasAppCapability } = useRBAC();
+  const canReadWorkspace = hasAppCapability("workspace.read");
+  const canUpdateWorkspace = hasAppCapability("workspace.update");
   const workspaceScope = useMemo(
     () => ({
       tenantId: activeTenant?.id,
@@ -76,6 +81,17 @@ export default function WorkspaceSettings() {
     },
     segments: [],
   });
+
+  if (!canReadWorkspace) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <AccessNotice
+          title="Access restricted"
+          description="This area requires the `settings.read` permission in the active tenant scope."
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-fade-in relative">
@@ -222,6 +238,7 @@ export default function WorkspaceSettings() {
                     type="text"
                     value={formData.tenantName}
                     onChange={(e) => updateField("tenantName", e.target.value)}
+                    disabled={!canUpdateWorkspace}
                     className="w-full bg-surface-secondary border border-border-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent-primary transition-all text-primary"
                   />
                 </div>
@@ -256,7 +273,8 @@ export default function WorkspaceSettings() {
                     <select
                       value={formData.region}
                       onChange={(e) => updateField("region", e.target.value)}
-                      className="w-full bg-surface-secondary border border-border-primary rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-accent-primary transition-all text-primary appearance-none cursor-pointer"
+                      disabled={!canUpdateWorkspace}
+                      className="w-full bg-surface-secondary border border-border-primary rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-accent-primary transition-all text-primary appearance-none cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       <option>South America (sa-east-1)</option>
                       <option>US East (us-east-1)</option>
@@ -279,7 +297,8 @@ export default function WorkspaceSettings() {
                       onChange={(e) =>
                         updateField("dataRetention", e.target.value)
                       }
-                      className="w-full bg-surface-secondary border border-border-primary rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-accent-primary transition-all text-primary appearance-none cursor-pointer"
+                      disabled={!canUpdateWorkspace}
+                      className="w-full bg-surface-secondary border border-border-primary rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-accent-primary transition-all text-primary appearance-none cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       <option>30 dias</option>
                       <option>90 dias</option>
@@ -294,14 +313,15 @@ export default function WorkspaceSettings() {
                 <button
                   type="button"
                   onClick={() => void restoreDefaults()}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-secondary hover:text-primary transition-colors hover:bg-surface-tertiary"
+                  disabled={!canUpdateWorkspace}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-secondary hover:text-primary transition-colors hover:bg-surface-tertiary disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <RotateCcw size={16} /> Restaurar Defaults
                 </button>
                 <button
                   type="submit"
-                  disabled={isSaving || !isDirty}
-                  className="flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-semibold bg-accent-primary text-white shadow-lg hover:scale-105 transition-all disabled:opacity-50"
+                  disabled={!canUpdateWorkspace || isSaving || !isDirty}
+                  className="flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-semibold bg-accent-primary text-white shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:hover:scale-100"
                 >
                   {isSaving ? "Aplicando..." : "Salvar Alterações"}{" "}
                   <Save size={16} />

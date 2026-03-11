@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Database, Bot, Wand2, Loader2, Settings } from "lucide-react";
+import { Database, Bot, Wand2, Loader2, Settings, Users } from "lucide-react";
 import AgentsGenerator from "./components/features/AgentsGenerator";
 import ChatInterface from "./components/features/ChatInterface";
 import CodeGenerator from "./components/features/CodeGenerator";
@@ -15,6 +15,7 @@ import Layout from "./components/layout/Layout";
 import Sidebar, { SidebarSection } from "./components/layout/Sidebar";
 import { LanguageContext } from "./context/LanguageContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { useRBAC } from "./hooks/useRBAC";
 import {
   APP_SECTION_IDS,
   buildSectionHash,
@@ -48,6 +49,7 @@ import MailHub from "./pages/MailHub";
 import DataSync from "./pages/DataSync";
 import ProvidersSettings from "./pages/ProvidersSettings";
 import WorkspaceSettings from "./pages/WorkspaceSettings";
+import AccessManagement from "./pages/AccessManagement";
 
 const SIDEBAR_COLLAPSED_KEY = "grompt.sidebar.collapsed";
 const SIDEBAR_AUTO_EXPAND_SEEN_KEY = "grompt.sidebar.autoExpandSeen";
@@ -55,6 +57,7 @@ const ACTIVE_SECTION_KEY = "grompt.activeSection";
 
 const MainApp: React.FC = () => {
   const { isAuthenticated, isLoading: authLoading, hasAccess } = useAuth();
+  const { hasAppCapability, hasPermission } = useRBAC();
 
   // State management
   const [theme, setTheme] = useState<Theme>("dark");
@@ -325,9 +328,41 @@ const MainApp: React.FC = () => {
           label: t("sectionSettingsLabel"),
           description: t("sectionSettingsDescription"),
         },
+        {
+          id: "access-management",
+          label: "Access",
+          description: "Members, Roles & Invites",
+          icon: Users,
+        },
       ],
     },
-  ];
+  ]
+    .map((section) => {
+      if (!section.children) {
+        return section;
+      }
+
+      const filteredChildren = section.children.filter((child) => {
+        switch (child.id) {
+          case "data-sync":
+            return hasAppCapability("sync.read");
+          case "workspace-settings":
+            return hasAppCapability("workspace.read");
+          case "providers-settings":
+            return hasAppCapability("providers.read");
+          case "access-management":
+            return hasPermission("user.read");
+          default:
+            return true;
+        }
+      });
+
+      return {
+        ...section,
+        children: filteredChildren,
+      };
+    })
+    .filter((section) => !section.children || section.children.length > 0);
 
   const renderContent = () => {
     switch (activeSection) {
@@ -349,6 +384,8 @@ const MainApp: React.FC = () => {
         return <WorkspaceSettings />;
       case "providers-settings":
         return <ProvidersSettings />;
+      case "access-management":
+        return <AccessManagement />;
       case "playground":
         return <Playground />;
       case "welcome":

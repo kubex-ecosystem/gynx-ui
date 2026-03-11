@@ -12,7 +12,9 @@ import {
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import Card from "@/components/ui/Card";
+import AccessNotice from "@/components/security/AccessNotice";
 import { useAuth } from "@/context/AuthContext";
+import { useRBAC } from "@/hooks/useRBAC";
 import { getIntegrationConfigs, getSyncJobs } from "@/services/syncService";
 
 // Types
@@ -42,11 +44,20 @@ export interface SyncJob {
 
 const DataSync: React.FC = () => {
   const { activeTenant, activeRoleName } = useAuth();
+  const { hasAppCapability } = useRBAC();
   const [connections, setConnections] = useState<IntegrationConfig[]>([]);
   const [cronjobs, setCronjobs] = useState<SyncJob[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const canReadSync = hasAppCapability("sync.read");
+  const canUpdateSync = hasAppCapability("sync.update");
 
   const fetchSyncData = async () => {
+    if (!canReadSync) {
+      setConnections([]);
+      setCronjobs([]);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
       const [connectionsData, jobsData] = await Promise.all([
@@ -63,8 +74,20 @@ const DataSync: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchSyncData();
-  }, [activeTenant?.id]);
+    void fetchSyncData();
+  }, [activeTenant?.id, canReadSync]);
+
+  if (!canReadSync) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <AccessNotice
+          title="Access restricted"
+          description="This area requires the `settings.read` permission in the active tenant scope."
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-10 animate-fade-in">
       <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
@@ -95,7 +118,10 @@ const DataSync: React.FC = () => {
             <RefreshCcw size={16} className={isLoading ? "animate-spin" : ""} />{" "}
             Refresh All
           </button>
-          <button className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl bg-accent-primary text-white text-sm font-bold hover:scale-105 transition-all flex items-center justify-center gap-2 shadow-lg shadow-accent-primary/20">
+          <button
+            disabled={!canUpdateSync}
+            className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl bg-accent-primary text-white text-sm font-bold hover:scale-105 transition-all flex items-center justify-center gap-2 shadow-lg shadow-accent-primary/20 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
+          >
             <Plus size={18} /> New Sync Task
           </button>
         </div>
@@ -193,7 +219,8 @@ const DataSync: React.FC = () => {
                           <button
                             title="More actions"
                             name="more-actions"
-                            className="p-1.5 rounded-lg hover:bg-surface-tertiary text-muted transition-colors"
+                            disabled={!canUpdateSync}
+                            className="p-1.5 rounded-lg hover:bg-surface-tertiary text-muted transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                           >
                             <MoreVertical size={16} />
                           </button>

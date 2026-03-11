@@ -20,6 +20,7 @@ export interface Membership {
   role_id: string;
   role_code?: string;
   role_name?: string;
+  permissions?: string[];
   is_active: boolean;
   created_at: string;
 }
@@ -56,6 +57,7 @@ export interface AccessScope {
   active_tenant_slug?: string;
   active_role_code?: string;
   active_role_name?: string;
+  effective_permissions?: string[];
   team_memberships: number;
   pending_access?: PendingAccess;
 }
@@ -145,6 +147,7 @@ const buildMockUser = (email = "rafael@kubex.world"): AuthUser =>
         role_id: "role-admin",
         role_code: "admin",
         role_name: "Administrator",
+        permissions: ["*"],
         is_active: true,
         created_at: new Date().toISOString(),
       },
@@ -158,6 +161,7 @@ const buildMockUser = (email = "rafael@kubex.world"): AuthUser =>
       active_tenant_slug: "bellube",
       active_role_code: "admin",
       active_role_name: "Administrator",
+      effective_permissions: ["*"],
       team_memberships: 0,
     },
   });
@@ -199,7 +203,18 @@ const selectActiveMembership = (
   );
 };
 
-const buildPermissions = (activeRoleCode: string | null): string[] => {
+const buildPermissions = (
+  activeMembership: Membership | null,
+  accessScope?: AccessScope,
+  activeRoleCode?: string | null,
+): string[] => {
+  const effectivePermissions =
+    activeMembership?.permissions || accessScope?.effective_permissions || [];
+
+  if (effectivePermissions.length > 0) {
+    return effectivePermissions;
+  }
+
   if (activeRoleCode === "admin") {
     return ["*"];
   }
@@ -257,7 +272,11 @@ const deriveAccessState = (
     hasAccess,
     hasPendingAccess,
     pendingAccess,
-    permissions: buildPermissions(activeRoleCode),
+    permissions: buildPermissions(
+      activeMembership,
+      accessScope,
+      activeRoleCode,
+    ),
   };
 };
 

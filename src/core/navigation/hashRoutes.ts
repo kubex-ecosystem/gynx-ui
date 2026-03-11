@@ -9,6 +9,7 @@ export const APP_SECTION_IDS = [
   "data-sync",
   "workspace-settings",
   "providers-settings",
+  "access-management",
   "playground",
   "prompt",
   "agents",

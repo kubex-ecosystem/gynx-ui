@@ -2,6 +2,7 @@ import { ArrowRight, Compass, Sparkles } from "lucide-react";
 import React, { useState } from "react";
 import Card from "@/components/ui/Card";
 import { useAuth } from "@/context/AuthContext";
+import { useRBAC } from "@/hooks/useRBAC";
 import { useTranslations } from "@/i18n/useTranslations";
 import lottieAnimation from "@assets/lotties/banner_sm-01.json";
 import LottieControl from "@/components/ui/Lottie";
@@ -25,6 +26,7 @@ const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
     hasPendingAccess,
     pendingAccess,
   } = useAuth();
+  const { hasAppCapability } = useRBAC();
 
   const [animationData, setAnimationData] = useState(lottieAnimation);
 
@@ -55,6 +57,9 @@ const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
       section: "summarizer" as AppSectionId,
     },
   ];
+  const canOpenWorkspaceSettings =
+    hasAccess && hasAppCapability("workspace.read");
+  const canOpenProviders = hasAccess && hasAppCapability("providers.read");
 
   const lottieControl = new LottieControl({
     ariaRole: "button",
@@ -200,11 +205,11 @@ const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
         {/* Placeholders for new CTAs */}
         <div
           onClick={() => {
-            if (hasAccess) {
+            if (canOpenWorkspaceSettings) {
               navigateToSection("workspace-settings");
             }
           }}
-          className={`rounded-2xl border-2 border-dashed border-border-primary/50 bg-surface-primary/10 flex flex-col items-center justify-center p-6 text-center shadow-none transition-all duration-300 group min-h-[160px] ${hasAccess ? "cursor-pointer hover:border-accent-primary/50 hover:bg-surface-primary/30 hover:-translate-y-1" : "cursor-not-allowed opacity-70"}`}
+          className={`rounded-2xl border-2 border-dashed border-border-primary/50 bg-surface-primary/10 flex flex-col items-center justify-center p-6 text-center shadow-none transition-all duration-300 group min-h-[160px] ${canOpenWorkspaceSettings ? "cursor-pointer hover:border-accent-primary/50 hover:bg-surface-primary/30 hover:-translate-y-1" : "cursor-not-allowed opacity-70"}`}
         >
           <Sparkles className="h-6 w-6 text-muted group-hover:text-accent-primary transition-colors mb-3 group-hover:scale-110 duration-300" />
           <p className="text-sm font-semibold text-secondary group-hover:text-primary transition-colors">
@@ -217,11 +222,11 @@ const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
 
         <div
           onClick={() => {
-            if (hasAccess) {
+            if (canOpenProviders) {
               navigateToSection("providers-settings");
             }
           }}
-          className={`rounded-2xl border-2 border-dashed border-border-primary/50 bg-surface-primary/10 flex flex-col items-center justify-center p-6 text-center shadow-none transition-all duration-300 group min-h-[160px] ${hasAccess ? "cursor-pointer hover:border-accent-primary/50 hover:bg-surface-primary/30 hover:-translate-y-1" : "cursor-not-allowed opacity-70"}`}
+          className={`rounded-2xl border-2 border-dashed border-border-primary/50 bg-surface-primary/10 flex flex-col items-center justify-center p-6 text-center shadow-none transition-all duration-300 group min-h-[160px] ${canOpenProviders ? "cursor-pointer hover:border-accent-primary/50 hover:bg-surface-primary/30 hover:-translate-y-1" : "cursor-not-allowed opacity-70"}`}
         >
           <Compass className="h-6 w-6 text-muted group-hover:text-accent-primary transition-colors mb-3 group-hover:scale-110 duration-300" />
           <p className="text-sm font-semibold text-secondary group-hover:text-primary transition-colors">
