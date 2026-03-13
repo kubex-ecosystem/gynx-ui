@@ -23,5 +23,81 @@ dist-ssr
 *.sln
 *.sw?
 
-# UI sub directories and files
-frontend/
+# Binários
+
+!gnyx/
+.venv/
+.notes/
+.kubex/
+.bkp/
+bkp/
+
+# Build outputs
+
+dist/
+
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+go.work
+
+# Node.js
+.next/
+out/
+build/*.js
+build/*.css
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# React
+!build/index.html
+build/
+dist/
+!ui/**/*.md
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+
+# Environment variables
+.env
+.env.local
+.env.koyeb
+.env.koyeb.local
+bkp/
+*.lkt.txt
+docs/prompt/
+support/docs/site/
+
+tasks/
+.venv-hooks/
+.venv-*
+.venv-hooks
