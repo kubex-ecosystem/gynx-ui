@@ -1,9 +1,10 @@
 import React, {
   createContext,
   useContext,
-  useState,
   useEffect,
-  ReactNode,
+  useMemo,
+  useState,
+  type ReactNode,
 } from "react";
 import Cookies from "js-cookie";
 import { httpClient } from "@/core/http/client";
@@ -12,29 +13,19 @@ import { httpEndpoints } from "@/core/http/endpoints";
 import { navigateToSection } from "@/core/navigation/hashRoutes";
 import { isSimulatedAuthEnabled } from "@/core/runtime/mode";
 
-interface User {
-  id: string;
-  email: string;
-  name: string;
-  lastName?: string;
-  status?: string;
-  memberships?: Membership[];
-  teamMemberships?: TeamMembership[];
-  accessScope?: AccessScope;
-}
-
-interface Membership {
+export interface Membership {
   tenant_id: string;
   tenant_name?: string;
   tenant_slug?: string;
   role_id: string;
   role_code?: string;
   role_name?: string;
+  permissions?: string[];
   is_active: boolean;
   created_at: string;
 }
 
-interface TeamMembership {
+export interface TeamMembership {
   team_id: string;
   team_name?: string;
   tenant_id: string;
@@ -48,7 +39,7 @@ interface TeamMembership {
   created_at: string;
 }
 
-interface PendingAccess {
+export interface PendingAccess {
   id: string;
   provider: string;
   status: string;
@@ -58,7 +49,7 @@ interface PendingAccess {
   reviewed_at?: string;
 }
 
-interface AccessScope {
+export interface AccessScope {
   has_access: boolean;
   has_pending_access: boolean;
   active_tenant_id?: string;
@@ -66,171 +57,346 @@ interface AccessScope {
   active_tenant_slug?: string;
   active_role_code?: string;
   active_role_name?: string;
+  effective_permissions?: string[];
   team_memberships: number;
   pending_access?: PendingAccess;
 }
 
+export interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+  lastName?: string;
+  status?: string;
+  memberships: Membership[];
+  teamMemberships: TeamMembership[];
+  accessScope?: AccessScope;
+}
+
+export interface ActiveTenant {
+  id: string;
+  name?: string;
+  slug?: string;
+}
+
 interface AuthContextType {
-  user: User | null;
+  user: AuthUser | null;
+  activeTenant: ActiveTenant | null;
+  activeMembership: Membership | null;
+  activeTeamMemberships: TeamMembership[];
+  activeRoleCode: string | null;
+  activeRoleName: string | null;
+  permissions: string[];
+  hasAccess: boolean;
+  hasPendingAccess: boolean;
+  pendingAccess: PendingAccess | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isSimulated: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
-  isSimulated: boolean;
+  switchActiveTenant: (tenantId: string) => void;
 }
+
+type AuthUserPayload = {
+  id: string;
+  email: string;
+  name?: string;
+  last_name?: string;
+  status?: string;
+  memberships?: Membership[];
+  team_memberships?: TeamMembership[];
+  access_scope?: AccessScope;
+};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const ACCESS_TOKEN_KEY = "gnyx_access_token";
 const REFRESH_TOKEN_KEY = "gnyx_refresh_token";
+const ACTIVE_TENANT_KEY = "gnyx_active_tenant_id";
+
+const readStoredTenantId = (): string | null => {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  return localStorage.getItem(ACTIVE_TENANT_KEY);
+};
+
+const mapAuthUser = (userData: AuthUserPayload): AuthUser => ({
+  id: userData.id,
+  email: userData.email,
+  name: userData.name || userData.email.split("@")[0],
+  lastName: userData.last_name,
+  status: userData.status,
+  memberships: userData.memberships || [],
+  teamMemberships: userData.team_memberships || [],
+  accessScope: userData.access_scope,
+});
+
+const buildMockUser = (email = "rafael@kubex.world"): AuthUser =>
+  mapAuthUser({
+    id: "1",
+    email,
+    name: "Rafael Mori",
+    status: "active",
+    memberships: [
+      {
+        tenant_id: "tenant-mock-456",
+        tenant_name: "Bellube Global",
+        tenant_slug: "bellube",
+        role_id: "role-admin",
+        role_code: "admin",
+        role_name: "Administrator",
+        permissions: ["*"],
+        is_active: true,
+        created_at: new Date().toISOString(),
+      },
+    ],
+    team_memberships: [],
+    access_scope: {
+      has_access: true,
+      has_pending_access: false,
+      active_tenant_id: "tenant-mock-456",
+      active_tenant_name: "Bellube Global",
+      active_tenant_slug: "bellube",
+      active_role_code: "admin",
+      active_role_name: "Administrator",
+      effective_permissions: ["*"],
+      team_memberships: 0,
+    },
+  });
+
+const selectActiveMembership = (
+  memberships: Membership[],
+  preferredTenantId?: string | null,
+  accessScope?: AccessScope,
+): Membership | null => {
+  if (memberships.length === 0) {
+    return null;
+  }
+
+  const candidateTenantIds = [
+    preferredTenantId,
+    accessScope?.active_tenant_id,
+  ].filter((value): value is string => Boolean(value));
+
+  for (const tenantId of candidateTenantIds) {
+    const preferredMembership = memberships.find(
+      (membership) => membership.tenant_id === tenantId && membership.is_active,
+    );
+    if (preferredMembership) {
+      return preferredMembership;
+    }
+
+    const fallbackMembership = memberships.find(
+      (membership) => membership.tenant_id === tenantId,
+    );
+    if (fallbackMembership) {
+      return fallbackMembership;
+    }
+  }
+
+  return (
+    memberships.find((membership) => membership.is_active) ||
+    memberships[0] ||
+    null
+  );
+};
+
+const buildPermissions = (
+  activeMembership: Membership | null,
+  accessScope?: AccessScope,
+  activeRoleCode?: string | null,
+): string[] => {
+  const effectivePermissions =
+    activeMembership?.permissions || accessScope?.effective_permissions || [];
+
+  if (effectivePermissions.length > 0) {
+    return effectivePermissions;
+  }
+
+  if (activeRoleCode === "admin") {
+    return ["*"];
+  }
+  return [];
+};
+
+const deriveAccessState = (
+  user: AuthUser | null,
+  preferredTenantId?: string | null,
+) => {
+  const memberships = user?.memberships || [];
+  const accessScope = user?.accessScope;
+  const activeMembership = selectActiveMembership(
+    memberships,
+    preferredTenantId,
+    accessScope,
+  );
+  const activeTenantId =
+    activeMembership?.tenant_id || accessScope?.active_tenant_id || null;
+  const activeTeamMemberships = (user?.teamMemberships || []).filter(
+    (membership) => !activeTenantId || membership.tenant_id === activeTenantId,
+  );
+  const activeRoleCode =
+    activeMembership?.role_code ||
+    accessScope?.active_role_code ||
+    activeTeamMemberships.find((membership) => membership.role_code)
+      ?.role_code ||
+    null;
+  const activeRoleName =
+    activeMembership?.role_name ||
+    accessScope?.active_role_name ||
+    activeTeamMemberships.find((membership) => membership.role_name)
+      ?.role_name ||
+    null;
+  const activeTenant = activeTenantId
+    ? {
+        id: activeTenantId,
+        name: activeMembership?.tenant_name || accessScope?.active_tenant_name,
+        slug: activeMembership?.tenant_slug || accessScope?.active_tenant_slug,
+      }
+    : null;
+  const hasAccess =
+    accessScope?.has_access ??
+    memberships.some((membership) => membership.is_active);
+  const hasPendingAccess =
+    accessScope?.has_pending_access ?? Boolean(accessScope?.pending_access);
+  const pendingAccess = accessScope?.pending_access || null;
+
+  return {
+    activeMembership,
+    activeTenant,
+    activeTeamMemberships,
+    activeRoleCode,
+    activeRoleName,
+    hasAccess,
+    hasPendingAccess,
+    pendingAccess,
+    permissions: buildPermissions(
+      activeMembership,
+      accessScope,
+      activeRoleCode,
+    ),
+  };
+};
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [preferredTenantId, setPreferredTenantId] = useState<string | null>(
+    () => readStoredTenantId(),
+  );
   const simulatedAuth = isSimulatedAuthEnabled();
 
-  const mapAuthUser = (userData: {
-    id: string;
-    email: string;
-    name?: string;
-    last_name?: string;
-    status?: string;
-    memberships?: Membership[];
-    team_memberships?: TeamMembership[];
-    access_scope?: AccessScope;
-  }): User => ({
-    id: userData.id,
-    email: userData.email,
-    name: userData.name || userData.email.split("@")[0],
-    lastName: userData.last_name,
-    status: userData.status,
-    memberships: userData.memberships || [],
-    teamMemberships: userData.team_memberships || [],
-    accessScope: userData.access_scope,
-  });
+  const accessState = useMemo(
+    () => deriveAccessState(user, preferredTenantId),
+    [user, preferredTenantId],
+  );
+
+  useEffect(() => {
+    const nextTenantId = accessState.activeTenant?.id || null;
+
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    if (!nextTenantId) {
+      localStorage.removeItem(ACTIVE_TENANT_KEY);
+      if (preferredTenantId !== null) {
+        setPreferredTenantId(null);
+      }
+      return;
+    }
+
+    localStorage.setItem(ACTIVE_TENANT_KEY, nextTenantId);
+
+    if (preferredTenantId !== nextTenantId) {
+      setPreferredTenantId(nextTenantId);
+    }
+  }, [accessState.activeTenant?.id, preferredTenantId]);
 
   useEffect(() => {
     const initAuth = async () => {
       try {
         if (simulatedAuth) {
-          // Em Demo Mode, checa o token mockado
           const token = Cookies.get(ACCESS_TOKEN_KEY);
-
-          if (token) {
-            setUser({
-              id: "1",
-              email: "rafael@kubex.world",
-              name: "Rafael Mori",
-              status: "active",
-              memberships: [
-                {
-                  tenant_id: "tenant-mock-456",
-                  tenant_name: "Bellube Global",
-                  tenant_slug: "bellube",
-                  role_id: "role-admin",
-                  role_code: "admin",
-                  role_name: "Administrator",
-                  is_active: true,
-                  created_at: new Date().toISOString(),
-                },
-              ],
-              teamMemberships: [],
-              accessScope: {
-                has_access: true,
-                has_pending_access: false,
-                active_tenant_id: "tenant-mock-456",
-                active_tenant_name: "Bellube Global",
-                active_tenant_slug: "bellube",
-                active_role_code: "admin",
-                active_role_name: "Administrator",
-                team_memberships: 0,
-              },
-            });
-          } else {
-            setUser(null);
-          }
-
-          setIsLoading(false);
+          setUser(token ? buildMockUser() : null);
           return;
-        } else {
-          // Real backend session validation using HttpOnly cookies
-          const userData = await httpClient.get<{
-            id: string;
-            email: string;
-            name?: string;
-            last_name?: string;
-            status?: string;
-            memberships?: Membership[];
-            team_memberships?: TeamMembership[];
-            access_scope?: AccessScope;
-          }>(httpEndpoints.auth.me, { credentials: HTTP_CREDENTIALS.session });
-          setUser(mapAuthUser(userData));
         }
+
+        const userData = await httpClient.get<AuthUserPayload>(
+          httpEndpoints.auth.me,
+          {
+            credentials: HTTP_CREDENTIALS.session,
+          },
+        );
+        setUser(mapAuthUser(userData));
       } catch (error) {
         console.error("Falha ao validar sessão", error);
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
     };
 
-    initAuth();
+    void initAuth();
   }, [simulatedAuth]);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
       if (simulatedAuth) {
-        // Simular delay de rede
         await new Promise((resolve) => setTimeout(resolve, 800));
 
-        const mockResponse = {
-          access_token: "mock_jwt_token_" + Date.now(),
-          refresh_token: "mock_refresh_token",
-          user: { id: "1", email, name: "Rafael Mori" },
-        };
-
-        Cookies.set(ACCESS_TOKEN_KEY, mockResponse.access_token, {
+        Cookies.set(ACCESS_TOKEN_KEY, `mock_jwt_token_${Date.now()}`, {
           expires: 7,
           secure: true,
           sameSite: "strict",
         });
-        Cookies.set(REFRESH_TOKEN_KEY, mockResponse.refresh_token, {
+        Cookies.set(REFRESH_TOKEN_KEY, "mock_refresh_token", {
           expires: 30,
           secure: true,
           sameSite: "strict",
         });
-        setUser(mockResponse.user);
-      } else {
-        await httpClient.post<void, { email: string; password: string }>(
-          httpEndpoints.auth.signIn,
-          { email, password },
+        setUser(buildMockUser(email));
+        return;
+      }
+
+      await httpClient.post<void, { email: string; password: string }>(
+        httpEndpoints.auth.signIn,
+        { email, password },
+        {
+          credentials: HTTP_CREDENTIALS.session,
+          parseAs: "void",
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+
+      try {
+        const userData = await httpClient.get<AuthUserPayload>(
+          httpEndpoints.auth.me,
           {
             credentials: HTTP_CREDENTIALS.session,
-            parseAs: "void",
-            headers: { "Content-Type": "application/json" },
           },
         );
-
-        // With HttpOnly cookies, the browser handles the cookies automatically!
-        // We just fetch the user profile right after successful login
-        try {
-          const userData = await httpClient.get<{
-            id: string;
-            email: string;
-            name?: string;
-            last_name?: string;
-            status?: string;
-            memberships?: Membership[];
-            team_memberships?: TeamMembership[];
-            access_scope?: AccessScope;
-          }>(httpEndpoints.auth.me, { credentials: HTTP_CREDENTIALS.session });
-          setUser(mapAuthUser(userData));
-        } catch {
-          // Fallback if /me endpoint is not available yet in BE but login was successful
-          setUser({ id: "real-uuid", email, name: email.split("@")[0] });
-        }
+        setUser(mapAuthUser(userData));
+      } catch {
+        setUser(
+          mapAuthUser({
+            id: "real-uuid",
+            email,
+            name: email.split("@")[0],
+            memberships: [],
+            team_memberships: [],
+            access_scope: {
+              has_access: false,
+              has_pending_access: false,
+              team_memberships: 0,
+            },
+          }),
+        );
       }
     } finally {
       setIsLoading(false);
@@ -251,23 +417,55 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
             parseAs: "void",
           },
         );
-      } catch (e) {
-        console.error("Erro no sign-out", e);
+      } catch (error) {
+        console.error("Erro no sign-out", error);
       }
     }
+
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(ACTIVE_TENANT_KEY);
+    }
+
+    setPreferredTenantId(null);
     setUser(null);
     navigateToSection("landing");
+  };
+
+  const switchActiveTenant = (tenantId: string) => {
+    if (!user) {
+      return;
+    }
+
+    const hasTenantMembership = user.memberships.some(
+      (membership) => membership.tenant_id === tenantId,
+    );
+
+    if (!hasTenantMembership) {
+      return;
+    }
+
+    setPreferredTenantId(tenantId);
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
+        activeTenant: accessState.activeTenant,
+        activeMembership: accessState.activeMembership,
+        activeTeamMemberships: accessState.activeTeamMemberships,
+        activeRoleCode: accessState.activeRoleCode,
+        activeRoleName: accessState.activeRoleName,
+        permissions: accessState.permissions,
+        hasAccess: accessState.hasAccess,
+        hasPendingAccess: accessState.hasPendingAccess,
+        pendingAccess: accessState.pendingAccess,
         isAuthenticated: !!user,
         isLoading,
+        isSimulated: simulatedAuth,
         login,
         logout,
-        isSimulated: simulatedAuth,
+        switchActiveTenant,
       }}
     >
       {children}

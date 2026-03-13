@@ -1,6 +1,7 @@
 export const API_V1_PREFIX = "/api/v1";
 
-const trimTrailingSlashes = (value: string): string => value.replace(/\/+$/, "");
+const trimTrailingSlashes = (value: string): string =>
+  value.replace(/\/+$/, "");
 
 const normalizePath = (path: string): string => {
   if (!path) return "/";
@@ -15,7 +16,8 @@ const normalizeProxyPath = (path: string): string => {
 export const isApiV1Path = (path: string): boolean =>
   path === API_V1_PREFIX || path.startsWith(`${API_V1_PREFIX}/`);
 
-export const buildApiV1Path = (endpoint: string): string => `${API_V1_PREFIX}${normalizePath(endpoint)}`;
+export const buildApiV1Path = (endpoint: string): string =>
+  `${API_V1_PREFIX}${normalizePath(endpoint)}`;
 
 export const buildApiV1Url = (baseURL: string, endpoint: string): string => {
   const normalizedBaseURL = trimTrailingSlashes(baseURL);
@@ -36,13 +38,24 @@ export const httpEndpoints = {
     root: "/config",
   },
   invites: {
+    root: "/invites",
+    create: "/invites",
     validate: "/invites/validate",
     accept: "/invites/accept",
+  },
+  access: {
+    members: "/access/members",
+    memberRole: (userId: string) => `/access/members/${userId}/role`,
   },
   unified: {
     root: "/unified",
     stream: "/unified/stream",
     providerTest: "/test",
+  },
+  bi: {
+    catalogStatus: "/bi/catalog/status",
+    generateBoard: "/bi/boards/generate",
+    exportBoard: "/bi/boards/export",
   },
   agents: {
     root: "/agents",

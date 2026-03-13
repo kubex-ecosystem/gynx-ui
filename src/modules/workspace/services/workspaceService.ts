@@ -3,23 +3,41 @@ import {
   resetMockWorkspaceSettings,
   saveMockWorkspaceSettings,
   waitMock,
-} from '@/mocks';
-import type { WorkspaceSettingsData } from '../types';
+} from "@/mocks";
+import type { WorkspaceSettingsData } from "../types";
+
+export interface WorkspaceScope {
+  tenantId?: string | null;
+  tenantName?: string | null;
+}
+
+const applyWorkspaceScope = (
+  data: WorkspaceSettingsData,
+  scope?: WorkspaceScope,
+): WorkspaceSettingsData => ({
+  ...data,
+  tenantId: scope?.tenantId || data.tenantId,
+  tenantName: scope?.tenantName || data.tenantName,
+});
 
 export const workspaceService = {
-  async getSettings(): Promise<WorkspaceSettingsData> {
+  async getSettings(scope?: WorkspaceScope): Promise<WorkspaceSettingsData> {
     await waitMock(500);
-    return getMockWorkspaceSettings();
+    return applyWorkspaceScope(getMockWorkspaceSettings(), scope);
   },
 
-  async saveSettings(data: WorkspaceSettingsData): Promise<WorkspaceSettingsData> {
+  async saveSettings(
+    data: WorkspaceSettingsData,
+    scope?: WorkspaceScope,
+  ): Promise<WorkspaceSettingsData> {
     await waitMock(800);
-    saveMockWorkspaceSettings(data);
-    return data;
+    const scopedData = applyWorkspaceScope(data, scope);
+    saveMockWorkspaceSettings(scopedData);
+    return scopedData;
   },
 
-  async resetSettings(): Promise<WorkspaceSettingsData> {
+  async resetSettings(scope?: WorkspaceScope): Promise<WorkspaceSettingsData> {
     await waitMock(300);
-    return resetMockWorkspaceSettings();
+    return applyWorkspaceScope(resetMockWorkspaceSettings(), scope);
   },
 };

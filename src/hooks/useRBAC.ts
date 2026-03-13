@@ -1,11 +1,15 @@
-import { useAuthStore } from '@/store/useAuthStore';
+import { useAuth } from "@/context/AuthContext";
+import {
+  hasCapability,
+  hasWildcardPermission,
+  type AppCapability,
+} from "@/core/access/rbacMvp";
 
 export const useRBAC = () => {
-  const { permissions, activeRoleCode } = useAuthStore();
+  const { permissions, activeRoleCode } = useAuth();
 
   const hasPermission = (permissionCode: string): boolean => {
-    // Caso seja um super admin com permissão curinga '*'
-    if (permissions.includes('*')) return true;
+    if (hasWildcardPermission(permissions)) return true;
     return permissions.includes(permissionCode);
   };
 
@@ -14,13 +18,18 @@ export const useRBAC = () => {
   };
 
   const hasAnyPermission = (permissionsToCheck: string[]): boolean => {
-    if (permissions.includes('*')) return true;
+    if (hasWildcardPermission(permissions)) return true;
     return permissionsToCheck.some((perm) => permissions.includes(perm));
+  };
+
+  const hasAppCapability = (capability: AppCapability): boolean => {
+    return hasCapability(permissions, capability);
   };
 
   return {
     hasPermission,
     hasRole,
     hasAnyPermission,
+    hasAppCapability,
   };
 };
