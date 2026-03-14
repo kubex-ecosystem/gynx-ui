@@ -44,6 +44,7 @@ export interface UpdateAccessMemberRoleResponse {
 export interface AccessInvite {
   id: string;
   name?: string;
+  token?: string;
   email: string;
   role: string;
   tenant_id: string;

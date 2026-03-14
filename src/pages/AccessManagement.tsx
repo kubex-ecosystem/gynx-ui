@@ -10,6 +10,7 @@ import {
 import React, { useMemo, useState } from "react";
 import AccessNotice from "@/components/security/AccessNotice";
 import Card from "@/components/ui/Card";
+import { buildSectionHash } from "@/core/navigation/hashRoutes";
 import { useAuth } from "@/context/AuthContext";
 import { useRBAC } from "@/hooks/useRBAC";
 import { useAccessManagement } from "@/modules/access/hooks/useAccessManagement";
@@ -32,6 +33,7 @@ const AccessManagement: React.FC = () => {
     isUpdatingRoleFor,
     error,
     statusMessage,
+    latestCreatedInvite,
     reload,
     createInvite,
     updateMemberRole,
@@ -58,6 +60,17 @@ const AccessManagement: React.FC = () => {
       ),
     [roles],
   );
+
+  const latestInviteUrl = useMemo(() => {
+    if (!latestCreatedInvite?.token || typeof window === "undefined") {
+      return null;
+    }
+
+    return `${window.location.origin}${window.location.pathname}${buildSectionHash(
+      "accept-invite",
+      { token: latestCreatedInvite.token },
+    )}`;
+  }, [latestCreatedInvite]);
 
   const handleCreateInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -146,6 +159,41 @@ const AccessManagement: React.FC = () => {
       {statusMessage && (
         <Card className="border-status-success/30 bg-status-success/5 p-4 text-sm text-status-success">
           {statusMessage}
+        </Card>
+      )}
+
+      {latestCreatedInvite && (
+        <Card className="space-y-3 border-accent-primary/30 bg-accent-primary/5 p-4">
+          <div>
+            <p className="text-sm font-semibold text-primary">
+              Manual invite handoff
+            </p>
+            <p className="mt-1 text-xs text-secondary">
+              Use this URL or token when the active runtime is not sending emails yet.
+            </p>
+          </div>
+
+          {latestInviteUrl && (
+            <div className="space-y-2">
+              <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-muted">
+                Invite URL
+              </p>
+              <div className="break-all rounded-xl border border-border-primary bg-surface-secondary px-3 py-2 text-xs text-primary">
+                {latestInviteUrl}
+              </div>
+            </div>
+          )}
+
+          {latestCreatedInvite.token && (
+            <div className="space-y-2">
+              <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-muted">
+                Invite token
+              </p>
+              <div className="break-all rounded-xl border border-border-primary bg-surface-secondary px-3 py-2 font-mono text-xs text-primary">
+                {latestCreatedInvite.token}
+              </div>
+            </div>
+          )}
         </Card>
       )}
 

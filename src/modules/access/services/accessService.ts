@@ -2,6 +2,7 @@ import { HTTP_CREDENTIALS } from "@/core/http/auth";
 import { httpClient } from "@/core/http/client";
 import { httpEndpoints } from "@/core/http/endpoints";
 import type {
+  AccessInvite,
   AccessInviteListResponse,
   AccessMembersResponse,
   CreateAccessInviteInput,
@@ -33,13 +34,12 @@ export const accessService = {
     return response.data;
   },
 
-  async createInvite(input: CreateAccessInviteInput): Promise<void> {
-    await httpClient.post<void, CreateAccessInviteInput>(
+  async createInvite(input: CreateAccessInviteInput): Promise<AccessInvite> {
+    return httpClient.post<AccessInvite, CreateAccessInviteInput>(
       httpEndpoints.invites.create,
       input,
       {
         credentials: HTTP_CREDENTIALS.session,
-        parseAs: "void",
         headers: { "Content-Type": "application/json" },
       },
     );

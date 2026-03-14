@@ -33,6 +33,8 @@ export const useAccessManagement = (tenantId?: string | null) => {
   const [isUpdatingRoleFor, setIsUpdatingRoleFor] = useState<string | null>(
     null,
   );
+  const [latestCreatedInvite, setLatestCreatedInvite] =
+    useState<AccessInvite | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
@@ -44,6 +46,7 @@ export const useAccessManagement = (tenantId?: string | null) => {
       setCurrentPermissions([]);
       setCurrentRoleCode(null);
       setCurrentUserId(null);
+      setLatestCreatedInvite(null);
       setIsLoading(false);
       return;
     }
@@ -86,9 +89,11 @@ export const useAccessManagement = (tenantId?: string | null) => {
       setIsCreatingInvite(true);
       setStatusMessage(null);
       setError(null);
+      setLatestCreatedInvite(null);
 
       try {
-        await accessService.createInvite(input);
+        const invite = await accessService.createInvite(input);
+        setLatestCreatedInvite(invite);
         setStatusMessage(`Invite created for ${input.email}.`);
         await load();
       } catch (error) {
@@ -138,6 +143,7 @@ export const useAccessManagement = (tenantId?: string | null) => {
     isUpdatingRoleFor,
     error,
     statusMessage,
+    latestCreatedInvite,
     reload: load,
     createInvite,
     updateMemberRole,
